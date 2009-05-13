@@ -1,6 +1,26 @@
 <?php
 
 /**
+ *
+ * Функция получает настройки из конфигурационного файла
+ * и помещает их в массив $_config.
+ */
+function config_parser()
+{
+    global $_config;
+    
+    $file_array = file($_config['dir'].'/FlightFiles.conf');
+    for ($i = 0; $i < count($file_array); $i++)
+    {
+        $explode = explode(' ', trim($file_array[$i]));
+        if (trim($explode[0]) == 'HIDDEN_FILES')
+            $_config['hidden_files'] = trim($explode[1]);
+        elseif (trim($explode[0]) == 'HOME_DIR')
+            $_config['start_dir'] = trim($explode[1]);
+    }
+}
+
+/**
  * Функция определяет действия, выполняемые при нажатии кнопкой мыши по строке.
  */
 function on_button($view, $event)
@@ -31,34 +51,49 @@ function on_button($view, $event)
         {
             $copy = new GtkImageMenuItem(Gtk::STOCK_COPY);
             $cut = new GtkImageMenuItem(Gtk::STOCK_CUT);
-            $delete = new GtkImageMenuItem(Gtk::STOCK_DELETE);
-            $md5 = new GtkMenuItem('Контрольная сумма');
+            $delete = new GtkMenuItem('Удалить файл');
+            $checksum = new GtkMenuItem('Контрольная сумма');
             $properties = new GtkImageMenuItem(Gtk::STOCK_PROPERTIES);
-        
+            
+            $sub_checksum = new GtkMenu();
+            $checksum->set_submenu($sub_checksum);
+            $md5 = new GtkMenuItem('MD5');
+            $sha1 = new GtkMenuItem('SHA1');
+            $sub_checksum->append($md5);
+            $sub_checksum->append($sha1);
+            
+            // Расчитывать контрольную сумму для пустых файлов бессмысленно
             if ($size == '0 Б')
+            {
                 $md5->set_sensitive(FALSE);
+                $sha1->set_sensitive(FALSE);
+            }
             
             $menu->append($copy);
             $menu->append($cut);
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($delete);
-            $menu->append($md5);
+            $menu->append($checksum);
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($properties);
             
             $copy->connect_simple('activate', 'bufer_file', $file, 'copy');
             $cut->connect_simple('activate', 'bufer_file', $file, 'cut');
             $delete->connect_simple('activate', 'delete', $file);
-            $md5->connect_simple('activate', 'md5_dialog', $file);
+            $md5->connect_simple('activate', 'checksum_dialog', $file, 'MD5');
+            $sha1->connect_simple('activate', 'checksum_dialog', $file, 'SHA1');
             $properties->connect_simple('activate', 'properties', $file);
         }
         elseif ($type == '<DIR>')
         {
             $open = new GtkImageMenuItem(Gtk::STOCK_OPEN);
+            $delete = new GtkMenuItem('Удалить папку');
             
             $menu->append($open);
+            $menu->append($delete);
             
             $open->connect_simple('activate', 'change_dir', 'open', $file);
+            $delete->connect_simple('activate', 'delete', $file);
         }
         else
         {
@@ -66,7 +101,7 @@ function on_button($view, $event)
             $new_dir = new GtkMenuItem('Создать папку');
             $paste = new GtkImageMenuItem(Gtk::STOCK_PASTE);
             
-            if (!file_exists($_config['dir'].'/'.$_config['bufer']))
+            if (!file_exists($_config['dir'].'/bufer'))
                 $paste->set_sensitive(FALSE);
             
             $menu->append($new_file);
@@ -93,13 +128,14 @@ function on_button($view, $event)
  * @param string $file Адрес файла, для которого необходимо провести операцию
  * @param string $action Иденификатор операции вырезания/копирования.
  */
-function bufer_file($file, $action)
+function bufer_file($file, $act)
 {
-    global $_config, $start_dir;
+    global $_config, $start_dir, $action;
     
-    $fopen = fopen($_config['dir'].'/'.$_config['bufer'], 'w+');
-    fwrite($fopen, $start_dir.'/'.$file."\n".$action);
+    $fopen = fopen($_config['dir'].'/bufer', 'w+');
+    fwrite($fopen, $start_dir.'/'.$file."\n".$act);
     fclose($fopen);
+    $action['paste']->set_sensitive(TRUE);
 }
 
 /**
@@ -110,7 +146,7 @@ function paste_file()
 {
     global $_config, $start_dir;
     
-    $file_array = file($_config['dir'].'/'.$_config['bufer']);
+    $file_array = file($_config['dir'].'/bufer');
     $file = trim($file_array[0]);
     $action = trim($file_array[1]);
     $dest = basename($file);
@@ -168,14 +204,16 @@ function properties($file)
     
     $table->attach($label_name, 0, 1, 0, 1, Gtk::FILL, Gtk::FILL, 10);
     $table->attach($name, 1, 2, 0, 1);
-    $table->attach($label_size, 0, 1, 1, 2, Gtk::FILL, Gtk::FILL);
-    $table->attach($size, 1, 2, 1, 2);
-    $table->attach($label_path, 0, 1, 2, 3, Gtk::FILL, Gtk::FILL);
-    $table->attach($path, 1, 2, 2, 3);
-    $table->attach($label_mtime, 0, 1, 3, 4, Gtk::FILL, Gtk::FILL);
-    $table->attach($mtime, 1, 2, 3, 4);
-    $table->attach($label_atime, 0, 1, 4, 5, Gtk::FILL, Gtk::FILL);
-    $table->attach($atime, 1, 2, 4, 5);
+    $table->attach(new GtkLabel(), 0, 2, 2, 3);
+    $table->attach($label_size, 0, 1, 3, 4, Gtk::FILL, Gtk::FILL);
+    $table->attach($size, 1, 2, 3, 4);
+    $table->attach($label_path, 0, 1, 4, 5, Gtk::FILL, Gtk::FILL);
+    $table->attach($path, 1, 2, 4, 5);
+    $table->attach(new GtkLabel(), 0, 2, 5, 6);
+    $table->attach($label_mtime, 0, 1, 6, 7, Gtk::FILL, Gtk::FILL);
+    $table->attach($mtime, 1, 2, 6, 7);
+    $table->attach($label_atime, 0, 1, 7, 8, Gtk::FILL, Gtk::FILL);
+    $table->attach($atime, 1, 2, 7, 8);
     
     $table->set_col_spacing(0, 10);
     
@@ -263,10 +301,10 @@ function properties($file)
     Gtk::main();
 }
 
+
 /**
  *
- * Функция удаляет выбранный файл, предварительно спросив подтверждения у пользователя.
- * В данной версии программы возможность удаления папок не реализована.
+ * Функция удаляет выбранный файл/папку, предварительно спросив подтверждения у пользователя.
  * @param string $file Адрес файла, для которого необходимо произвести операцию
  */
 function delete($file)
@@ -274,7 +312,30 @@ function delete($file)
     global $start_dir;
     
     if (is_dir("$start_dir/$file"))
-        alert('Данная версия программы не умеет удалять папки!');
+    {
+        $dialog = new GtkDialog(
+            'Подтверждение операции',
+            NULL,
+            Gtk::DIALOG_MODAL,
+            array(
+                Gtk::STOCK_NO, Gtk::RESPONSE_NO,
+                Gtk::STOCK_YES, Gtk::RESPONSE_YES
+            )
+        );
+        $dialog->set_has_separator(FALSE);
+        $dialog->set_resizable(FALSE);
+        $vbox = $dialog->vbox;
+        $vbox->pack_start($hbox = new GtkHBox());
+        $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
+        $hbox->pack_start(new GtkLabel('Вы действительно хотите удалить папку "'.$file.
+                                       '" со всем её содержимым?'));
+        $dialog->show_all();
+        $result = $dialog->run();
+        if ($result == Gtk::RESPONSE_YES)
+            exec('rm -R "'.$start_dir.'/'.$file.'"');
+        $dialog->destroy();
+        change_dir('none');
+    }
     else
     {
         $dialog = new GtkDialog(
@@ -296,16 +357,16 @@ function delete($file)
         $result = $dialog->run();
         if ($result == Gtk::RESPONSE_YES)
         {
-        	if (!is_writable($start_dir.'/'.$file))
-        	{
-        		$dialog->destroy();
-        		alert('У вас недостаточно прав на выполнение данной операции!');
-        	}
-        	else
-        	{
-	            unlink("$start_dir/$file");
-            	$dialog->destroy();
-        	}
+            if (!is_writable($start_dir.'/'.$file))
+            {
+        	$dialog->destroy();
+        	alert('У вас недостаточно прав на выполнение данной операции!');
+            }
+            else
+            {
+	           unlink("$start_dir/$file");
+            $dialog->destroy();
+            }
         }
         else
             $dialog->destroy();
@@ -318,26 +379,40 @@ function delete($file)
  * Функция выводит диалоговое окно, в котором отображается
  * контрольная сумма указанного файла.
  * @param string $file Адрес файла, для которого необходимо произвести операцию
+ * @param string $alg Алгоритм шифрования (поддерживается MD5 и SHA1)
  */
-function md5_dialog($file)
+function checksum_dialog($file, $alg)
 {
     global $start_dir;
     
-    $dialog = new GtkDialog("Контрольная сумма файла $file", NULL, Gtk::DIALOG_MODAL);
+    $dialog = new GtkDialog("Контрольная сумма", NULL, Gtk::DIALOG_MODAL);
     $dialog->set_position(Gtk::WIN_POS_CENTER);
-    $dialog->set_size_request(350, -1);
+    $dialog->set_size_request(400, -1);
     $vbox = $dialog->vbox;
+    $vbox->pack_start(new GtkLabel($alg.' для файла '.$file));
     $vbox->pack_start($hbox = new GtkHBox());
     $hbox->pack_start(
                       GtkImage::new_from_stock(Gtk::STOCK_DIALOG_INFO, Gtk::ICON_SIZE_DIALOG),
                       FALSE,
                       FALSE
                     );
-    $hbox->pack_start(
-                      new GtkEntry(md5_file($start_dir.'/'.$file), 32),
-                      TRUE,
-                      TRUE
-                    );
+    if ($alg == 'MD5')
+    {
+        $hbox->pack_start(
+                          new GtkEntry(md5_file($start_dir.'/'.$file), 32),
+                          TRUE,
+                          TRUE
+                        );
+    }
+    elseif ($alg == 'SHA1')
+    {
+        $hbox->pack_start(
+                          new GtkEntry(sha1_file($start_dir.'/'.$file), 40),
+                          TRUE,
+                          TRUE
+                        );
+    }
+    
     $dialog->add_button(Gtk::STOCK_OK, Gtk::RESPONSE_OK);
     $dialog->set_has_separator(FALSE);
     $dialog->show_all();
@@ -353,15 +428,7 @@ function current_dir()
     global $vbox, $store, $start_dir, $_config, $count_element, $count_dir, $count_file;
     
     // Получаем настройки программы
-    $file_array = file($_config['dir'].'/FlightFiles.conf');
-    for ($i = 0; $i < count($file_array); $i++)
-    {
-        $explode = explode(' ', trim($file_array[$i]));
-        if ($explode[0] == 'BUFER')
-            $_config['bufer'] = $explode[1];
-        elseif (trim($explode[0]) == 'HIDDEN_FILES')
-            $config['hidden_files'] = trim($explode[1]);
-    }
+    config_parser();
     
     $count_element = 0;
     $count_dir = 0;
@@ -376,7 +443,7 @@ function current_dir()
             continue;
         
         // Пропускаем скрытые файлы, если это предусмотрено настройками
-        if ($config['hidden_files'] == 'off')
+        if ($_config['hidden_files'] == 'off')
         {
             if (preg_match("#^\.(.+?)#", $file))
                 continue;
@@ -428,23 +495,20 @@ function convert_size($file)
 
 /**
  * Функция для смены текущей директории.
- * @param string $action
+ * @param string $act
  */
-function change_dir($action = '', $dir = '')
+function change_dir($act = '', $dir = '')
 {
-    global $vbox, $store, $start_dir, $entry_current_dir;
-    
-    // Очищаем список
-    $store->clear();
+    global $vbox, $store, $start_dir, $entry_current_dir, $action;
     
     // Устанавливаем новое значение текущей директории
-    if ($action == 'user')
+    if ($act == 'user')
         $new_dir = $entry_current_dir->get_text();
-    elseif ($action == 'none')
+    elseif ($act == 'none')
         $new_dir = $start_dir;
-    elseif ($action == 'home')
+    elseif ($act == 'home')
     	$new_dir = $_ENV['HOME'];
-    elseif ($action == 'open')
+    elseif ($act == 'open')
         $new_dir = $start_dir.'/'.$dir;
     else
         $new_dir = dirname($start_dir);
@@ -456,6 +520,24 @@ function change_dir($action = '', $dir = '')
         $start_dir = $new_dir;
     
     $start_dir = preg_replace ('#/+#', '/', $start_dir);
+    
+    // Делаем неактивными некоторые кнопки на панели инструментов
+    $action['up']->set_sensitive(TRUE);
+    $action['home']->set_sensitive(TRUE);
+    $action['new_file']->set_sensitive(TRUE);
+    $action['new_dir']->set_sensitive(TRUE);
+    if ($start_dir == '/')
+        $action['up']->set_sensitive(FALSE);
+    if ($start_dir == $_ENV['HOME'])
+        $action['home']->set_sensitive(FALSE);
+    if (!is_writable($start_dir))
+    {
+        $action['new_file']->set_sensitive(FALSE);
+        $action['new_dir']->set_sensitive(FALSE);
+    }
+    
+    // Очищаем список
+    $store->clear();
     
     // Выводим имеющиеся в директории файлы и папки
     current_dir();
@@ -485,7 +567,6 @@ function status_bar()
     return $status;
 }
 
-
 /**
  *
  * Функция выводит диалоговое окно.
@@ -493,7 +574,7 @@ function status_bar()
  */
 function alert($msg)
 {
-    $dialog = new GtkDialog('Ошибка', NULL, Gtk::DIALOG_MODAL, array(Gtk::STOCK_OK, Gtk::RESPONSE_OK));
+    $dialog = new GtkDialog('Сообщение', NULL, Gtk::DIALOG_MODAL, array(Gtk::STOCK_OK, Gtk::RESPONSE_OK));
     $dialog->set_position(Gtk::WIN_POS_CENTER_ALWAYS);
     $dialog->set_resizable(FALSE);
     $top_area = $dialog->vbox;
@@ -590,7 +671,7 @@ function close_window()
 {
     global $_config;
     
-    @unlink($_config['dir'].'/'.$_config['bufer']);
+    @unlink($_config['dir'].'/bufer');
     Gtk::main_quit();
 }
 
@@ -601,25 +682,11 @@ function close_window()
  */
 function clear_bufer()
 {
-    global $_config;
+    global $_config, $action;
     
-    @unlink($_config['dir'].'/'.$_config['bufer']);
-    $dialog = new GtkDialog(
-        'Буфер очищен',
-        NULL,
-        Gtk::DIALOG_MODAL,
-        array(
-            Gtk::STOCK_OK, Gtk::RESPONSE_OK
-        )
-    );
-    $dialog->set_size_request(250, 80);
-    $label = new GtkLabel('Буфер обмена успешно очищен.');
-    $vbox = $dialog->vbox;
-    $vbox->add($label);
-    $dialog->set_has_separator(FALSE);
-    $dialog->show_all();
-    $dialog->run();
-    $dialog->destroy();
+    @unlink($_config['dir'].'/bufer');
+    $action['paste']->set_sensitive(FALSE);
+    alert('Буфер обмена успешно очищен.');
 }
 
 /**
@@ -635,10 +702,11 @@ function about()
     $dialog->set_icon(GdkPixbuf::new_from_file('logo.png'));
     $dialog->set_logo(GdkPixbuf::new_from_file('logo.png'));
     $dialog->set_name('FlightFiles');
-    $dialog->set_version('0.0.1');
+    $dialog->set_version('0.0.2');
     $dialog->set_comments("Небольшой файловый менеджер, написанный на языке PHP\n".
                           "с использованием библиотеки PHP-GTK2.");
     $dialog->set_copyright('Copyright © 2009 Shecspi');
+    $dialog->set_website('http://code.google.com/p/flight-files/');
     $dialog->set_authors(array('Вавилов Егор (Shecspi) <shecspi@gmail.com>'));
     $dialog->set_license("Программа FlightFiles является свободным программным обеспечением.\n\n".
                          "Вы вправе распространять ее и/или модифицировать\n".
@@ -666,34 +734,70 @@ function preference()
     $window->set_title('Параметры FlightFiles');
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
     
-    $file = file($_config['dir'].'/FlightFiles.conf');
-    for ($i = 0; $i < count($file); $i++)
-    {
-        $explode = explode(' ', trim($file[$i]));
-        if ($explode[0] == 'HIDDEN_FILES')
-            $hidden_files = trim($explode[1]);
-    }
-    
     $notebook = new GtkNotebook();
     
     $table = new GtkTable();
     
     $label_hidden_files = new GtkCheckButton('Показывать скрытые файлы и папки');
+    $label_home_dir = new GtkLabel('Начинать с:');
+    $radio_home = new GtkRadioButton(NULL, 'Домашнаей папки');
+    $radio_root = new GtkRadioButton($radio_home, 'Корневой папки');
     
-    if ($hidden_files == 'on')
+    if ($_config['hidden_files'] == 'on')
         $label_hidden_files->set_active(TRUE);
+    if ($_config['start_dir'] == '/')
+        $radio_root->set_active(TRUE);
+    else
+        $radio_home->set_active(FALSE);
     
     $label_hidden_files->set_alignment(0,0);
+    $label_home_dir->set_alignment(0,0);
     
     $label_hidden_files->connect('toggled', 'check_button_write');
+    $radio_home->connect_simple('toggled', 'radio_button_write', 'HOME_DIR', 'home');
+    $radio_root->connect_simple('toggled', 'radio_button_write', 'HOME_DIR', 'root');
     
-    $table->attach($label_hidden_files, 0, 1, 0, 1, Gtk::FILL, Gtk::FILL);
+    $table->attach($label_hidden_files, 0, 2, 0, 1, Gtk::FILL, Gtk::FILL);
+    $table->attach($label_home_dir, 0, 2, 1, 2, Gtk::FILL, Gtk::FILL);
+    $table->attach($radio_home, 0, 1, 2, 3, Gtk::FILL, Gtk::FILL);
+    $table->attach($radio_root, 1, 2, 2, 3, Gtk::FILL, Gtk::FILL);
     
     $notebook->append_page($table, new GtkLabel('Основные'));
     
     $window->add($notebook);
     $window->show_all();
     Gtk::main();
+}
+
+/**
+ *
+ * Функция производит запись в конфигурационный файл
+ * при изменении значения радио-кнопки в окне настроек.
+ * @param string $param Изменяемый параметр
+ * @param string $value Новое значение параметра
+ */
+function radio_button_write($param, $value)
+{
+    global $_config;
+    
+    $file = file($_config['dir'].'/FlightFiles.conf');
+    $fopen = fopen($_config['dir'].'/FlightFiles.conf', 'w+');
+    if ($value == 'home')
+        $value = $_ENV['HOME'];
+    else
+        $value = '/';
+    for ($i = 0; $i < count($file); $i++)
+    {
+        $explode = explode(' ', trim($file[$i]));
+        if ($explode[0] == $param)
+            fwrite($fopen, $param.' '.$value."\n");
+        else
+            fwrite($fopen, trim($file[$i])."\n");
+    }
+    fclose($fopen);
+    
+    // Обновляем главное окно
+    change_dir('none');
 }
 
 /**
@@ -711,7 +815,6 @@ function check_button_write($check)
     $fopen = fopen($_config['dir'].'/FlightFiles.conf', 'w+');
     for ($i = 0; $i < count($file); $i++)
     {
-        $hidden_bool = FALSE;
         $explode = explode(' ', trim($file[$i]));
         if ($explode[0] == 'HIDDEN_FILES')
             fwrite($fopen, 'HIDDEN_FILES '.$hidden_files."\n");

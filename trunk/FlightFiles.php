@@ -9,8 +9,10 @@ $_config['dir'] = './configuration';
 
 include 'FlightFiles.data.php';
 
+config_parser();
+
 // Стартовая директория
-$start_dir = $_ENV['HOME'];
+$start_dir = $_config['start_dir'];
 
 $store = new GtkListStore(
                           GObject::TYPE_STRING,
@@ -80,28 +82,81 @@ $vbox->pack_start($menubar, FALSE, FALSE, 0);
 
 $toolbar = new GtkToolBar();
 
-$button_up = GtkToolButton::new_from_stock(Gtk::STOCK_GO_UP);
-$button_home = GtkToolButton::new_from_stock(Gtk::STOCK_HOME);
-$button_update = GtkToolButton::new_from_stock(Gtk::STOCK_REFRESH);
-$button_new = GtkToolButton::new_from_stock(Gtk::STOCK_FILE);
-$button_new->set_label('Создать файл');
-$button_new_folder = GtkToolButton::new_from_stock(Gtk::STOCK_DIRECTORY);
-$button_new_folder->set_label('Создать папку');
-//$button_new->set_sensitive(FALSE);
+/**
+ * Кнопка "Вверх".
+ * При нажатии вызывается функция change_dir().
+ */
+$action['up'] = new GtkAction('UP', 'Вверх', '', Gtk::STOCK_GO_UP);
+$toolitem['up'] = $action['up']->create_tool_item();
+$action['up']->connect_simple('activate', 'change_dir');
+$toolbar->insert($toolitem['up'], -1);
 
-$toolbar->insert($button_up, -1);
-$toolbar->insert($button_home, -1);
-$toolbar->insert(new GtkSeparatorToolItem(), -1);
-$toolbar->insert($button_update, -1);
-$toolbar->insert(new GtkSeparatorToolItem(), -1);
-$toolbar->insert($button_new, -1);
-$toolbar->insert($button_new_folder, -1);
+/**
+ * Кнопка "Домой".
+ * При нажатии вызывается функция change_dir('home').
+ */
+$action['home'] = new GtkAction('HOME', 'Домой', '', Gtk::STOCK_HOME);
+$toolitem['home'] = $action['home']->create_tool_item();
+$action['home']->connect_simple('activate', 'change_dir', 'home');
+if ($start_dir == $_ENV['HOME'])
+    $action['home']->set_sensitive(FALSE);
+$toolbar->insert($toolitem['home'], -1);
 
-$button_home->connect_simple('clicked', 'change_dir', 'home');
-$button_update->connect_simple('clicked', 'change_dir', 'none');
-$button_up->connect_simple('clicked', 'change_dir');
-$button_new->connect_simple('clicked', 'new_element', 'file');
-$button_new_folder->connect_simple('clicked', 'new_element', 'dir');
+/**
+ * Разделитель.
+ */
+$toolbar->insert(new GtkSeparatorToolItem(), -1);
+
+/**
+ * Кнопка "Обновить".
+ * При нажатии вызывается функция change_dir('none').
+ */
+$action['refresh'] = new GtkAction('REFRESH', 'Обновить', '', Gtk::STOCK_REFRESH);
+$toolitem['refresh'] = $action['refresh']->create_tool_item();
+$action['refresh']->connect_simple('activate', 'change_dir', 'none');
+$toolbar->insert($toolitem['refresh'], -1);
+
+/**
+ * Разделитель.
+ */
+$toolbar->insert(new GtkSeparatorToolItem(), -1);
+
+/**
+ * Кнопка "Создать файл".
+ * При нажатии на кнопку вызывается функция new_element('file').
+ */
+$action['new_file'] = new GtkAction('NEW_FILE', 'Создать файл', '', Gtk::STOCK_NEW);
+$toolitem['new_file'] = $action['new_file']->create_tool_item();
+$action['new_file']->connect_simple('activate', 'new_element', 'file');
+if (!is_writable($start_dir))
+    $action['new_file']->set_sensitive(FALSE);
+$toolbar->insert($toolitem['new_file'], -1);
+
+/**
+ * Кнопка "Создать папку".
+ * При нажатии на кнопку вызывается функция new_element('dir').
+ */
+$action['new_dir'] = new GtkAction('NEW_DIR', 'Создать папку', '', Gtk::STOCK_DIRECTORY);
+$toolitem['new_dir'] = $action['new_dir']->create_tool_item();
+$action['new_dir']->connect_simple('activate', 'new_element', 'dir');
+if (!is_writable($start_dir))
+    $action['new_dir']->set_sensitive(FALSE);
+$toolbar->insert($toolitem['new_dir'], -1);
+
+/**
+ * Разделитель.
+ */
+$toolbar->insert(new GtkSeparatorToolItem(), -1);
+
+/**
+ * Кнопка "Вставить".
+ * При нажатии на кнопку вызывается функция paste_file().
+ */
+$action['paste'] = new GtkAction('PASTE', 'Вставить', '', Gtk::STOCK_PASTE);
+$toolitem['paste'] = $action['paste']->create_tool_item();
+$action['paste']->connect_simple('activate', 'paste_file');
+$action['paste']->set_sensitive(FALSE);
+$toolbar->insert($toolitem['paste'], -1);
 
 $vbox->pack_start($toolbar, FALSE, FALSE);
 
@@ -172,7 +227,7 @@ $vbox->pack_start(status_bar(), FALSE, FALSE);
 
 $window = new GtkWindow();
 $window->set_icon(GdkPixbuf::new_from_file('logo.png'));
-$window->set_size_request(550, 400);
+$window->set_size_request(550, 600);
 $window->set_position(Gtk::WIN_POS_CENTER);
 $window->set_title('Фаловый менеджер FlightFiles');
 $window->connect_simple('destroy', 'close_window');
