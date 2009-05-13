@@ -192,12 +192,16 @@ $cell_renderer->set_property('size-points', '10');
 $column_file = new GtkTreeViewColumn('Название', $cell_renderer, 'text', 0);
 $column_file->set_max_width(400);
 $column_file->set_resizable(TRUE);
+$column_file->set_sort_column_id(0);
 
 $column_df = new GtkTreeViewColumn('Папка/файл', $cell_renderer, 'text', 1);
+$column_df->set_sort_column_id(1);
 
 $column_size = new GtkTreeViewColumn('Размер', $cell_renderer, 'text', 2);
+$column_size->set_sort_column_id(2);
 
 $column_mtime = new GtkTreeViewColumn('Дата изменения', $cell_renderer, 'text', 3);
+$column_mtime->set_sort_column_id(3);
 
 $tree_view->append_column($column_file);
 $tree_view->append_column($column_df);
