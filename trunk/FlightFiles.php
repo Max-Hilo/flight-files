@@ -45,20 +45,20 @@ $action_menu['new_file'] = new GtkAction('NEW_FILE', 'Создать файл', 
 $menu_item['new_file'] = $action_menu['new_file']->create_menu_item();
 $menu_item['new_file']->connect_simple('activate', 'new_element', 'file');
 if (!is_writable($start_dir))
-	$menu_item['new_file']->set_sensitive(FALSE);
+	$action_menu['new_file']->set_sensitive(FALSE);
 
 $action_menu['new_dir'] = new GtkAction('NEW_DIR', 'Создать папку', '', Gtk::STOCK_DIRECTORY);
 $menu_item['new_dir'] = $action_menu['new_dir']->create_menu_item();
 $menu_item['new_dir']->connect_simple('activate', 'new_element', 'dir');
 if (!is_writable($start_dir))
-	$menu_item['new_dir']->set_sensitive(FALSE);
+	$action_menu['new_dir']->set_sensitive(FALSE);
 
 $menu_item['separator_one'] = new GtkSeparatorMenuItem();
 
 $action_menu['clear_bufer'] = new GtkAction('CLEAR_BUFER', 'Очистить буфер обмена', '', Gtk::STOCK_CLEAR);
 $menu_item['clear_bufer'] = $action_menu['clear_bufer']->create_menu_item();
-$menu_item['clear_bufer']->set_sensitive(FALSE);
 $menu_item['clear_bufer']->connect_simple('activate', 'clear_bufer');
+$action_menu['clear_bufer']->set_sensitive(FALSE);
 
 $menu_item['separator_two'] = new GtkSeparatorMenuItem();
 
