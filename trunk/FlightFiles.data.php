@@ -87,12 +87,20 @@ function on_button($view, $event)
         elseif ($type == '<DIR>')
         {
             $open = new GtkImageMenuItem(Gtk::STOCK_OPEN);
+            $copy = new GtkImageMenuItem(Gtk::STOCK_COPY);
+            $cut = new GtkImageMenuItem(Gtk::STOCK_CUT);
             $delete = new GtkMenuItem('Удалить папку');
             
             $menu->append($open);
+            $menu->append(new GtkSeparatorMenuItem());
+            $menu->append($copy);
+            $menu->append($cut);
+            $menu->append(new GtkSeparatorMenuItem());
             $menu->append($delete);
             
             $open->connect_simple('activate', 'change_dir', 'open', $file);
+            $copy->connect_simple('activate', 'bufer_file', $file, 'copy');
+            $cut->connect_simple('activate', 'bufer_file', $file, 'cut');
             $delete->connect_simple('activate', 'delete', $file);
         }
         else
@@ -124,7 +132,7 @@ function on_button($view, $event)
 
 /**
  *
- * Функция помещает адрес вырезанного/скопированного файла в файл буфера обмена.
+ * Функция помещает адрес вырезанного/скопированного файла/каталога в файл буфера обмена.
  * @param string $file Адрес файла, для которого необходимо провести операцию
  * @param string $action Иденификатор операции вырезания/копирования.
  */
@@ -152,9 +160,19 @@ function paste_file()
     $action = trim($file_array[1]);
     $dest = basename($file);
     if ($action == 'copy')
-        copy($file, $start_dir.'/'.$dest);
+    {
+    	if (is_file($file))
+    		copy($file, $start_dir.'/'.$dest);
+    	elseif (is_dir($file))
+    		exec("cp -R '$file' '$start_dir/$dest'");
+    }
     elseif ($action == 'cut')
-        rename($file, $start_dir.'/'.$dest);
+    {
+    	if (is_file($file))
+    		rename($file, $start_dir.'/'.$dest);
+    	elseif (is_dir($file))
+    		exec('mv '.$file.' '.$start_dir.'/'.$dest);
+    }
     change_dir('none');
 }
 
@@ -500,7 +518,7 @@ function convert_size($file)
  */
 function change_dir($act = '', $dir = '')
 {
-    global $vbox, $store, $start_dir, $entry_current_dir, $action, $action_menu;
+    global $vbox, $store, $start_dir, $entry_current_dir, $action, $action_menu, $_config;
     
     // Устанавливаем новое значение текущей директории
     if ($act == 'user')
@@ -527,6 +545,10 @@ function change_dir($act = '', $dir = '')
     $action['home']->set_sensitive(TRUE);
     $action['new_file']->set_sensitive(TRUE);
     $action['new_dir']->set_sensitive(TRUE);
+    if (file_exists($_config['dir'].'/bufer'))
+    {
+    	$action['paste']->set_sensitive(TRUE);
+    }
     $action_menu['new_file']->set_sensitive(TRUE);
     $action_menu['new_dir']->set_sensitive(TRUE);
     if ($start_dir == '/')
@@ -539,6 +561,7 @@ function change_dir($act = '', $dir = '')
     	$action_menu['new_dir']->set_sensitive(FALSE);
         $action['new_file']->set_sensitive(FALSE);
         $action['new_dir']->set_sensitive(FALSE);
+        $action['paste']->set_sensitive(FALSE);
     }
     
     // Очищаем список
