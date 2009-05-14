@@ -109,7 +109,12 @@ function on_button($view, $event)
             $new_dir = new GtkMenuItem('Создать папку');
             $paste = new GtkImageMenuItem(Gtk::STOCK_PASTE);
             
-            if (!file_exists($_config['dir'].'/bufer'))
+            if (!is_writable($start_dir))
+            {
+            	$new_file->set_sensitive(FALSE);
+            	$new_dir->set_sensitive(FALSE);
+            }
+            if (!file_exists($_config['dir'].'/bufer') OR !is_writable($start_dir))
                 $paste->set_sensitive(FALSE);
             
             $menu->append($new_file);
@@ -143,8 +148,8 @@ function bufer_file($file, $act)
     $fopen = fopen($_config['dir'].'/bufer', 'w+');
     fwrite($fopen, $start_dir.'/'.$file."\n".$act);
     fclose($fopen);
-    $action['paste']->set_sensitive(TRUE);
     $action_menu['clear_bufer']->set_sensitive(TRUE);
+    $action['paste']->set_sensitive(TRUE);
 }
 
 /**
@@ -548,6 +553,7 @@ function change_dir($act = '', $dir = '')
     if (file_exists($_config['dir'].'/bufer'))
     {
     	$action['paste']->set_sensitive(TRUE);
+    	$action_menu['clear_bufer']->set_sensitive(TRUE);
     }
     $action_menu['new_file']->set_sensitive(TRUE);
     $action_menu['new_dir']->set_sensitive(TRUE);
@@ -710,11 +716,11 @@ function close_window()
  */
 function clear_bufer()
 {
-    global $_config, $action, $menu_item;
+    global $_config, $action, $action_menu;
     
     @unlink($_config['dir'].'/bufer');
     $action['paste']->set_sensitive(FALSE);
-    $menu_item['clear_bufer']->set_sensitive(FALSE);
+    $action_menu['clear_bufer']->set_sensitive(FALSE);
     alert('Буфер обмена успешно очищен.');
 }
 
