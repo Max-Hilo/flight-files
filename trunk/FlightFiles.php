@@ -28,51 +28,75 @@ $vbox = new GtkVBox();
 
 $menubar = new GtkMenuBar();
 
-$file_menu = new GtkMenuItem('_Файл');
-$edit_menu = new GtkMenuItem('_Правка');
-$help_menu = new GtkMenuItem('_Справка');
+$menu['file'] = new GtkMenuItem('_Файл');
+$menu['edit'] = new GtkMenuItem('_Правка');
+$menu['help'] = new GtkMenuItem('_Справка');
 
-$menubar->append($file_menu);
-$menubar->append($edit_menu);
-$menubar->append($help_menu);
+foreach ($menu as $value)
+	$menubar->append($value);
 
-$sub_file = new GtkMenu();
-$sub_edit = new GtkMenu();
-$sub_help = new GtkMenu();
+/**
+ * Меню "Файл"
+ */
+$sub_menu['file'] = new GtkMenu();
+$menu['file']->set_submenu($sub_menu['file']);
 
-$file_menu->set_submenu($sub_file);
-$edit_menu->set_submenu($sub_edit);
-$help_menu->set_submenu($sub_help);
+$action_menu['new_file'] = new GtkAction('NEW_FILE', 'Создать файл', '', Gtk::STOCK_NEW);
+$menu_item['new_file'] = $action_menu['new_file']->create_menu_item();
+$menu_item['new_file']->connect_simple('activate', 'new_element', 'file');
+if (!is_writable($start_dir))
+	$menu_item['new_file']->set_sensitive(FALSE);
 
-$menu_new_dir = new GtkMenuItem('Создать папку');
-$menu_new_file = new GtkMenuItem('Создать файл');
-$menu_close = new GtkImageMenuItem(Gtk::STOCK_CLOSE);
-$menu_preference = new GtkImageMenuItem(Gtk::STOCK_PREFERENCES);
-$menu_delete_all_file = new GtkMenuItem('Удалить все файлы');
-$menu_delete_all_dir = new GtkMenuItem('Удалить все папки');
-$menu_delete_all_dir->set_sensitive(FALSE);
-$menu_clear_bufer = new GtkMenuItem('Очистить буфер обмена');
-$menu_about = new GtkImageMenuItem(Gtk::STOCK_ABOUT);
+$action_menu['new_dir'] = new GtkAction('NEW_DIR', 'Создать папку', '', Gtk::STOCK_DIRECTORY);
+$menu_item['new_dir'] = $action_menu['new_dir']->create_menu_item();
+$menu_item['new_dir']->connect_simple('activate', 'new_element', 'dir');
+if (!is_writable($start_dir))
+	$menu_item['new_dir']->set_sensitive(FALSE);
 
-$sub_file->append($menu_new_file);
-$sub_file->append($menu_new_dir);
-$sub_file->append(new GtkSeparatorMenuItem());
-$sub_edit->append($menu_preference);
-$sub_file->append($menu_delete_all_file);
-$sub_file->append($menu_delete_all_dir);
-$sub_file->append(new GtkSeparatorMenuItem());
-$sub_file->append($menu_clear_bufer);
-$sub_file->append(new GtkSeparatorMenuItem());
-$sub_file->append($menu_close);
-$sub_help->append($menu_about);
+$menu_item['separator_one'] = new GtkSeparatorMenuItem();
 
-$menu_new_file->connect_simple('activate', 'new_element', 'file');
-$menu_new_dir->connect_simple('activate', 'new_element', 'dir');
-$menu_close->connect_simple('activate', 'close_window');
-$menu_preference->connect_simple('activate', 'preference');
-$menu_delete_all_file->connect_simple('activate', 'delete_all', 'file');
-$menu_clear_bufer->connect_simple('activate', 'clear_bufer');
-$menu_about->connect_simple('activate', 'about');
+$action_menu['clear_bufer'] = new GtkAction('CLEAR_BUFER', 'Очистить буфер обмена', '', Gtk::STOCK_CLEAR);
+$menu_item['clear_bufer'] = $action_menu['clear_bufer']->create_menu_item();
+$menu_item['clear_bufer']->set_sensitive(FALSE);
+$menu_item['clear_bufer']->connect_simple('activate', 'clear_bufer');
+
+$menu_item['separator_two'] = new GtkSeparatorMenuItem();
+
+$action_menu['close'] = new GtkAction('CLOSE', 'Закрыть', '', Gtk::STOCK_CLOSE);
+$menu_item['close'] = $action_menu['close']->create_menu_item();
+$menu_item['close']->connect_simple('activate', 'close_window');
+
+
+foreach ($menu_item as $value)
+	$sub_menu['file']->append($value);
+
+/**
+ * Меню "Правка"
+ */
+unset($menu_item);
+$sub_menu['edit'] = new GtkMenu();
+$menu['edit']->set_submenu($sub_menu['edit']);
+
+$action_menu['preference'] = new GtkAction('PREFERENCE', 'Параметры', '', Gtk::STOCK_PREFERENCES);
+$menu_item['preference'] = $action_menu['preference']->create_menu_item();
+$menu_item['preference']->connect_simple('activate', 'preference');
+
+foreach ($menu_item as $value)
+	$sub_menu['edit']->append($value);
+
+/**
+ * Меню "Справка"
+ */
+unset($menu_item);
+$sub_menu['help'] = new GtkMenu();
+$menu['help']->set_submenu($sub_menu['help']);
+
+$action_menu['about'] = new GtkAction('ABOUT', 'О программе', '', Gtk::STOCK_ABOUT);
+$menu_item['about'] = $action_menu['about']->create_menu_item();
+$menu_item['about']->connect_simple('activate', 'about');
+
+foreach ($menu_item as $value)
+	$sub_menu['help']->append($value);
 
 $vbox->pack_start($menubar, FALSE, FALSE, 0);
 

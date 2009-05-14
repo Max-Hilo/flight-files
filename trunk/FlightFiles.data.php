@@ -130,12 +130,13 @@ function on_button($view, $event)
  */
 function bufer_file($file, $act)
 {
-    global $_config, $start_dir, $action;
+    global $_config, $start_dir, $action, $action_menu;
     
     $fopen = fopen($_config['dir'].'/bufer', 'w+');
     fwrite($fopen, $start_dir.'/'.$file."\n".$act);
     fclose($fopen);
     $action['paste']->set_sensitive(TRUE);
+    $action_menu['clear_bufer']->set_sensitive(TRUE);
 }
 
 /**
@@ -499,7 +500,7 @@ function convert_size($file)
  */
 function change_dir($act = '', $dir = '')
 {
-    global $vbox, $store, $start_dir, $entry_current_dir, $action;
+    global $vbox, $store, $start_dir, $entry_current_dir, $action, $action_menu;
     
     // Устанавливаем новое значение текущей директории
     if ($act == 'user')
@@ -521,17 +522,21 @@ function change_dir($act = '', $dir = '')
     
     $start_dir = preg_replace ('#/+#', '/', $start_dir);
     
-    // Делаем неактивными некоторые кнопки на панели инструментов
+    // Делаем неактивными некоторые кнопки на панели инструментов и пункты меню
     $action['up']->set_sensitive(TRUE);
     $action['home']->set_sensitive(TRUE);
     $action['new_file']->set_sensitive(TRUE);
     $action['new_dir']->set_sensitive(TRUE);
+    $action_menu['new_file']->set_sensitive(TRUE);
+    $action_menu['new_dir']->set_sensitive(TRUE);
     if ($start_dir == '/')
         $action['up']->set_sensitive(FALSE);
     if ($start_dir == $_ENV['HOME'])
         $action['home']->set_sensitive(FALSE);
     if (!is_writable($start_dir))
     {
+    	$action_menu['new_file']->set_sensitive(FALSE);
+    	$action_menu['new_dir']->set_sensitive(FALSE);
         $action['new_file']->set_sensitive(FALSE);
         $action['new_dir']->set_sensitive(FALSE);
     }
@@ -682,10 +687,11 @@ function close_window()
  */
 function clear_bufer()
 {
-    global $_config, $action;
+    global $_config, $action, $menu_item;
     
     @unlink($_config['dir'].'/bufer');
     $action['paste']->set_sensitive(FALSE);
+    $menu_item['clear_bufer']->set_sensitive(FALSE);
     alert('Буфер обмена успешно очищен.');
 }
 
@@ -728,6 +734,7 @@ function preference()
     
     $window = new GtkWindow();
     $window->set_position(Gtk::WIN_POS_CENTER);
+    $window->set_icon(GdkPixbuf::new_from_file('logo.png'));
     $window->set_size_request(400, 200);
     $window->set_modal(TRUE);
     $window->set_resizable(FALSE);
