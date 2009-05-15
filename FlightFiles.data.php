@@ -25,7 +25,7 @@ function config_parser()
  */
 function on_button($view, $event)
 {
-    global $_config, $store;
+    global $_config, $store, $start_dir;
     
     // Если нажата левая кнопка, то выделяем выбранную запись
     if ($event->button == 1)
@@ -51,6 +51,7 @@ function on_button($view, $event)
         {
             $copy = new GtkImageMenuItem(Gtk::STOCK_COPY);
             $cut = new GtkImageMenuItem(Gtk::STOCK_CUT);
+            $rename = new GtkMenuItem('Переименовать');
             $delete = new GtkMenuItem('Удалить файл');
             $checksum = new GtkMenuItem('Контрольная сумма');
             $properties = new GtkImageMenuItem(Gtk::STOCK_PROPERTIES);
@@ -68,9 +69,17 @@ function on_button($view, $event)
                 $md5->set_sensitive(FALSE);
                 $sha1->set_sensitive(FALSE);
             }
+            if (!is_writable($start_dir))
+            {
+            	$cut->set_sensitive(FALSE);
+            	$rename->set_sensitive(FALSE);
+            	$delete->set_sensitive(FALSE);
+            }
             
             $menu->append($copy);
             $menu->append($cut);
+            $menu->append(new GtkSeparatorMenuItem());
+            $menu->append($rename);
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($delete);
             $menu->append($checksum);
@@ -79,6 +88,7 @@ function on_button($view, $event)
             
             $copy->connect_simple('activate', 'bufer_file', $file, 'copy');
             $cut->connect_simple('activate', 'bufer_file', $file, 'cut');
+            $rename->connect_simple('activate', '_rename', $file);
             $delete->connect_simple('activate', 'delete', $file);
             $md5->connect_simple('activate', 'checksum_dialog', $file, 'MD5');
             $sha1->connect_simple('activate', 'checksum_dialog', $file, 'SHA1');
@@ -89,18 +99,29 @@ function on_button($view, $event)
             $open = new GtkImageMenuItem(Gtk::STOCK_OPEN);
             $copy = new GtkImageMenuItem(Gtk::STOCK_COPY);
             $cut = new GtkImageMenuItem(Gtk::STOCK_CUT);
+            $rename = new GtkMenuItem('Переименовать');
             $delete = new GtkMenuItem('Удалить папку');
+            
+            if (!is_writable($start_dir))
+            {
+            	$cut->set_sensitive(FALSE);
+            	$rename->set_sensitive(FALSE);
+            	$delete->set_sensitive(FALSE);
+            }
             
             $menu->append($open);
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($copy);
             $menu->append($cut);
             $menu->append(new GtkSeparatorMenuItem());
+            $menu->append($rename);
+            $menu->append(new GtkSeparatorMenuItem());
             $menu->append($delete);
             
             $open->connect_simple('activate', 'change_dir', 'open', $file);
             $copy->connect_simple('activate', 'bufer_file', $file, 'copy');
             $cut->connect_simple('activate', 'bufer_file', $file, 'cut');
+            $rename->connect_simple('activate', '_rename', $file);
             $delete->connect_simple('activate', 'delete', $file);
         }
         else
@@ -119,12 +140,12 @@ function on_button($view, $event)
             
             $menu->append($new_file);
             $menu->append($new_dir);
+            $menu->append(new GtkSeparatorMenuItem());
+            $menu->append($paste);
             
             $paste->connect_simple('activate', 'paste_file');
             $new_file->connect_simple('activate', 'new_element', 'file');
             $new_dir->connect_simple('activate', 'new_element', 'dir');
-            $menu->append(new GtkSeparatorMenuItem());
-            $menu->append($paste);
         }
         
         // Показываем контекстное меню
@@ -133,6 +154,56 @@ function on_button($view, $event)
         
         return FALSE;
     }
+}
+
+function _rename($file)
+{
+	global $start_dir;
+	
+	$dialog = new GtkDialog(
+		'Переименовать',
+		NULL,
+		Gtk::DIALOG_MODAL,
+		array(
+			Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL,
+			Gtk::STOCK_OK, Gtk::RESPONSE_OK
+		)
+	);
+	$dialog->set_has_separator(FALSE);
+	$vbox = $dialog->vbox;
+	$vbox->pack_start($hbox = new GtkHBox());
+	$hbox->pack_start($entry = new GtkEntry(basename($file)));
+	$dialog->show_all();
+	$result = $dialog->run();
+	if ($result == Gtk::RESPONSE_OK)
+	{
+		$new_name = $entry->get_text();
+		if (empty($new_name))
+		{
+			$dialog->destroy();
+			alert('Необходимо ввести имя!');
+			_rename($file);
+		}
+		else
+		{
+			if (file_exists($start_dir.'/'.$new_name))
+			{
+				$dialog->destroy();
+				if (is_dir($start_dir.'/'.$new_name))
+					$el = 'Папка';
+				else
+					$el = 'Файл';
+				alert($el.' с таким именем уже существует!');
+				_rename($file);
+			}
+			else
+				rename($start_dir.'/'.$file, $start_dir.'/'.$entry->get_text());
+			$dialog->destroy();
+		}
+	}
+	else
+		$dialog->destroy();
+	change_dir('none');
 }
 
 /**
@@ -324,7 +395,6 @@ function properties($file)
     $window->show_all();
     Gtk::main();
 }
-
 
 /**
  *
@@ -534,6 +604,8 @@ function change_dir($act = '', $dir = '')
     	$new_dir = $_ENV['HOME'];
     elseif ($act == 'open')
         $new_dir = $start_dir.'/'.$dir;
+    elseif ($act == 'bookmars')
+	$new_dir = $dir;
     else
         $new_dir = dirname($start_dir);
     

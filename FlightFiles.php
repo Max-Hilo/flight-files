@@ -30,6 +30,7 @@ $menubar = new GtkMenuBar();
 
 $menu['file'] = new GtkMenuItem('_Файл');
 $menu['edit'] = new GtkMenuItem('_Правка');
+$menu['bookmars'] = new GtkMenuItem('_Закладки');
 $menu['help'] = new GtkMenuItem('_Справка');
 
 foreach ($menu as $value)
@@ -82,7 +83,34 @@ $menu_item['preference'] = $action_menu['preference']->create_menu_item();
 $menu_item['preference']->connect_simple('activate', 'preference');
 
 foreach ($menu_item as $value)
-	$sub_menu['edit']->append($value);
+    $sub_menu['edit']->append($value);
+
+/**
+ * Меню "Закладки"
+ */
+unset($menu_item);
+$sub_menu['bookmars'] = new GtkMenu();
+$menu['bookmars']->set_submenu($sub_menu['bookmars']);
+
+$file_bookmars = file($_config['dir'].'/bookmars');
+for ($i = 0; $i < count($file_bookmars); $i++)
+{
+    $action_menu['bookmars'.$i] = new GtkAction($i, trim($file_bookmars[$i]), '', '');
+    $menu_item = $action_menu['bookmars'.$i]->create_menu_item();
+    $menu_item->connect_simple('activate', 'change_dir', 'bookmars', trim($file_bookmars[$i+1]));
+    $sub_menu['bookmars']->append($menu_item);
+    $i++;
+}
+
+unset($menu_item);
+
+$menu_item['separator_two'] = new GtkSeparatorMenuItem();
+
+$action_menu['bookmars_edit'] = new GtkAction('BOOKMARS_EDIT', 'Изменить закладки', '', Gtk::STOCK_EDIT);
+$menu_item['bookmars_edit'] = $action_menu['bookmars_edit']->create_menu_item();
+
+foreach ($menu_item as $value)
+    $sub_menu['bookmars']->append($value);
 
 /**
  * Меню "Справка"
