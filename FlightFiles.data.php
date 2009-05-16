@@ -519,7 +519,7 @@ function checksum_dialog($file, $alg)
  */
 function current_dir()
 {
-    global $vbox, $store, $start_dir, $_config, $count_element, $count_dir, $count_file;
+    global $store, $start_dir, $_config, $count_element, $count_dir, $count_file;
     
     // Получаем настройки программы
     config_parser();
@@ -933,6 +933,156 @@ function check_button_write($check)
     
     // Обновляем главное окно
     change_dir('none');
+}
+
+/**
+ *
+ * Функция выводит окно "Управление закладками".
+ */
+function bookmars_edit()
+{
+    global $selection_bookmars;
+    
+    $window = new GtkWindow();
+    $window->connect_simple('destroy', array('Gtk', 'main_quit'));
+    $window->set_size_request(450, 200);
+    $window->set_title('Управление закладками');
+    $window->set_modal(TRUE);
+    
+    $hbox_top = new GtkHBox();
+    
+    $vbox_left = new GtkVBox();
+    $vbox_right = new GtkVBox();
+    
+    /**
+     * Правый столбик
+     */
+    $name_label = new GtkLabel('Название:');
+    $name_entry = new GtkEntry();
+    $path_label = new GtkLabel('Адрес:');
+    $path_entry = new GtkEntry();
+    
+    $name_label->set_alignment(0,0);
+    $path_label->set_alignment(0,0);
+    
+    $vbox_right->pack_start($name_label, FALSE, FALSE);
+    $vbox_right->pack_start($name_entry, FALSE, FASLE);
+    $vbox_right->pack_start(new GtkLabel(), FALSE, FALSE);
+    $vbox_right->pack_start($path_label, FALSE, FALSE);
+    $vbox_right->pack_start($path_entry, FALSE, FALSE);
+    
+    /**
+     * Нижний бокс с кнопками.
+     */
+    $hbox_bottom = new GtkHBox();
+    $button_delete = new GtkButton('Удалить');
+    $button_delete->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_BUTTON));
+    $button_delete->set_sensitive(FALSE);
+    $button_delete->connect_simple('clicked', 'bookmars_delete', $name_entry, $path_entry);
+    $hbox_bottom->pack_end($button_delete, FALSE, FALSE);
+    
+    /**
+     * Левый столбик
+     */
+    $scrolled = new GtkScrolledWindow();
+    $scrolled->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
+    $vbox_left->pack_start($scrolled, TRUE, TRUE);
+    
+    $model = new GtkListStore(GObject::TYPE_STRING);
+    
+    $view = new GtkTreeView($model);
+    $scrolled->add($view);
+    
+    $cell_renderer = new GtkCellRendererText();
+    
+    $column_name = new GtkTreeViewColumn('Закладки', $cell_renderer, 'text', 0);
+    $view->append_column($column_name);
+    
+    bookmars_list($model);
+    
+    $selection_bookmars = $view->get_selection();
+    $selection_bookmars->connect('changed', 'selection_bookmars', $name_entry, $path_entry, $button_delete);
+    
+    ///////////
+    
+    $hbox_top->pack_start($vbox_left, TRUE, TRUE);
+    $hbox_top->pack_start($vbox_right, TRUE, TRUE);
+    
+    $vbox = new GtkVBox();
+    $vbox->pack_start($hbox_top, TRUE, TRUE);
+    $vbox->pack_start($hbox_bottom, FALSE, FALSE);
+    
+    $window->add($vbox);
+    $window->show_all();
+    Gtk::main();
+}
+
+/**
+ *
+ * Добавление строчек с названиями закладок в список окна "Управление закладками".
+ */
+function bookmars_list($model)
+{
+    global $_config;
+    
+    $file_bookmars = file($_config['dir'].'/bookmars');
+    $data = array();
+    for ($i = 0; $i < count ($file_bookmars); $i++)
+    {
+	$data[] = array(trim($file_bookmars[$i]));
+	$i++;
+    }
+    
+    for ($i = 0; $i < count($data); $i++)
+	$model->append($data[$i]);
+}
+
+/**
+ *
+ * Функция заполняет текстовые поля в окне "Упарвление закладками" при выборе закладки в списке.
+ */
+function selection_bookmars($selection, $name_entry, $path_entry, $button_delete)
+{
+    global $_config;
+    
+    list($model, $iter) = $selection->get_selected();
+    @$name = $model->get_value($iter, 0);
+    $name_entry->set_text($name);
+    $button_delete->set_sensitive(TRUE);
+    $file_bookmars = file($_config['dir'].'/bookmars');
+    for ($i = 0; $i < count($file_bookmars); $i++)
+    {
+	if (trim($file_bookmars[$i]) == $name)
+	{
+	    $path_entry->set_text(trim($file_bookmars[$i+1]));
+	    break;
+	}
+	$i++;
+    }
+}
+
+/**
+ *
+ * Функция удаляет выбранную закладку.
+ */
+function bookmars_delete($name_entry, $path_entry)
+{
+    global $_config, $selection_bookmars, $action_menu;
+    
+    list($model, $iter) = $selection_bookmars->get_selected();
+    $name = $model->get_value($iter, 0);
+    $file_bookmars = file($_config['dir'].'/bookmars');
+    $fopen = fopen($_config['dir'].'/bookmars', 'w+');
+    for ($i = 0; $i < count($file_bookmars); $i++)
+    {
+	if (trim($file_bookmars[$i]) != $name)
+	    fwrite($fopen, trim($file_bookmars[$i])."\n".trim($file_bookmars[$i+1])."\n");
+	$i++;
+    }
+    $model->clear();
+    bookmars_list($model);
+    $name_entry->set_text('');
+    $path_entry->set_text('');
 }
 
 ?>

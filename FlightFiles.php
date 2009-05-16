@@ -106,8 +106,9 @@ unset($menu_item);
 
 $menu_item['separator_two'] = new GtkSeparatorMenuItem();
 
-$action_menu['bookmars_edit'] = new GtkAction('BOOKMARS_EDIT', 'Изменить закладки', '', Gtk::STOCK_EDIT);
+$action_menu['bookmars_edit'] = new GtkAction('BOOKMARS_EDIT', 'Управление закладками', '', Gtk::STOCK_EDIT);
 $menu_item['bookmars_edit'] = $action_menu['bookmars_edit']->create_menu_item();
+$menu_item['bookmars_edit']->connect_simple('activate', 'bookmars_edit');
 
 foreach ($menu_item as $value)
     $sub_menu['bookmars']->append($value);
