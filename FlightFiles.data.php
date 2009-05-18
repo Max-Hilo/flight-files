@@ -27,14 +27,27 @@ function on_button($view, $event)
 {
     global $_config, $store, $start_dir;
     
-    // Если нажата левая кнопка, то выделяем выбранную запись
+    // Если нажата левая кнопка, то...
     if ($event->button == 1)
+    {
+	// При двойном клике по папке открываем её
+	if ($event->type == Gdk::_2BUTTON_PRESS)
+	{
+	    $path_array = $view->get_path_at_pos($event->x, $event->y);
+	    $path = $path_array[0][0];
+	    
+	    @$iter = $store->get_iter($path);
+	    @$file = $store->get_value($iter, 0);
+	    if (is_dir($start_dir.'/'.$file))
+	        change_dir('open', $file);
+	}
         return FALSE;
+    }
     // Если нажата средняя кнопка, то ничего не делаем
-    if ($event->button == 2)
+    elseif ($event->button == 2)
         return TRUE;
     // Если нажата правая кнопка, то показываем контекстное меню
-    if ($event->button == 3)
+    elseif ($event->button == 3)
     {
         $path_array = $view->get_path_at_pos($event->x, $event->y);
         $path = $path_array[0][0];
@@ -76,6 +89,14 @@ function on_button($view, $event)
             	$delete->set_sensitive(FALSE);
             }
             
+	    if (mime_content_type($start_dir.'/'.$file) == 'text/plain' OR
+		mime_content_type($start_dir.'/'.$file) == 'text/html')
+	    {
+		$open = new GtkMenuItem('Открыть в текстовом редакторе');
+		$menu->append($open);
+		$menu->append(new GtkSeparatorMenuItem());
+		$open->connect_simple('activate', 'text_view', $file);
+	    }
             $menu->append($copy);
             $menu->append($cut);
             $menu->append(new GtkSeparatorMenuItem());
@@ -1127,17 +1148,63 @@ function bookmarks_save_change($name_entry, $path_entry)
 /**
  * Функция добавляет новую заклкдку.
  */
-function bookmark_add()
+function bookmark_add($bool = FALSE)
 {
-    global $_config, $selection_bookmarks;
+    global $_config, $selection_bookmarks, $start_dir;
     
     $fopen = fopen($_config['dir'].'/bookmarks', 'a+');
-    fwrite ($fopen, "Новая закладка\n/\n");
-    fclose($fopen);
+    if ($bool === TRUE)
+    {
+	fwrite($fopen, basename($start_dir)."\n".$start_dir."\n");
+	fclose($fopen);
+    }
+    else
+    {
+	fwrite ($fopen, "Новая закладка\n/\n");
+	fclose($fopen);
+	
+	list($model, $iter) = $selection_bookmarks->get_selected();
+	$model->clear();
+	bookmarks_list($model);
+    }
+}
+
+function text_view($file)
+{
+    global $start_dir;
     
-    list($model, $iter) = $selection_bookmarks->get_selected();
-    $model->clear();
-    bookmarks_list($model);
+    $window = new GtkWindow();
+    $window->connect_simple('destroy', array('Gtk', 'main_quit'));
+    $window->set_size_request(600, 400);
+    $window->set_icon(GdkPixbuf::new_from_file('logo.png'));
+    $window->set_title('Текстовый редактор');
+    
+    $vbox = new GtkVBox();
+    
+    $text_buffer = new GtkTextBuffer();
+    $text_view = new GtkTextView();
+    
+    $text_buffer->set_text(file_get_contents($start_dir.'/'.$file));
+    
+    $text_view->set_buffer($text_buffer);
+    $text_view->set_editable(TRUE);
+    
+    $scroll = new GtkScrolledWindow;
+    $scroll->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
+    $scroll->add($text_view);
+    
+    $vbox->pack_start($scroll, TRUE, TRUE);
+    
+    $status_bar = new GtkStatusBar();
+    
+    $path_id = $status_bar->get_context_id('path');
+    $status_bar->push($path_id, 'Файл: '.(($start_dir == '/') ? '' : $start_dir).'/'.$file);
+    
+    $vbox->pack_start($status_bar, FALSE, FALSE);
+    
+    $window->add($vbox);
+    $window->show_all();
+    Gtk::main();
 }
 
 ?>

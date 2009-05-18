@@ -95,7 +95,7 @@ $menu['bookmarks']->set_submenu($sub_menu['bookmarks']);
 $file_bookmarks = file($_config['dir'].'/bookmarks');
 for ($i = 0; $i < count($file_bookmarks); $i++)
 {
-    $action_menu['bookmarks'.$i] = new GtkAction($i, trim($file_bookmarks[$i]), '', '');
+    $action_menu['bookmarks'.$i] = new GtkAction($i, trim($file_bookmarks[$i]), '', Gtk::STOCK_DIRECTORY);
     $menu_item = $action_menu['bookmarks'.$i]->create_menu_item();
     $menu_item->connect_simple('activate', 'change_dir', 'bookmarks', trim($file_bookmarks[$i+1]));
     $sub_menu['bookmarks']->append($menu_item);
@@ -105,6 +105,10 @@ for ($i = 0; $i < count($file_bookmarks); $i++)
 unset($menu_item);
 
 $menu_item['separator_two'] = new GtkSeparatorMenuItem();
+
+$action_menu['bookmarks_add'] = new GtkAction('BOOKMARKS_ADD', 'Добавить в закладки', '', Gtk::STOCK_ADD);
+$menu_item['bookmarks_add'] = $action_menu['bookmarks_add']->create_menu_item();
+$menu_item['bookmarks_add']->connect_simple('activate', 'bookmark_add', TRUE);
 
 $action_menu['bookmarks_edit'] = new GtkAction('BOOKMARKS_EDIT', 'Управление закладками', '', Gtk::STOCK_EDIT);
 $menu_item['bookmarks_edit'] = $action_menu['bookmarks_edit']->create_menu_item();
