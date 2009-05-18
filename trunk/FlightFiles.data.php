@@ -604,7 +604,7 @@ function change_dir($act = '', $dir = '')
     	$new_dir = $_ENV['HOME'];
     elseif ($act == 'open')
         $new_dir = $start_dir.'/'.$dir;
-    elseif ($act == 'bookmars')
+    elseif ($act == 'bookmarks')
 	$new_dir = $dir;
     else
         $new_dir = dirname($start_dir);
@@ -939,23 +939,21 @@ function check_button_write($check)
  *
  * Функция выводит окно "Управление закладками".
  */
-function bookmars_edit()
+function bookmarks_edit()
 {
-    global $selection_bookmars;
+    global $selection_bookmarks;
     
     $window = new GtkWindow();
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
-    $window->set_size_request(450, 200);
+    $window->set_size_request(550, 200);
+    $window->set_icon(GdkPixbuf::new_from_file('logo.png'));
     $window->set_title('Управление закладками');
     $window->set_modal(TRUE);
     
-    $hbox_top = new GtkHBox();
-    
-    $vbox_left = new GtkVBox();
-    $vbox_right = new GtkVBox();
+    $table = new GtkTable();
     
     /**
-     * Правый столбик
+     * Поля ввода
      */
     $name_label = new GtkLabel('Название:');
     $name_entry = new GtkEntry();
@@ -965,28 +963,43 @@ function bookmars_edit()
     $name_label->set_alignment(0,0);
     $path_label->set_alignment(0,0);
     
-    $vbox_right->pack_start($name_label, FALSE, FALSE);
-    $vbox_right->pack_start($name_entry, FALSE, FASLE);
-    $vbox_right->pack_start(new GtkLabel(), FALSE, FALSE);
-    $vbox_right->pack_start($path_label, FALSE, FALSE);
-    $vbox_right->pack_start($path_entry, FALSE, FALSE);
+    $vbox = new GtkVBox();
+    $vbox->pack_start($name_label, FALSE, FALSE);
+    $vbox->pack_start($name_entry, FALSE, FALSE);
+    $vbox->pack_start(new GtkLabel(''), FALSE, FALSE);
+    $vbox->pack_start($path_label, FALSE, FALSE);
+    $vbox->pack_start($path_entry, FALSE, FALSE);
+    
+    $table->attach($vbox, 2, 3, 0, 1, Gtk::FILL, Gtk::FILL);
     
     /**
-     * Нижний бокс с кнопками.
+     * Кнопки
      */
-    $hbox_bottom = new GtkHBox();
     $button_delete = new GtkButton('Удалить');
     $button_delete->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_BUTTON));
     $button_delete->set_sensitive(FALSE);
-    $button_delete->connect_simple('clicked', 'bookmars_delete', $name_entry, $path_entry);
-    $hbox_bottom->pack_end($button_delete, FALSE, FALSE);
+    $button_delete->connect_simple('clicked', 'bookmarks_delete', $name_entry, $path_entry);
+    
+    $table->attach($button_delete, 0, 1, 1, 2, Gtk::FILL, Gtk::FILL);
+    
+    $button_add = new GtkButton('Добавить');
+    $button_add->set_image(GtkImage::new_from_stock(Gtk::STOCK_ADD, Gtk::ICON_SIZE_BUTTON));
+    $button_add->connect_simple('clicked', 'bookmark_add');
+    
+    $table->attach($button_add, 1, 2, 1, 2, Gtk::FILL, Gtk::FILL);
+    
+    $button_ok = new GtkButton('Сохранить изменения');
+    $button_ok->set_image(GtkImage::new_from_stock(Gtk::STOCK_OK, Gtk::ICON_SIZE_BUTTON));
+    $button_ok->set_sensitive(FALSE);
+    $button_ok->connect_simple('clicked', 'bookmarks_save_change', $name_entry, $path_entry);
+    
+    $table->attach($button_ok, 2, 3, 1, 2, Gtk::FILL, Gtk::FILL);
     
     /**
-     * Левый столбик
+     * Список закладок
      */
     $scrolled = new GtkScrolledWindow();
     $scrolled->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
-    $vbox_left->pack_start($scrolled, TRUE, TRUE);
     
     $model = new GtkListStore(GObject::TYPE_STRING);
     
@@ -998,21 +1011,18 @@ function bookmars_edit()
     $column_name = new GtkTreeViewColumn('Закладки', $cell_renderer, 'text', 0);
     $view->append_column($column_name);
     
-    bookmars_list($model);
+    bookmarks_list($model);
     
-    $selection_bookmars = $view->get_selection();
-    $selection_bookmars->connect('changed', 'selection_bookmars', $name_entry, $path_entry, $button_delete);
+    $selection_bookmarks = $view->get_selection();
+    $selection_bookmarks->connect('changed', 'selection_bookmarks',
+				 $name_entry, $path_entry, $button_delete, $button_ok);
     
-    ///////////
+    $table->attach($scrolled, 0, 2, 0, 1);
     
-    $hbox_top->pack_start($vbox_left, TRUE, TRUE);
-    $hbox_top->pack_start($vbox_right, TRUE, TRUE);
+    $table->attach(new GtkLabel('Внимание! При любом изменении закладок необходимо перезапустить программу!'),
+		   0, 3, 2, 3);
     
-    $vbox = new GtkVBox();
-    $vbox->pack_start($hbox_top, TRUE, TRUE);
-    $vbox->pack_start($hbox_bottom, FALSE, FALSE);
-    
-    $window->add($vbox);
+    $window->add($table);
     $window->show_all();
     Gtk::main();
 }
@@ -1021,15 +1031,15 @@ function bookmars_edit()
  *
  * Добавление строчек с названиями закладок в список окна "Управление закладками".
  */
-function bookmars_list($model)
+function bookmarks_list($model)
 {
     global $_config;
     
-    $file_bookmars = file($_config['dir'].'/bookmars');
+    $file_bookmarks = file($_config['dir'].'/bookmarks');
     $data = array();
-    for ($i = 0; $i < count ($file_bookmars); $i++)
+    for ($i = 0; $i < count ($file_bookmarks); $i++)
     {
-	$data[] = array(trim($file_bookmars[$i]));
+	$data[] = array(trim($file_bookmarks[$i]));
 	$i++;
     }
     
@@ -1041,7 +1051,7 @@ function bookmars_list($model)
  *
  * Функция заполняет текстовые поля в окне "Упарвление закладками" при выборе закладки в списке.
  */
-function selection_bookmars($selection, $name_entry, $path_entry, $button_delete)
+function selection_bookmarks($selection, $name_entry, $path_entry, $button_delete, $button_ok)
 {
     global $_config;
     
@@ -1049,12 +1059,13 @@ function selection_bookmars($selection, $name_entry, $path_entry, $button_delete
     @$name = $model->get_value($iter, 0);
     $name_entry->set_text($name);
     $button_delete->set_sensitive(TRUE);
-    $file_bookmars = file($_config['dir'].'/bookmars');
-    for ($i = 0; $i < count($file_bookmars); $i++)
+    $button_ok->set_sensitive(TRUE);
+    $file_bookmarks = file($_config['dir'].'/bookmarks');
+    for ($i = 0; $i < count($file_bookmarks); $i++)
     {
-	if (trim($file_bookmars[$i]) == $name)
+	if (trim($file_bookmarks[$i]) == $name)
 	{
-	    $path_entry->set_text(trim($file_bookmars[$i+1]));
+	    $path_entry->set_text(trim($file_bookmarks[$i+1]));
 	    break;
 	}
 	$i++;
@@ -1065,24 +1076,68 @@ function selection_bookmars($selection, $name_entry, $path_entry, $button_delete
  *
  * Функция удаляет выбранную закладку.
  */
-function bookmars_delete($name_entry, $path_entry)
+function bookmarks_delete($name_entry, $path_entry)
 {
-    global $_config, $selection_bookmars, $action_menu;
+    global $_config, $selection_bookmarks, $action_menu;
     
-    list($model, $iter) = $selection_bookmars->get_selected();
+    list($model, $iter) = $selection_bookmarks->get_selected();
     $name = $model->get_value($iter, 0);
-    $file_bookmars = file($_config['dir'].'/bookmars');
-    $fopen = fopen($_config['dir'].'/bookmars', 'w+');
-    for ($i = 0; $i < count($file_bookmars); $i++)
+    $file_bookmarks = file($_config['dir'].'/bookmarks');
+    $fopen = fopen($_config['dir'].'/bookmarks', 'w+');
+    for ($i = 0; $i < count($file_bookmarks); $i++)
     {
-	if (trim($file_bookmars[$i]) != $name)
-	    fwrite($fopen, trim($file_bookmars[$i])."\n".trim($file_bookmars[$i+1])."\n");
+	if (trim($file_bookmarks[$i]) != $name)
+	    fwrite($fopen, trim($file_bookmarks[$i])."\n".trim($file_bookmarks[$i+1])."\n");
 	$i++;
     }
     $model->clear();
-    bookmars_list($model);
+    bookmarks_list($model);
     $name_entry->set_text('');
     $path_entry->set_text('');
+}
+
+/**
+ * Функция сохраняет изменения в закладках.
+ */
+function bookmarks_save_change($name_entry, $path_entry)
+{
+    global $_config, $selection_bookmarks;
+    
+    list($model, $iter) = $selection_bookmarks->get_selected();
+    $name_old = $model->get_value($iter, 0);
+    $name = $name_entry->get_text();
+    $path = $path_entry->get_text();
+    
+    $file_array = file($_config['dir'].'/bookmarks');
+    $fopen = fopen($_config['dir'].'/bookmarks', 'w+');
+    for ($i = 0; $i < count($file_array); $i++)
+    {
+	if (trim($file_array[$i]) == $name_old)
+	    fwrite($fopen, $name."\n".$path."\n");
+	else
+	    fwrite($fopen, trim($file_array[$i])."\n".trim($file_array[$i+1])."\n");
+	$i++;
+    }
+    $model->clear();
+    bookmarks_list($model);
+    $name_entry->set_text('');
+    $path_entry->set_text('');
+}
+
+/**
+ * Функция добавляет новую заклкдку.
+ */
+function bookmark_add()
+{
+    global $_config, $selection_bookmarks;
+    
+    $fopen = fopen($_config['dir'].'/bookmarks', 'a+');
+    fwrite ($fopen, "Новая закладка\n/\n");
+    fclose($fopen);
+    
+    list($model, $iter) = $selection_bookmarks->get_selected();
+    $model->clear();
+    bookmarks_list($model);
 }
 
 ?>

@@ -30,7 +30,7 @@ $menubar = new GtkMenuBar();
 
 $menu['file'] = new GtkMenuItem('_Файл');
 $menu['edit'] = new GtkMenuItem('_Правка');
-$menu['bookmars'] = new GtkMenuItem('_Закладки');
+$menu['bookmarks'] = new GtkMenuItem('_Закладки');
 $menu['help'] = new GtkMenuItem('_Справка');
 
 foreach ($menu as $value)
@@ -89,16 +89,16 @@ foreach ($menu_item as $value)
  * Меню "Закладки"
  */
 unset($menu_item);
-$sub_menu['bookmars'] = new GtkMenu();
-$menu['bookmars']->set_submenu($sub_menu['bookmars']);
+$sub_menu['bookmarks'] = new GtkMenu();
+$menu['bookmarks']->set_submenu($sub_menu['bookmarks']);
 
-$file_bookmars = file($_config['dir'].'/bookmars');
-for ($i = 0; $i < count($file_bookmars); $i++)
+$file_bookmarks = file($_config['dir'].'/bookmarks');
+for ($i = 0; $i < count($file_bookmarks); $i++)
 {
-    $action_menu['bookmars'.$i] = new GtkAction($i, trim($file_bookmars[$i]), '', '');
-    $menu_item = $action_menu['bookmars'.$i]->create_menu_item();
-    $menu_item->connect_simple('activate', 'change_dir', 'bookmars', trim($file_bookmars[$i+1]));
-    $sub_menu['bookmars']->append($menu_item);
+    $action_menu['bookmarks'.$i] = new GtkAction($i, trim($file_bookmarks[$i]), '', '');
+    $menu_item = $action_menu['bookmarks'.$i]->create_menu_item();
+    $menu_item->connect_simple('activate', 'change_dir', 'bookmarks', trim($file_bookmarks[$i+1]));
+    $sub_menu['bookmarks']->append($menu_item);
     $i++;
 }
 
@@ -106,12 +106,12 @@ unset($menu_item);
 
 $menu_item['separator_two'] = new GtkSeparatorMenuItem();
 
-$action_menu['bookmars_edit'] = new GtkAction('BOOKMARS_EDIT', 'Управление закладками', '', Gtk::STOCK_EDIT);
-$menu_item['bookmars_edit'] = $action_menu['bookmars_edit']->create_menu_item();
-$menu_item['bookmars_edit']->connect_simple('activate', 'bookmars_edit');
+$action_menu['bookmarks_edit'] = new GtkAction('BOOKMARKS_EDIT', 'Управление закладками', '', Gtk::STOCK_EDIT);
+$menu_item['bookmarks_edit'] = $action_menu['bookmarks_edit']->create_menu_item();
+$menu_item['bookmarks_edit']->connect_simple('activate', 'bookmarks_edit');
 
 foreach ($menu_item as $value)
-    $sub_menu['bookmars']->append($value);
+    $sub_menu['bookmarks']->append($value);
 
 /**
  * Меню "Справка"
