@@ -210,7 +210,7 @@ function _rename($file)
 		}
 		else
 		{
-			if (file_exists($start_dir.'/'.$new_name))
+			if (file_exists($start_dir.'/'.$new_name) AND $new_name != $file)
 			{
 				$dialog->destroy();
 				if (is_dir($start_dir.'/'.$new_name))
@@ -775,7 +775,7 @@ function new_element($type)
 
 /**
  *
- * Функция удаляет все файлы из текущего каталога.
+ * Функция удаляет все файлы/папки из текущего каталога.
  */
 function delete_all($type)
 {
@@ -833,7 +833,7 @@ function about()
     $dialog->set_icon(GdkPixbuf::new_from_file('logo.png'));
     $dialog->set_logo(GdkPixbuf::new_from_file('logo.png'));
     $dialog->set_name('FlightFiles');
-    $dialog->set_version('0.0.2');
+    $dialog->set_version('0.1.0');
     $dialog->set_comments("Небольшой файловый менеджер, написанный на языке PHP\n".
                           "с использованием библиотеки PHP-GTK2.");
     $dialog->set_copyright('Copyright © 2009 Shecspi');
