@@ -67,7 +67,6 @@ $action_menu['close'] = new GtkAction('CLOSE', 'Закрыть', '', Gtk::STOCK_
 $menu_item['close'] = $action_menu['close']->create_menu_item();
 $menu_item['close']->connect_simple('activate', 'close_window');
 
-
 foreach ($menu_item as $value)
 	$sub_menu['file']->append($value);
 
@@ -288,7 +287,7 @@ $vbox->pack_start(status_bar(), FALSE, FALSE);
 
 $window = new GtkWindow();
 $window->set_icon(GdkPixbuf::new_from_file('logo.png'));
-$window->set_size_request(550, 600);
+$window->set_size_request(750, 600);
 $window->set_position(Gtk::WIN_POS_CENTER);
 $window->set_title('Фаловый менеджер FlightFiles');
 $window->connect_simple('destroy', 'close_window');

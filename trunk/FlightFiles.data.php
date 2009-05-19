@@ -40,6 +40,9 @@ function on_button($view, $event)
 	    @$file = $store->get_value($iter, 0);
 	    if (is_dir($start_dir.'/'.$file))
 	        change_dir('open', $file);
+	    if (mime_content_type($start_dir.'/'.$file) == 'text/plain' OR
+		mime_content_type($start_dir.'/'.$file) == 'text/html')
+		text_view($file);
 	}
         return FALSE;
     }
@@ -1175,12 +1178,16 @@ function text_view($file)
     
     $window = new GtkWindow();
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
-    $window->set_size_request(600, 400);
+    $window->set_size_request(700, 400);
+    $window->set_position(Gtk::WIN_POS_CENTER);
     $window->set_icon(GdkPixbuf::new_from_file('logo.png'));
     $window->set_title('Текстовый редактор');
     
     $vbox = new GtkVBox();
     
+    /**
+     * Содержимое файла.
+     */
     $text_buffer = new GtkTextBuffer();
     $text_view = new GtkTextView();
     
@@ -1193,13 +1200,15 @@ function text_view($file)
     $scroll->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
     $scroll->add($text_view);
     
-    $vbox->pack_start($scroll, TRUE, TRUE);
-    
+    /**
+     * Статусбар.
+     */
     $status_bar = new GtkStatusBar();
     
     $path_id = $status_bar->get_context_id('path');
     $status_bar->push($path_id, 'Файл: '.(($start_dir == '/') ? '' : $start_dir).'/'.$file);
     
+    $vbox->pack_start($scroll, TRUE, TRUE);
     $vbox->pack_start($status_bar, FALSE, FALSE);
     
     $window->add($vbox);
