@@ -276,7 +276,8 @@ current_dir();
 
 $tree_view = new GtkTreeView($store);
 $cell_renderer = new GtkCellRendererText();
-$cell_renderer->set_property('size-points', '10');
+if (file_exists($_config['dir'].'/fonts'))
+    $cell_renderer->set_property('font',  file_get_contents($_config['dir'].'/fonts'));
 
 ///////////////////
 ///// Колонки /////
