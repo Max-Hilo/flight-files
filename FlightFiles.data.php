@@ -706,6 +706,7 @@ function alert($msg)
 {
     $dialog = new GtkDialog('Сообщение', NULL, Gtk::DIALOG_MODAL, array(Gtk::STOCK_OK, Gtk::RESPONSE_OK));
     $dialog->set_position(Gtk::WIN_POS_CENTER_ALWAYS);
+    $dialog->set_icon(GdkPixbuf::new_from_file('logo.png'));
     $dialog->set_resizable(FALSE);
     $top_area = $dialog->vbox;
     $top_area->pack_start($hbox = new GtkHBox());
@@ -868,6 +869,9 @@ function preference()
     
     $notebook = new GtkNotebook();
     
+    /**
+     * Вкладка "Основные".
+     */
     $table = new GtkTable();
     
     $label_hidden_files = new GtkCheckButton('Показывать скрытые файлы и папки');
@@ -896,9 +900,93 @@ function preference()
     
     $notebook->append_page($table, new GtkLabel('Основные'));
     
+    /**
+     * Вкладка "Шрифты".
+     */
+    $table = new GtkTable();
+    
+    $label_text_list = new GtkLabel('Шрифт в списке:');
+    
+    $label_text_list->modify_font(new PangoFontDescription('Bold'));
+    $label_text_list->set_alignment(0, 0);
+        
+    $entry_font_select = new GtkEntry();
+    $button_font_select = new GtkButton('Сменить');
+    $button_font_select->connect_simple('clicked', 'font_select', $entry_font_select);
+    $check_text_list = new GtkCheckButton('Использовать системный шрифт');
+    $check_text_list->connect('toggled', 'check_font', $entry_font_select, $button_font_select);
+    
+    
+    if (!file_exists($_config['dir'].'/fonts'))
+    {
+        $check_text_list->set_active(TRUE);
+	$entry_font_select->set_sensitive(FALSE);
+	$button_font_select->set_sensitive(FALSE);
+    }
+    else
+    {
+	$check_text_list->set_active(FALSE);
+	$entry_font_select->set_sensitive(TRUE);
+	$button_font_select->set_sensitive(TRUE);
+	$entry_font_select->set_text(file_get_contents($_config['dir'].'/fonts'));
+    }
+    
+    
+    $table->attach($label_text_list, 0, 1, 0, 1, Gtk::FILL, Gtk::FILL);
+    $table->attach($check_text_list, 0, 1, 1, 2, Gtk::FILL, Gtk::FILL);
+    $table->attach($entry_font_select, 0, 1, 2, 3, Gtk::FILL, Gtk::FILL);
+    $table->attach($button_font_select, 1, 2, 2, 3, Gtk::FILL, Gtk::FILL);
+    
+    $notebook->append_page($table, new GtkLabel('Шрифты'));
+    
     $window->add($notebook);
     $window->show_all();
     Gtk::main();
+}
+
+function check_font($check, $entry, $button)
+{
+    global $_config, $cell_renderer;
+    
+    if ($check->get_active() === FALSE)
+    {
+	$entry->set_sensitive(TRUE);
+	$button->set_sensitive(TRUE);
+    }
+    else
+    {
+	$entry->set_sensitive(FALSE);
+	$button->set_sensitive(FALSE);
+	$entry->set_text('');
+	$cell_renderer->set_property('font',  '');
+	change_dir('none');
+	@unlink($_config['dir'].'/fonts');
+    }
+}
+
+function font_select($entry)
+{
+    global $_config, $cell_renderer;
+    
+    $dialog = new GtkFontSelectionDialog('Выбрать шрифт');
+    $dialog->set_position(Gtk::WIN_POS_CENTER_ALWAYS);
+    $dialog->set_preview_text('Файловый менджер FlightFiles');
+    if (file_exists($_config['dir'].'/fonts'))
+        $dialog->set_font_name(file_get_contents($_config['dir'].'/fonts'));
+    $dialog->show_all();
+    $dialog->run();
+    
+    $font_name = $dialog->get_font_name();
+    $entry->set_text($font_name);
+    
+    $fopen = fopen($_config['dir'].'/fonts', 'w+');
+    fwrite($fopen, $font_name);
+    fclose($fopen);
+    
+    $cell_renderer->set_property('font',  $font_name);
+    change_dir('none');
+    
+    $dialog->destroy();
 }
 
 /**
