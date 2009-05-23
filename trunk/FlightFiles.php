@@ -99,6 +99,26 @@ unset($menu_item);
 $sub_menu['edit'] = new GtkMenu();
 $menu['edit']->set_submenu($sub_menu['edit']);
 
+$action_menu['copy'] = new GtkAction('COPY', 'Копировать', '', Gtk::STOCK_COPY);
+$accel['copy'] = '<control>C';
+$action_group->add_action_with_accel($action_menu['copy'], $accel['copy']);
+$action_menu['copy']->set_accel_group($accel_group);
+$action_menu['copy']->connect_accelerator();
+$menu_item['copy'] = $action_menu['copy']->create_menu_item();
+$action_menu['copy']->connect_simple('activate', 'bufer_file', '', 'copy');
+$action_menu['copy']->set_sensitive(FALSE);
+
+$action_menu['paste'] = new GtkAction('PASTE', 'Вставить', '', Gtk::STOCK_PASTE);
+$accel['paste'] = '<control>V';
+$action_group->add_action_with_accel($action_menu['paste'], $accel['paste']);
+$action_menu['paste']->set_accel_group($accel_group);
+$action_menu['paste']->connect_accelerator();
+$menu_item['paste'] = $action_menu['paste']->create_menu_item();
+$action_menu['paste']->connect_simple('activate', 'paste_file');
+$action_menu['paste']->set_sensitive(FALSE);
+
+$menu_item['separator_one'] = new GtkSeparatorMenuItem();
+
 $action_menu['preference'] = new GtkAction('PREFERENCE', 'Параметры', '', Gtk::STOCK_PREFERENCES);
 $menu_item['preference'] = $action_menu['preference']->create_menu_item();
 $action_menu['preference']->connect_simple('activate', 'preference');
@@ -278,6 +298,9 @@ $tree_view = new GtkTreeView($store);
 $cell_renderer = new GtkCellRendererText();
 if (file_exists($_config['dir'].'/fonts'))
     $cell_renderer->set_property('font',  file_get_contents($_config['dir'].'/fonts'));
+
+$selection = $tree_view->get_selection();
+$selection->connect('changed', 'on_selection');
 
 ///////////////////
 ///// Колонки /////

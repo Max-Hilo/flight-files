@@ -236,15 +236,25 @@ function _rename($file)
  * @param string $file Адрес файла, для которого необходимо провести операцию
  * @param string $action Иденификатор операции вырезания/копирования.
  */
-function bufer_file($file, $act)
+function bufer_file($file = '', $act)
 {
-    global $_config, $start_dir, $action, $action_menu;
+    global $_config, $start_dir, $action, $action_menu, $selection;
+    
+    if (empty($file))
+    {
+	list($model, $iter) = $selection->get_selected();
+	@$file = $model->get_value($iter, 0);
+    }
     
     $fopen = fopen($_config['dir'].'/bufer', 'w+');
     fwrite($fopen, $start_dir.'/'.$file."\n".$act);
     fclose($fopen);
     $action_menu['clear_bufer']->set_sensitive(TRUE);
-    $action['paste']->set_sensitive(TRUE);
+    if (is_writable($start_dir))
+    {
+	$action['paste']->set_sensitive(TRUE);
+        $action_menu['paste']->set_sensitive(TRUE);
+    }
 }
 
 /**
@@ -259,21 +269,28 @@ function paste_file()
     $file = trim($file_array[0]);
     $action = trim($file_array[1]);
     $dest = basename($file);
-    if ($action == 'copy')
+    if (is_file($start_dir.'/'.$dest) AND is_file($file))
+	   alert('Файл с таким именем уже существует!');
+    elseif (is_dir($start_dir.'/'.$dest) AND is_dir($file))
+        alert('Папка с таким именем уже существует');
+    else
     {
-    	if (is_file($file))
-    		copy($file, $start_dir.'/'.$dest);
-    	elseif (is_dir($file))
-    		exec("cp -R '$file' '$start_dir/$dest'");
+	if ($action == 'copy')
+	{
+            if (is_file($file))
+	        copy($file, $start_dir.'/'.$dest);
+	    elseif (is_dir($file))
+		exec("cp -R '$file' '$start_dir/$dest'");
+	}
+	elseif ($action == 'cut')
+	{
+	    if (is_file($file))
+		rename($file, $start_dir.'/'.$dest);
+	    elseif (is_dir($file))
+		exec('mv '.$file.' '.$start_dir.'/'.$dest);
+	}
+	change_dir('none');
     }
-    elseif ($action == 'cut')
-    {
-    	if (is_file($file))
-    		rename($file, $start_dir.'/'.$dest);
-    	elseif (is_dir($file))
-    		exec('mv '.$file.' '.$start_dir.'/'.$dest);
-    }
-    change_dir('none');
 }
 
 /**
@@ -646,13 +663,16 @@ function change_dir($act = '', $dir = '')
     $action['home']->set_sensitive(TRUE);
     $action['new_file']->set_sensitive(TRUE);
     $action['new_dir']->set_sensitive(TRUE);
+    $action_menu['paste']->set_sensitive(FALSE);
+    $action_menu['copy']->set_sensitive(FALSE);
+    $action_menu['new_file']->set_sensitive(TRUE);
+    $action_menu['new_dir']->set_sensitive(TRUE);
     if (file_exists($_config['dir'].'/bufer'))
     {
     	$action['paste']->set_sensitive(TRUE);
     	$action_menu['clear_bufer']->set_sensitive(TRUE);
+	$action_menu['paste']->set_sensitive(TRUE);
     }
-    $action_menu['new_file']->set_sensitive(TRUE);
-    $action_menu['new_dir']->set_sensitive(TRUE);
     if ($start_dir == '/')
         $action['up']->set_sensitive(FALSE);
     if ($start_dir == $_ENV['HOME'])
@@ -664,6 +684,7 @@ function change_dir($act = '', $dir = '')
         $action['new_file']->set_sensitive(FALSE);
         $action['new_dir']->set_sensitive(FALSE);
         $action['paste']->set_sensitive(FALSE);
+	$action_menu['paste']->set_sensitive(FALSE);
     }
     
     // Очищаем список
@@ -818,6 +839,7 @@ function clear_bufer()
     @unlink($_config['dir'].'/bufer');
     $action['paste']->set_sensitive(FALSE);
     $action_menu['clear_bufer']->set_sensitive(FALSE);
+    $action_menu['paste']->set_sensitive(FALSE);
     alert('Буфер обмена успешно очищен.');
 }
 
@@ -1302,6 +1324,16 @@ function text_view($file)
     $window->add($vbox);
     $window->show_all();
     Gtk::main();
+}
+
+function on_selection($selection)
+{
+    global $action_menu, $start_dir;
+    
+    list($model, $iter) = $selection->get_selected();
+    @$file = $model->get_value($iter, 0);
+    if (!empty($file))
+	$action_menu['copy']->set_sensitive(TRUE);
 }
 
 ?>
