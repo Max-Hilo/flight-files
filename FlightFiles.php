@@ -16,7 +16,7 @@ $window->set_icon(GdkPixbuf::new_from_file('logo.png'));
 $window->set_size_request(750, 600);
 $window->set_position(Gtk::WIN_POS_CENTER);
 $window->set_title('Фаловый менеджер FlightFiles');
-$window->connect_simple('destroy', 'close_window');
+$window->connect_simple('destroy', 'close_window', $window);
 $accel_group = new GtkAccelGroup();
 $window->add_accel_group($accel_group);
 $action_group = new GtkActionGroup('menubar');
@@ -44,7 +44,7 @@ $menu['bookmarks'] = new GtkMenuItem('_Закладки');
 $menu['help'] = new GtkMenuItem('_Справка');
 
 foreach ($menu as $value)
-	$menubar->append($value);
+    $menubar->append($value);
 
 /**
  * Меню "Файл"
@@ -60,7 +60,7 @@ $action_menu['new_file']->connect_accelerator();
 $menu_item['new_file'] = $action_menu['new_file']->create_menu_item();
 $action_menu['new_file']->connect_simple('activate', 'new_element', 'file');
 if (!is_writable($start_dir))
-	$action_menu['new_file']->set_sensitive(FALSE);
+    $action_menu['new_file']->set_sensitive(FALSE);
 
 $action_menu['new_dir'] = new GtkAction('NEW_DIR', 'Создать папку', '', Gtk::STOCK_DIRECTORY);
 $accel['new_dir'] = '<shift><control>N';
@@ -70,7 +70,7 @@ $action_menu['new_dir']->connect_accelerator();
 $menu_item['new_dir'] = $action_menu['new_dir']->create_menu_item();
 $action_menu['new_dir']->connect_simple('activate', 'new_element', 'dir');
 if (!is_writable($start_dir))
-	$action_menu['new_dir']->set_sensitive(FALSE);
+    $action_menu['new_dir']->set_sensitive(FALSE);
 
 $menu_item['separator_one'] = new GtkSeparatorMenuItem();
 
@@ -90,7 +90,7 @@ $menu_item['close'] = $action_menu['close']->create_menu_item();
 $action_menu['close']->connect_simple('activate', 'close_window');
 
 foreach ($menu_item as $value)
-	$sub_menu['file']->append($value);
+    $sub_menu['file']->append($value);
 
 /**
  * Меню "Правка"
@@ -133,19 +133,22 @@ unset($menu_item);
 $sub_menu['bookmarks'] = new GtkMenu();
 $menu['bookmarks']->set_submenu($sub_menu['bookmarks']);
 
-$file_bookmarks = file($_config['dir'].'/bookmarks');
-for ($i = 0; $i < count($file_bookmarks); $i++)
+if (file_exists($_config['dir'].'/bookmarks') AND filesize($_config['dir'].'/bookmarks') != 0)
 {
-    $action_menu['bookmarks'.$i] = new GtkAction($i, trim($file_bookmarks[$i]), '', Gtk::STOCK_DIRECTORY);
-    $menu_item = $action_menu['bookmarks'.$i]->create_menu_item();
-    $action_menu['bookmarks'.$i]->connect_simple('activate', 'change_dir', 'bookmarks', trim($file_bookmarks[$i+1]));
-    $sub_menu['bookmarks']->append($menu_item);
-    $i++;
+    $file_bookmarks = file($_config['dir'].'/bookmarks');
+    for ($i = 0; $i < count($file_bookmarks); $i++)
+    {
+        $action_menu['bookmarks'.$i] = new GtkAction($i, trim($file_bookmarks[$i]), '', Gtk::STOCK_DIRECTORY);
+        $menu_item = $action_menu['bookmarks'.$i]->create_menu_item();
+        $action_menu['bookmarks'.$i]->connect_simple('activate', 'change_dir', 'bookmarks', trim($file_bookmarks[$i+1]));
+        $sub_menu['bookmarks']->append($menu_item);
+        $i++;
+    }
+    
+    unset($menu_item);
+    
+    $menu_item['separator_two'] = new GtkSeparatorMenuItem();
 }
-
-unset($menu_item);
-
-$menu_item['separator_two'] = new GtkSeparatorMenuItem();
 
 $action_menu['bookmarks_add'] = new GtkAction('BOOKMARKS_ADD', 'Добавить в закладки', '', Gtk::STOCK_ADD);
 $accel['bookmarks_add'] = '<control>D';
@@ -178,7 +181,7 @@ $menu_item['about'] = $action_menu['about']->create_menu_item();
 $action_menu['about']->connect_simple('activate', 'about');
 
 foreach ($menu_item as $value)
-	$sub_menu['help']->append($value);
+    $sub_menu['help']->append($value);
 
 $vbox->pack_start($menubar, FALSE, FALSE, 0);
 
@@ -193,7 +196,7 @@ $toolbar = new GtkToolBar();
  * При нажатии вызывается функция change_dir().
  */
 $action['up'] = new GtkAction('UP', 'Вверх',
-			      'Перейти на уровень выше', Gtk::STOCK_GO_UP);
+                  'Перейти на уровень выше', Gtk::STOCK_GO_UP);
 $toolitem['up'] = $action['up']->create_tool_item();
 $action['up']->connect_simple('activate', 'change_dir');
 $toolbar->insert($toolitem['up'], -1);
@@ -203,7 +206,7 @@ $toolbar->insert($toolitem['up'], -1);
  * При нажатии вызывается функция change_dir('home').
  */
 $action['home'] = new GtkAction('HOME', 'Домой',
-				'Перейти в домашнюю папку - '.$_ENV['HOME'], Gtk::STOCK_HOME);
+                'Перейти в домашнюю папку - '.$_ENV['HOME'], Gtk::STOCK_HOME);
 $toolitem['home'] = $action['home']->create_tool_item();
 $action['home']->connect_simple('activate', 'change_dir', 'home');
 if ($start_dir == $_ENV['HOME'])
@@ -220,7 +223,7 @@ $toolbar->insert(new GtkSeparatorToolItem(), -1);
  * При нажатии вызывается функция change_dir('none').
  */
 $action['refresh'] = new GtkAction('REFRESH', 'Обновить',
-				   'Обновить список файлов и папок', Gtk::STOCK_REFRESH);
+                   'Обновить список файлов и папок', Gtk::STOCK_REFRESH);
 $toolitem['refresh'] = $action['refresh']->create_tool_item();
 $action['refresh']->connect_simple('activate', 'change_dir', 'none');
 $toolbar->insert($toolitem['refresh'], -1);
@@ -235,7 +238,7 @@ $toolbar->insert(new GtkSeparatorToolItem(), -1);
  * При нажатии на кнопку вызывается функция new_element('file').
  */
 $action['new_file'] = new GtkAction('NEW_FILE', 'Создать файл',
-				    'Создать пустой файл в текущей директории', Gtk::STOCK_NEW);
+                    'Создать пустой файл в текущей директории', Gtk::STOCK_NEW);
 $toolitem['new_file'] = $action['new_file']->create_tool_item();
 $action['new_file']->connect_simple('activate', 'new_element', 'file');
 if (!is_writable($start_dir))
@@ -247,7 +250,7 @@ $toolbar->insert($toolitem['new_file'], -1);
  * При нажатии на кнопку вызывается функция new_element('dir').
  */
 $action['new_dir'] = new GtkAction('NEW_DIR', 'Создать папку',
-				   'Создать папку в текущей директории', Gtk::STOCK_DIRECTORY);
+                   'Создать папку в текущей директории', Gtk::STOCK_DIRECTORY);
 $toolitem['new_dir'] = $action['new_dir']->create_tool_item();
 $action['new_dir']->connect_simple('activate', 'new_element', 'dir');
 if (!is_writable($start_dir))
@@ -264,7 +267,7 @@ $toolbar->insert(new GtkSeparatorToolItem(), -1);
  * При нажатии на кнопку вызывается функция paste_file().
  */
 $action['paste'] = new GtkAction('PASTE', 'Вставить',
-				 'Вставить элемент из буфера обмена в текущую папку', Gtk::STOCK_PASTE);
+                 'Вставить элемент из буфера обмена в текущую папку', Gtk::STOCK_PASTE);
 $toolitem['paste'] = $action['paste']->create_tool_item();
 $action['paste']->connect_simple('activate', 'paste_file');
 $action['paste']->set_sensitive(FALSE);
@@ -281,14 +284,24 @@ $vbox->pack_start($hbox, FALSE, FALSE);
 
 $label_current_dir = new GtkLabel('Текущий каталог:  ');
 $entry_current_dir = new GtkEntry($start_dir);
-$button_change_dir = new GtkButton('Сменить');
+$button_change_dir = new GtkButton();
+
+$button_hbox = new GtkHBox();
+$button_change_dir->add($button_hbox);
+$button_hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_REDO, Gtk::ICON_SIZE_BUTTON));
+$button_hbox->pack_start(new GtkLabel());
+$button_hbox->pack_start(new GtkLabel('Сменить'));
 
 $entry_current_dir->connect_simple('activate', 'change_dir', 'user');
 $button_change_dir->connect_simple('clicked', 'change_dir', 'user');
 
+$hbox->pack_start(new GtkLabel(' '), FALSE, FALSE);
 $hbox->pack_start($label_current_dir, FALSE, FALSE);
+$hbox->pack_start(new GtkLabel(' '), FALSE, FALSE);
 $hbox->pack_start($entry_current_dir);
+$hbox->pack_start(new GtkLabel(' '), FALSE, FALSE);
 $hbox->pack_start($button_change_dir, FALSE, FALSE);
+$hbox->pack_start(new GtkLabel(' '), FALSE, FALSE);
 
 /////////////////////////////
 

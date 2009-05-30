@@ -30,20 +30,20 @@ function on_button($view, $event)
     // Если нажата левая кнопка, то...
     if ($event->button == 1)
     {
-	// При двойном клике по папке открываем её
-	if ($event->type == Gdk::_2BUTTON_PRESS)
-	{
-	    $path_array = $view->get_path_at_pos($event->x, $event->y);
-	    $path = $path_array[0][0];
-	    
-	    @$iter = $store->get_iter($path);
-	    @$file = $store->get_value($iter, 0);
-	    if (is_dir($start_dir.'/'.$file))
-	        change_dir('open', $file);
-	    if (mime_content_type($start_dir.'/'.$file) == 'text/plain' OR
-		mime_content_type($start_dir.'/'.$file) == 'text/html')
-		text_view($file);
-	}
+    // При двойном клике по папке открываем её
+    if ($event->type == Gdk::_2BUTTON_PRESS)
+    {
+        $path_array = $view->get_path_at_pos($event->x, $event->y);
+        $path = $path_array[0][0];
+        
+        @$iter = $store->get_iter($path);
+        @$file = $store->get_value($iter, 0);
+        if (is_dir($start_dir.'/'.$file))
+            change_dir('open', $file);
+        if (mime_content_type($start_dir.'/'.$file) == 'text/plain' OR
+        mime_content_type($start_dir.'/'.$file) == 'text/html')
+        text_view($file);
+    }
         return FALSE;
     }
     // Если нажата средняя кнопка, то ничего не делаем
@@ -87,19 +87,19 @@ function on_button($view, $event)
             }
             if (!is_writable($start_dir))
             {
-            	$cut->set_sensitive(FALSE);
-            	$rename->set_sensitive(FALSE);
-            	$delete->set_sensitive(FALSE);
+                $cut->set_sensitive(FALSE);
+                $rename->set_sensitive(FALSE);
+                $delete->set_sensitive(FALSE);
             }
             
-	    if (mime_content_type($start_dir.'/'.$file) == 'text/plain' OR
-		mime_content_type($start_dir.'/'.$file) == 'text/html')
-	    {
-		$open = new GtkMenuItem('Открыть в текстовом редакторе');
-		$menu->append($open);
-		$menu->append(new GtkSeparatorMenuItem());
-		$open->connect_simple('activate', 'text_view', $file);
-	    }
+        if (mime_content_type($start_dir.'/'.$file) == 'text/plain' OR
+        mime_content_type($start_dir.'/'.$file) == 'text/html')
+        {
+        $open = new GtkMenuItem('Открыть в текстовом редакторе');
+        $menu->append($open);
+        $menu->append(new GtkSeparatorMenuItem());
+        $open->connect_simple('activate', 'text_view', $file);
+        }
             $menu->append($copy);
             $menu->append($cut);
             $menu->append(new GtkSeparatorMenuItem());
@@ -128,9 +128,9 @@ function on_button($view, $event)
             
             if (!is_writable($start_dir))
             {
-            	$cut->set_sensitive(FALSE);
-            	$rename->set_sensitive(FALSE);
-            	$delete->set_sensitive(FALSE);
+                $cut->set_sensitive(FALSE);
+                $rename->set_sensitive(FALSE);
+                $delete->set_sensitive(FALSE);
             }
             
             $menu->append($open);
@@ -156,8 +156,8 @@ function on_button($view, $event)
             
             if (!is_writable($start_dir))
             {
-            	$new_file->set_sensitive(FALSE);
-            	$new_dir->set_sensitive(FALSE);
+                $new_file->set_sensitive(FALSE);
+                $new_dir->set_sensitive(FALSE);
             }
             if (!file_exists($_config['dir'].'/bufer') OR !is_writable($start_dir))
                 $paste->set_sensitive(FALSE);
@@ -182,52 +182,52 @@ function on_button($view, $event)
 
 function _rename($file)
 {
-	global $start_dir;
-	
-	$dialog = new GtkDialog(
-		'Переименовать',
-		NULL,
-		Gtk::DIALOG_MODAL,
-		array(
-			Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL,
-			Gtk::STOCK_OK, Gtk::RESPONSE_OK
-		)
-	);
-	$dialog->set_has_separator(FALSE);
-	$vbox = $dialog->vbox;
-	$vbox->pack_start($hbox = new GtkHBox());
-	$hbox->pack_start($entry = new GtkEntry(basename($file)));
-	$dialog->show_all();
-	$result = $dialog->run();
-	if ($result == Gtk::RESPONSE_OK)
-	{
-		$new_name = $entry->get_text();
-		if (empty($new_name))
-		{
-			$dialog->destroy();
-			alert('Необходимо ввести имя!');
-			_rename($file);
-		}
-		else
-		{
-			if (file_exists($start_dir.'/'.$new_name) AND $new_name != $file)
-			{
-				$dialog->destroy();
-				if (is_dir($start_dir.'/'.$new_name))
-					$el = 'Папка';
-				else
-					$el = 'Файл';
-				alert($el.' с таким именем уже существует!');
-				_rename($file);
-			}
-			else
-				rename($start_dir.'/'.$file, $start_dir.'/'.$entry->get_text());
-			$dialog->destroy();
-		}
-	}
-	else
-		$dialog->destroy();
-	change_dir('none');
+    global $start_dir;
+    
+    $dialog = new GtkDialog(
+        'Переименовать',
+        NULL,
+        Gtk::DIALOG_MODAL,
+        array(
+            Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL,
+            Gtk::STOCK_OK, Gtk::RESPONSE_OK
+        )
+    );
+    $dialog->set_has_separator(FALSE);
+    $vbox = $dialog->vbox;
+    $vbox->pack_start($hbox = new GtkHBox());
+    $hbox->pack_start($entry = new GtkEntry(basename($file)));
+    $dialog->show_all();
+    $result = $dialog->run();
+    if ($result == Gtk::RESPONSE_OK)
+    {
+        $new_name = $entry->get_text();
+        if (empty($new_name))
+        {
+            $dialog->destroy();
+            alert('Необходимо ввести имя!');
+            _rename($file);
+        }
+        else
+        {
+            if (file_exists($start_dir.'/'.$new_name) AND $new_name != $file)
+            {
+                $dialog->destroy();
+                if (is_dir($start_dir.'/'.$new_name))
+                    $el = 'Папка';
+                else
+                    $el = 'Файл';
+                alert($el.' с таким именем уже существует!');
+                _rename($file);
+            }
+            else
+                rename($start_dir.'/'.$file, $start_dir.'/'.$entry->get_text());
+            $dialog->destroy();
+        }
+    }
+    else
+        $dialog->destroy();
+    change_dir('none');
 }
 
 /**
@@ -242,8 +242,8 @@ function bufer_file($file = '', $act)
     
     if (empty($file))
     {
-	list($model, $iter) = $selection->get_selected();
-	@$file = $model->get_value($iter, 0);
+    list($model, $iter) = $selection->get_selected();
+    @$file = $model->get_value($iter, 0);
     }
     
     $fopen = fopen($_config['dir'].'/bufer', 'w+');
@@ -252,7 +252,7 @@ function bufer_file($file = '', $act)
     $action_menu['clear_bufer']->set_sensitive(TRUE);
     if (is_writable($start_dir))
     {
-	$action['paste']->set_sensitive(TRUE);
+    $action['paste']->set_sensitive(TRUE);
         $action_menu['paste']->set_sensitive(TRUE);
     }
 }
@@ -270,26 +270,26 @@ function paste_file()
     $action = trim($file_array[1]);
     $dest = basename($file);
     if (is_file($start_dir.'/'.$dest) AND is_file($file))
-	   alert('Файл с таким именем уже существует!');
+       alert('Файл с таким именем уже существует!');
     elseif (is_dir($start_dir.'/'.$dest) AND is_dir($file))
         alert('Папка с таким именем уже существует');
     else
     {
-	if ($action == 'copy')
-	{
+    if ($action == 'copy')
+    {
             if (is_file($file))
-	        copy($file, $start_dir.'/'.$dest);
-	    elseif (is_dir($file))
-		exec("cp -R '$file' '$start_dir/$dest'");
-	}
-	elseif ($action == 'cut')
-	{
-	    if (is_file($file))
-		rename($file, $start_dir.'/'.$dest);
-	    elseif (is_dir($file))
-		exec('mv '.$file.' '.$start_dir.'/'.$dest);
-	}
-	change_dir('none');
+            copy($file, $start_dir.'/'.$dest);
+        elseif (is_dir($file))
+        exec("cp -R '$file' '$start_dir/$dest'");
+    }
+    elseif ($action == 'cut')
+    {
+        if (is_file($file))
+        rename($file, $start_dir.'/'.$dest);
+        elseif (is_dir($file))
+        exec('mv '.$file.' '.$start_dir.'/'.$dest);
+    }
+    change_dir('none');
     }
 }
 
@@ -462,8 +462,8 @@ function delete($file)
         $vbox = $dialog->vbox;
         $vbox->pack_start($hbox = new GtkHBox());
         $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
-        $hbox->pack_start(new GtkLabel('Вы действительно хотите удалить папку "'.$file.
-                                       '" со всем её содержимым?'));
+        $hbox->pack_start(new GtkLabel("Вы действительно хотите удалить папку\n".
+                       "'".$file."' со всем её содержимым?"));
         $dialog->show_all();
         $result = $dialog->run();
         if ($result == Gtk::RESPONSE_YES)
@@ -494,12 +494,12 @@ function delete($file)
         {
             if (!is_writable($start_dir.'/'.$file))
             {
-        	$dialog->destroy();
-        	alert('У вас недостаточно прав на выполнение данной операции!');
+            $dialog->destroy();
+            alert('У вас недостаточно прав на выполнение данной операции!');
             }
             else
             {
-	           unlink("$start_dir/$file");
+               unlink("$start_dir/$file");
             $dialog->destroy();
             }
         }
@@ -642,17 +642,17 @@ function change_dir($act = '', $dir = '')
     elseif ($act == 'none')
         $new_dir = $start_dir;
     elseif ($act == 'home')
-    	$new_dir = $_ENV['HOME'];
+        $new_dir = $_ENV['HOME'];
     elseif ($act == 'open')
         $new_dir = $start_dir.'/'.$dir;
     elseif ($act == 'bookmarks')
-	$new_dir = $dir;
+    $new_dir = $dir;
     else
         $new_dir = dirname($start_dir);
     
     // Если указанной директории не существует, то информируем пользователя об этом
     if (!file_exists($new_dir))
-        alert('Указанная вами директория не существует!');
+        alert("Указанная вами директория не существует!\nПереход выполнен не будет.");
     else
         $start_dir = $new_dir;
     
@@ -669,9 +669,9 @@ function change_dir($act = '', $dir = '')
     $action_menu['new_dir']->set_sensitive(TRUE);
     if (file_exists($_config['dir'].'/bufer'))
     {
-    	$action['paste']->set_sensitive(TRUE);
-    	$action_menu['clear_bufer']->set_sensitive(TRUE);
-	$action_menu['paste']->set_sensitive(TRUE);
+        $action['paste']->set_sensitive(TRUE);
+        $action_menu['clear_bufer']->set_sensitive(TRUE);
+        $action_menu['paste']->set_sensitive(TRUE);
     }
     if ($start_dir == '/')
         $action['up']->set_sensitive(FALSE);
@@ -679,12 +679,12 @@ function change_dir($act = '', $dir = '')
         $action['home']->set_sensitive(FALSE);
     if (!is_writable($start_dir))
     {
-    	$action_menu['new_file']->set_sensitive(FALSE);
-    	$action_menu['new_dir']->set_sensitive(FALSE);
+        $action_menu['new_file']->set_sensitive(FALSE);
+        $action_menu['new_dir']->set_sensitive(FALSE);
         $action['new_file']->set_sensitive(FALSE);
         $action['new_dir']->set_sensitive(FALSE);
         $action['paste']->set_sensitive(FALSE);
-	$action_menu['paste']->set_sensitive(FALSE);
+        $action_menu['paste']->set_sensitive(FALSE);
     }
     
     // Очищаем список
@@ -731,8 +731,13 @@ function alert($msg)
     $dialog->set_resizable(FALSE);
     $top_area = $dialog->vbox;
     $top_area->pack_start($hbox = new GtkHBox());
+    $hbox->pack_start(new GtkLabel(' '));
     $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_WARNING, Gtk::ICON_SIZE_DIALOG));
-    $hbox->pack_start(new GtkLabel($msg));
+    $hbox->pack_start(new GtkLabel(' '));
+    $label = new GtkLabel($msg);
+    $label->set_justify(Gtk::JUSTIFY_CENTER);
+    $hbox->pack_start($label);
+    $hbox->pack_start(new GtkLabel(' '));
     $dialog->set_has_separator(FALSE);
     $dialog->show_all();
     $dialog->run();
@@ -756,40 +761,40 @@ function new_element($type)
     
     if ($type == 'file')
     {
-    	if (!file_exists($start_dir.'/Новый файл'))
-        	fclose(fopen($start_dir.'/Новый файл', 'a+'));
+        if (!file_exists($start_dir.'/Новый файл'))
+            fclose(fopen($start_dir.'/Новый файл', 'a+'));
         else
         {
-        	$i = 2;
-        	while (TRUE)
+            $i = 2;
+            while (TRUE)
                 {
-        		if (!file_exists($start_dir.'/Новый файл '.$i))
-        		{
-        			fclose(fopen($start_dir.'/Новый файл '.$i, 'a+'));
-        			break;
-        		}
-        		else
-        			$i++;
-        	}
+                if (!file_exists($start_dir.'/Новый файл '.$i))
+                {
+                    fclose(fopen($start_dir.'/Новый файл '.$i, 'a+'));
+                    break;
+                }
+                else
+                    $i++;
+            }
         }
     }
     elseif ($type == 'dir')
     {
-    	if (!file_exists($start_dir.'/Новая папка'))
-        	mkdir($start_dir.'/Новая папка');
+        if (!file_exists($start_dir.'/Новая папка'))
+            mkdir($start_dir.'/Новая папка');
         else
         {
-        	$i = 2;
-        	while (TRUE)
-        	{
-        		if (!file_exists($start_dir.'/Новая папка '.$i))
-        		{
-        			mkdir($start_dir.'/Новая папка '.$i);
-        			break;
-        		}
-        		else
-        			$i++;
-        	}
+            $i = 2;
+            while (TRUE)
+            {
+                if (!file_exists($start_dir.'/Новая папка '.$i))
+                {
+                    mkdir($start_dir.'/Новая папка '.$i);
+                    break;
+                }
+                else
+                    $i++;
+            }
         }
     }
     change_dir('none');
@@ -819,10 +824,8 @@ function delete_all($type)
  *
  * При закрытии окна программы данная функция удаляет файл буфера обмена.
  */
-function close_window()
+function close_window($window)
 {
-    global $_config;
-    
     @unlink($_config['dir'].'/bufer');
     Gtk::main_quit();
 }
@@ -884,7 +887,6 @@ function preference()
     $window->set_position(Gtk::WIN_POS_CENTER);
     $window->set_icon(GdkPixbuf::new_from_file('logo.png'));
     $window->set_size_request(400, 200);
-    $window->set_modal(TRUE);
     $window->set_resizable(FALSE);
     $window->set_title('Параметры FlightFiles');
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
@@ -942,15 +944,15 @@ function preference()
     if (!file_exists($_config['dir'].'/fonts'))
     {
         $check_text_list->set_active(TRUE);
-	$entry_font_select->set_sensitive(FALSE);
-	$button_font_select->set_sensitive(FALSE);
+    $entry_font_select->set_sensitive(FALSE);
+    $button_font_select->set_sensitive(FALSE);
     }
     else
     {
-	$check_text_list->set_active(FALSE);
-	$entry_font_select->set_sensitive(TRUE);
-	$button_font_select->set_sensitive(TRUE);
-	$entry_font_select->set_text(file_get_contents($_config['dir'].'/fonts'));
+    $check_text_list->set_active(FALSE);
+    $entry_font_select->set_sensitive(TRUE);
+    $button_font_select->set_sensitive(TRUE);
+    $entry_font_select->set_text(file_get_contents($_config['dir'].'/fonts'));
     }
     
     
@@ -972,17 +974,17 @@ function check_font($check, $entry, $button)
     
     if ($check->get_active() === FALSE)
     {
-	$entry->set_sensitive(TRUE);
-	$button->set_sensitive(TRUE);
+    $entry->set_sensitive(TRUE);
+    $button->set_sensitive(TRUE);
     }
     else
     {
-	$entry->set_sensitive(FALSE);
-	$button->set_sensitive(FALSE);
-	$entry->set_text('');
-	$cell_renderer->set_property('font',  '');
-	change_dir('none');
-	@unlink($_config['dir'].'/fonts');
+    $entry->set_sensitive(FALSE);
+    $button->set_sensitive(FALSE);
+    $entry->set_text('');
+    $cell_renderer->set_property('font',  '');
+    change_dir('none');
+    @unlink($_config['dir'].'/fonts');
     }
 }
 
@@ -1079,7 +1081,7 @@ function bookmarks_edit()
     
     $window = new GtkWindow();
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
-    $window->set_size_request(550, 200);
+    $window->set_size_request(600, 200);
     $window->set_icon(GdkPixbuf::new_from_file('logo.png'));
     $window->set_title('Управление закладками');
     $window->set_modal(TRUE);
@@ -1149,12 +1151,12 @@ function bookmarks_edit()
     
     $selection_bookmarks = $view->get_selection();
     $selection_bookmarks->connect('changed', 'selection_bookmarks',
-				 $name_entry, $path_entry, $button_delete, $button_ok);
+                 $name_entry, $path_entry, $button_delete, $button_ok);
     
     $table->attach($scrolled, 0, 2, 0, 1);
     
     $table->attach(new GtkLabel('Внимание! При любом изменении закладок необходимо перезапустить программу!'),
-		   0, 3, 2, 3);
+           0, 3, 2, 3);
     
     $window->add($table);
     $window->show_all();
@@ -1173,12 +1175,12 @@ function bookmarks_list($model)
     $data = array();
     for ($i = 0; $i < count ($file_bookmarks); $i++)
     {
-	$data[] = array(trim($file_bookmarks[$i]));
-	$i++;
+    $data[] = array(trim($file_bookmarks[$i]));
+    $i++;
     }
     
     for ($i = 0; $i < count($data); $i++)
-	$model->append($data[$i]);
+    $model->append($data[$i]);
 }
 
 /**
@@ -1197,12 +1199,12 @@ function selection_bookmarks($selection, $name_entry, $path_entry, $button_delet
     $file_bookmarks = file($_config['dir'].'/bookmarks');
     for ($i = 0; $i < count($file_bookmarks); $i++)
     {
-	if (trim($file_bookmarks[$i]) == $name)
-	{
-	    $path_entry->set_text(trim($file_bookmarks[$i+1]));
-	    break;
-	}
-	$i++;
+    if (trim($file_bookmarks[$i]) == $name)
+    {
+        $path_entry->set_text(trim($file_bookmarks[$i+1]));
+        break;
+    }
+    $i++;
     }
 }
 
@@ -1220,9 +1222,9 @@ function bookmarks_delete($name_entry, $path_entry)
     $fopen = fopen($_config['dir'].'/bookmarks', 'w+');
     for ($i = 0; $i < count($file_bookmarks); $i++)
     {
-	if (trim($file_bookmarks[$i]) != $name)
-	    fwrite($fopen, trim($file_bookmarks[$i])."\n".trim($file_bookmarks[$i+1])."\n");
-	$i++;
+    if (trim($file_bookmarks[$i]) != $name)
+        fwrite($fopen, trim($file_bookmarks[$i])."\n".trim($file_bookmarks[$i+1])."\n");
+    $i++;
     }
     $model->clear();
     bookmarks_list($model);
@@ -1246,11 +1248,11 @@ function bookmarks_save_change($name_entry, $path_entry)
     $fopen = fopen($_config['dir'].'/bookmarks', 'w+');
     for ($i = 0; $i < count($file_array); $i++)
     {
-	if (trim($file_array[$i]) == $name_old)
-	    fwrite($fopen, $name."\n".$path."\n");
-	else
-	    fwrite($fopen, trim($file_array[$i])."\n".trim($file_array[$i+1])."\n");
-	$i++;
+    if (trim($file_array[$i]) == $name_old)
+        fwrite($fopen, $name."\n".$path."\n");
+    else
+        fwrite($fopen, trim($file_array[$i])."\n".trim($file_array[$i+1])."\n");
+    $i++;
     }
     $model->clear();
     bookmarks_list($model);
@@ -1268,17 +1270,17 @@ function bookmark_add($bool = FALSE)
     $fopen = fopen($_config['dir'].'/bookmarks', 'a+');
     if ($bool === TRUE)
     {
-	fwrite($fopen, basename($start_dir)."\n".$start_dir."\n");
-	fclose($fopen);
+    fwrite($fopen, basename($start_dir)."\n".$start_dir."\n");
+    fclose($fopen);
     }
     else
     {
-	fwrite ($fopen, "Новая закладка\n/\n");
-	fclose($fopen);
-	
-	list($model, $iter) = $selection_bookmarks->get_selected();
-	$model->clear();
-	bookmarks_list($model);
+    fwrite ($fopen, "Новая закладка\n/\n");
+    fclose($fopen);
+    
+    list($model, $iter) = $selection_bookmarks->get_selected();
+    $model->clear();
+    bookmarks_list($model);
     }
 }
 
@@ -1305,6 +1307,7 @@ function text_view($file)
     
     $text_view->set_buffer($text_buffer);
     $text_view->set_editable(TRUE);
+    $text_view->set_left_margin(10);
     
     $scroll = new GtkScrolledWindow;
     $scroll->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
@@ -1333,7 +1336,7 @@ function on_selection($selection)
     list($model, $iter) = $selection->get_selected();
     @$file = $model->get_value($iter, 0);
     if (!empty($file))
-	$action_menu['copy']->set_sensitive(TRUE);
+    $action_menu['copy']->set_sensitive(TRUE);
 }
 
 ?>
