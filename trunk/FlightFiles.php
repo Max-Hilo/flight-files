@@ -12,7 +12,7 @@ include 'FlightFiles.data.php';
 config_parser();
 
 $window = new GtkWindow();
-$window->set_icon(GdkPixbuf::new_from_file('logo.png'));
+$window->set_icon(GdkPixbuf::new_from_file('logo.svg'));
 $window->set_size_request(750, 600);
 $window->set_position(Gtk::WIN_POS_CENTER);
 $window->set_title('Фаловый менеджер FlightFiles');
