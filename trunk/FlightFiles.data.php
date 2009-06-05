@@ -280,7 +280,11 @@ function paste_file()
         if (is_file($file))
             copy($file, $start_dir.'/'.$dest);
         elseif (is_dir($file))
-            exec("cp -R '$file' '$start_dir/$dest'");
+        {
+            mkdir($start_dir.'/'.$dest);
+            _copy($file, $start_dir.'/'.$dest);
+        }
+            //exec("cp -R '$file' '$start_dir/$dest'");
     }
     elseif ($action == 'cut')
     {
@@ -291,6 +295,33 @@ function paste_file()
     }
     change_dir('none');
     }
+}
+
+/*
+ * Рекурсивное копирование директорий.
+ * @param string $source_dir Исходная директория
+ * @param string $dest_dir Создаваемая директория
+ */
+
+function _copy($source_dir, $dest_dir)
+{
+    $opendir = opendir($source_dir);
+    while (FALSE !== ($file = readdir($opendir)))
+    {
+        if ($file == '.' OR $file == '..')
+            continue;
+        if (is_file($source_dir.'/'.$file))
+            copy($source_dir.'/'.$file, $dest_dir.'/'.$file);
+            //echo $source_dir.'/'.$file.' --- '.$dest_dir.'/'.$file."\n";
+        elseif (is_dir($source_dir.'/'.$file))
+        {
+            //echo "Создаём директорию\n";
+            mkdir($dest_dir.'/'.$file);
+            _copy($source_dir.'/'.$file, $dest_dir.'/'.$file);
+        }
+            //copy($source_dir.'/'.$file, $dest_dir.'/'.$file);
+    }
+    closedir($opendir);
 }
 
 /**
@@ -467,7 +498,7 @@ function delete($file)
         $dialog->show_all();
         $result = $dialog->run();
         if ($result == Gtk::RESPONSE_YES)
-            exec('rm -R "'.$start_dir.'/'.$file.'"');
+            rm($start_dir.'/'.$file, $start_dir.'/'.$file);
         $dialog->destroy();
         change_dir('none');
     }
@@ -507,6 +538,29 @@ function delete($file)
             $dialog->destroy();
         change_dir('none');
     }
+}
+
+/*
+ * Рекурсивное удаление каталогов.
+ * @param string $dir Каталог, который необходимо удалить
+ */
+
+function rm($dir)
+{
+    $opendir = opendir($dir);
+    while (FALSE !== ($file = readdir($opendir)))
+    {
+        if ($file == '.' OR $file == '..')
+            continue;
+        if (is_file($dir.'/'.$file))
+            unlink($dir.'/'.$file);
+        elseif (is_dir($dir.'/'.$file))
+        {
+            rm($dir.'/'.$file);
+        }
+    }
+    closedir($opendir);
+    rmdir($dir.'/'.$file);
 }
 
 /**
