@@ -914,7 +914,7 @@ function about()
     $dialog = new GtkAboutDialog();
     $dialog->set_icon(GdkPixbuf::new_from_file('logo.svg'));
     $dialog->set_logo(GdkPixbuf::new_from_file('logo.svg'));
-    $dialog->set_name('FlightFiles');
+    $dialog->set_program_name('FlightFiles');
     $dialog->set_version('0.1.0');
     $dialog->set_comments("Небольшой файловый менеджер, написанный на языке PHP\n".
                           "с использованием библиотеки PHP-GTK2.");

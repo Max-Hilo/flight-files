@@ -281,8 +281,7 @@ $selection->connect('changed', 'on_selection');
 ///// Колонки /////
 ///////////////////
 $column_file = new GtkTreeViewColumn('Название', $cell_renderer, 'text', 0);
-$column_file->set_max_width(400);
-$column_file->set_resizable(TRUE);
+$column_file->set_expand(TRUE);
 $column_file->set_sort_column_id(0);
 
 $column_df = new GtkTreeViewColumn('Папка/файл', $cell_renderer, 'text', 1);
@@ -292,6 +291,8 @@ $column_size = new GtkTreeViewColumn('Размер', $cell_renderer, 'text', 2);
 $column_size->set_sort_column_id(2);
 
 $column_mtime = new GtkTreeViewColumn('Дата изменения', $cell_renderer, 'text', 3);
+$column_mtime->set_sizing(Gtk::TREE_VIEW_COLUMN_FIXED);
+$column_mtime->set_fixed_width(150);
 $column_mtime->set_sort_column_id(3);
 
 $tree_view->append_column($column_file);
@@ -304,7 +305,7 @@ $tree_view->append_column($column_mtime);
 //////////////////
 
 $scroll = new GtkScrolledWindow();
-$scroll->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
+$scroll->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_ALWAYS);
 $scroll->add($tree_view);
 $vbox->pack_start($scroll);
 $tree_view->connect('button-press-event', 'on_button');
