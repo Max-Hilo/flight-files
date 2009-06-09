@@ -1135,7 +1135,7 @@ function bookmarks_edit()
     
     $window = new GtkWindow();
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
-    $window->set_size_request(600, 200);
+    $window->set_size_request(600, 220);
     $window->set_icon(GdkPixbuf::new_from_file('logo.svg'));
     $window->set_title('Управление закладками');
     $window->set_modal(TRUE);
@@ -1159,6 +1159,12 @@ function bookmarks_edit()
     $vbox->pack_start(new GtkLabel(''), FALSE, FALSE);
     $vbox->pack_start($path_label, FALSE, FALSE);
     $vbox->pack_start($path_entry, FALSE, FALSE);
+    $vbox->pack_start(new GtkLabel(''), FALSE, FALSE);
+    $button_ok = new GtkButton('Сохранить изменения');
+    $button_ok->set_image(GtkImage::new_from_stock(Gtk::STOCK_OK, Gtk::ICON_SIZE_BUTTON));
+    $button_ok->set_sensitive(FALSE);
+    $button_ok->connect_simple('clicked', 'bookmarks_save_change', $name_entry, $path_entry);
+    $vbox->pack_start($button_ok, FALSE, FALSE);
     
     $table->attach($vbox, 2, 3, 0, 1, Gtk::FILL, Gtk::FILL);
     
@@ -1177,13 +1183,6 @@ function bookmarks_edit()
     $button_add->connect_simple('clicked', 'bookmark_add');
     
     $table->attach($button_add, 1, 2, 1, 2, Gtk::FILL, Gtk::FILL);
-    
-    $button_ok = new GtkButton('Сохранить изменения');
-    $button_ok->set_image(GtkImage::new_from_stock(Gtk::STOCK_OK, Gtk::ICON_SIZE_BUTTON));
-    $button_ok->set_sensitive(FALSE);
-    $button_ok->connect_simple('clicked', 'bookmarks_save_change', $name_entry, $path_entry);
-    
-    $table->attach($button_ok, 2, 3, 1, 2, Gtk::FILL, Gtk::FILL);
     
     /**
      * Список закладок
@@ -1208,9 +1207,6 @@ function bookmarks_edit()
                                   $name_entry, $path_entry, $button_delete, $button_ok);
     
     $table->attach($scrolled, 0, 2, 0, 1);
-    
-    $table->attach(new GtkLabel('Внимание! При любом изменении закладок необходимо перезапустить программу!'),
-                   0, 3, 2, 3);
     
     $window->add($table);
     $window->show_all();
@@ -1268,7 +1264,7 @@ function selection_bookmarks($selection, $name_entry, $path_entry, $button_delet
  */
 function bookmarks_delete($name_entry, $path_entry)
 {
-    global $_config, $selection_bookmarks, $action_menu;
+    global $_config, $selection_bookmarks, $action_menu, $sub_menu;
     
     list($model, $iter) = $selection_bookmarks->get_selected();
     $name = $model->get_value($iter, 0);
@@ -1284,6 +1280,11 @@ function bookmarks_delete($name_entry, $path_entry)
     bookmarks_list($model);
     $name_entry->set_text('');
     $path_entry->set_text('');
+    
+    // Изменяем меню
+    foreach ($sub_menu['bookmarks']->get_children() as $widget)
+        $sub_menu['bookmarks']->remove($widget);
+    bookmarks_menu();
 }
 
 /**
@@ -1291,7 +1292,7 @@ function bookmarks_delete($name_entry, $path_entry)
  */
 function bookmarks_save_change($name_entry, $path_entry)
 {
-    global $_config, $selection_bookmarks;
+    global $_config, $selection_bookmarks, $sub_menu;
     
     list($model, $iter) = $selection_bookmarks->get_selected();
     $name_old = $model->get_value($iter, 0);
@@ -1302,16 +1303,21 @@ function bookmarks_save_change($name_entry, $path_entry)
     $fopen = fopen($_config['dir'].'/bookmarks', 'w+');
     for ($i = 0; $i < count($file_array); $i++)
     {
-    if (trim($file_array[$i]) == $name_old)
-        fwrite($fopen, $name."\n".$path."\n");
-    else
-        fwrite($fopen, trim($file_array[$i])."\n".trim($file_array[$i+1])."\n");
-    $i++;
+        if (trim($file_array[$i]) == $name_old)
+            fwrite($fopen, $name."\n".$path."\n");
+        else
+            fwrite($fopen, trim($file_array[$i])."\n".trim($file_array[$i+1])."\n");
+        $i++;
     }
     $model->clear();
     bookmarks_list($model);
     $name_entry->set_text('');
     $path_entry->set_text('');
+    
+    // Изменяем меню
+    foreach ($sub_menu['bookmarks']->get_children() as $widget)
+        $sub_menu['bookmarks']->remove($widget);
+    bookmarks_menu();
 }
 
 /**
@@ -1319,12 +1325,16 @@ function bookmarks_save_change($name_entry, $path_entry)
  */
 function bookmark_add($bool = FALSE)
 {
-    global $_config, $selection_bookmarks, $start_dir;
+    global $_config, $selection_bookmarks, $start_dir, $sub_menu;
     
     $fopen = fopen($_config['dir'].'/bookmarks', 'a+');
     if ($bool === TRUE)
     {
-        fwrite($fopen, basename($start_dir)."\n".$start_dir."\n");
+        if ($start_dir == '/')
+            $basename = 'Корень';
+        else
+            $basename = basename($start_dir);
+        fwrite($fopen, $basename."\n".$start_dir."\n");
         fclose($fopen);
     }
     else
@@ -1336,6 +1346,11 @@ function bookmark_add($bool = FALSE)
         $model->clear();
         bookmarks_list($model);
     }
+    
+    // Изменяем меню
+    foreach ($sub_menu['bookmarks']->get_children() as $widget)
+        $sub_menu['bookmarks']->remove($widget);
+    bookmarks_menu();
 }
 
 function text_view($file)
@@ -1391,6 +1406,51 @@ function on_selection($selection)
     @$file = $model->get_value($iter, 0);
     if (!empty($file))
         $action_menu['copy']->set_sensitive(TRUE);
+}
+
+function bookmarks_menu()
+{
+    global $menu_item, $menu, $accel_group, $action_group, $_config, $sub_menu, $action_menu;
+    
+    unset($menu_item);
+    $sub_menu['bookmarks'] = new GtkMenu();
+    $menu['bookmarks']->set_submenu($sub_menu['bookmarks']);
+
+    if (file_exists($_config['dir'].'/bookmarks') AND filesize($_config['dir'].'/bookmarks') != 0)
+    {
+        $file_bookmarks = file($_config['dir'].'/bookmarks');
+        for ($i = 0; $i < count($file_bookmarks); $i++)
+        {
+            $action_menu['bookmarks'.$i] = new GtkAction($i, trim($file_bookmarks[$i]), '', Gtk::STOCK_DIRECTORY);
+            $menu_item = $action_menu['bookmarks'.$i]->create_menu_item();
+            $action_menu['bookmarks'.$i]->connect_simple('activate', 'change_dir', 'bookmarks', trim($file_bookmarks[$i+1]));
+            $sub_menu['bookmarks']->append($menu_item);
+            $i++;
+        }
+        
+        unset($menu_item);
+        
+        $menu_item['separator_two'] = new GtkSeparatorMenuItem();
+    }
+
+    $action_menu['bookmarks_add'] = new GtkAction('BOOKMARKS_ADD', 'Добавить в закладки', '', Gtk::STOCK_ADD);
+    //$accel['bookmarks_add'] = '<control>D';
+    //$action_group->add_action_with_accel($action_menu['bookmarks_add'], $accel['bookmarks_add']);
+    //$action_menu['bookmarks_add']->set_accel_group($accel_group);
+    //$action_menu['bookmarks_add']->connect_accelerator();
+    $menu_item['bookmarks_add'] = $action_menu['bookmarks_add']->create_menu_item();
+    $action_menu['bookmarks_add']->connect_simple('activate', 'bookmark_add', TRUE);
+
+    $action_menu['bookmarks_edit'] = new GtkAction('BOOKMARKS_EDIT', 'Управление закладками', '', Gtk::STOCK_EDIT);
+    //$accel['bookmarks_edit'] = '<control>B';
+    //$action_group->add_action_with_accel($action_menu['bookmarks_edit'], $accel['bookmarks_edit']);
+    //$action_menu['bookmarks_edit']->set_accel_group($accel_group);
+    //$action_menu['bookmarks_edit']->connect_accelerator();
+    $menu_item['bookmarks_edit'] = $action_menu['bookmarks_edit']->create_menu_item();
+    $action_menu['bookmarks_edit']->connect_simple('activate', 'bookmarks_edit');
+
+    foreach ($menu_item as $value)
+        $sub_menu['bookmarks']->append($value);
 }
 
 ?>
