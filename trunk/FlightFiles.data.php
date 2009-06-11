@@ -1,6 +1,14 @@
 <?php
 
 /**
+ * Файл, содержащий все функции программы.
+ * 
+ * @copyright Copyright (C) 2009, Вавилов Егор (Shecspi)
+ * @license http://www.opensource.org/licenses/mit-license.php MIT License
+ * @link http://code.google.com/p/flight-files/ Домашняя страница проекта
+ */
+
+/**
  *
  * Функция получает настройки из конфигурационного файла
  * и помещает их в массив $_config.
@@ -9,7 +17,7 @@ function config_parser()
 {
     global $_config;
     
-    $file_array = file($_config['dir'].'/FlightFiles.conf');
+    $file_array = file(CONFIG_FILE);
     for ($i = 0; $i < count($file_array); $i++)
     {
         $explode = explode(' ', trim($file_array[$i]));
@@ -17,6 +25,8 @@ function config_parser()
             $_config['hidden_files'] = trim($explode[1]);
         elseif (trim($explode[0]) == 'HOME_DIR')
             $_config['start_dir'] = trim($explode[1]);
+        elseif (trim($explode[0]) == 'ASK_DELETE')
+            $_config['ask_delete'] = trim($explode[1]);
     }
 }
 
@@ -172,7 +182,7 @@ function on_button($view, $event)
                 $new_file->set_sensitive(FALSE);
                 $new_dir->set_sensitive(FALSE);
             }
-            if (!file_exists($_config['dir'].'/bufer') OR !is_writable($start_dir))
+            if (!file_exists(BUFER_FILE) OR !is_writable($start_dir))
                 $paste->set_sensitive(FALSE);
             
             $menu->append($new_file);
@@ -259,7 +269,7 @@ function bufer_file($file = '', $act)
         @$file = $model->get_value($iter, 0);
     }
     
-    $fopen = fopen($_config['dir'].'/bufer', 'w+');
+    $fopen = fopen(BUFER_FILE, 'w+');
     fwrite($fopen, $start_dir.'/'.$file."\n".$act);
     fclose($fopen);
     $action_menu['clear_bufer']->set_sensitive(TRUE);
@@ -278,7 +288,7 @@ function paste_file()
 {
     global $_config, $start_dir;
     
-    $file_array = file($_config['dir'].'/bufer');
+    $file_array = file(BUFER_FILE);
     $file = trim($file_array[0]);
     $action = trim($file_array[1]);
     $dest = basename($file);
@@ -488,67 +498,77 @@ function properties($file)
  */
 function delete($file)
 {
-    global $start_dir;
+    global $start_dir, $_config;
     
-    if (is_dir("$start_dir/$file"))
+    if (is_dir($start_dir.'/'.$file))
     {
-        $dialog = new GtkDialog(
-            'Подтверждение операции',
-            NULL,
-            Gtk::DIALOG_MODAL,
-            array(
-                Gtk::STOCK_NO, Gtk::RESPONSE_NO,
-                Gtk::STOCK_YES, Gtk::RESPONSE_YES
-            )
-        );
-        $dialog->set_has_separator(FALSE);
-        $dialog->set_resizable(FALSE);
-        $vbox = $dialog->vbox;
-        $vbox->pack_start($hbox = new GtkHBox());
-        $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
-        $hbox->pack_start(new GtkLabel("Вы действительно хотите удалить папку\n".
-                       "'".$file."' со всем её содержимым?"));
-        $dialog->show_all();
-        $result = $dialog->run();
-        if ($result == Gtk::RESPONSE_YES)
-            rm($start_dir.'/'.$file, $start_dir.'/'.$file);
-        $dialog->destroy();
+        if ($_config['ask_delete'] == 'on')
+        {
+            $dialog = new GtkDialog(
+                'Подтверждение операции',
+                NULL,
+                Gtk::DIALOG_MODAL,
+                array(
+                    Gtk::STOCK_NO, Gtk::RESPONSE_NO,
+                    Gtk::STOCK_YES, Gtk::RESPONSE_YES
+                )
+            );
+            $dialog->set_has_separator(FALSE);
+            $dialog->set_resizable(FALSE);
+            $vbox = $dialog->vbox;
+            $vbox->pack_start($hbox = new GtkHBox());
+            $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
+            $hbox->pack_start(new GtkLabel("Вы действительно хотите удалить папку\n".
+                           "'".$file."' со всем её содержимым?"));
+            $dialog->show_all();
+            $result = $dialog->run();
+            if ($result == Gtk::RESPONSE_YES)
+                rm($start_dir.'/'.$file, $start_dir.'/'.$file);
+            $dialog->destroy();
+        }
+        else
+            rm($start_dir.'/'.$file);
         change_dir('none');
     }
     else
     {
-        $dialog = new GtkDialog(
-            'Подтверждение операции',
-            NULL,
-            Gtk::DIALOG_MODAL,
-            array(
-                Gtk::STOCK_NO, Gtk::RESPONSE_NO,
-                Gtk::STOCK_YES, Gtk::RESPONSE_YES
-            )
-        );
-        $dialog->set_has_separator(FALSE);
-        $dialog->set_resizable(FALSE);
-        $vbox = $dialog->vbox;
-        $vbox->pack_start($hbox = new GtkHBox());
-        $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
-        $hbox->pack_start(new GtkLabel('Вы действительно хотите удалить файл "'.$file.'"?'));
-        $dialog->show_all();
-        $result = $dialog->run();
-        if ($result == Gtk::RESPONSE_YES)
+        if ($_config['ask_delete'] == 'on')
         {
-            if (!is_writable($start_dir.'/'.$file))
+            $dialog = new GtkDialog(
+                'Подтверждение операции',
+                NULL,
+                Gtk::DIALOG_MODAL,
+                array(
+                    Gtk::STOCK_NO, Gtk::RESPONSE_NO,
+                    Gtk::STOCK_YES, Gtk::RESPONSE_YES
+                )
+            );
+            $dialog->set_has_separator(FALSE);
+            $dialog->set_resizable(FALSE);
+            $vbox = $dialog->vbox;
+            $vbox->pack_start($hbox = new GtkHBox());
+            $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
+            $hbox->pack_start(new GtkLabel('Вы действительно хотите удалить файл "'.$file.'"?'));
+            $dialog->show_all();
+            $result = $dialog->run();
+            if ($result == Gtk::RESPONSE_YES)
             {
-                $dialog->destroy();
-                alert('У вас недостаточно прав на выполнение данной операции!');
+                if (!is_writable($start_dir.'/'.$file))
+                {
+                    $dialog->destroy();
+                    alert('У вас недостаточно прав на выполнение данной операции!');
+                }
+                else
+                {
+                    unlink($start_dir.'/'.$file);
+                    $dialog->destroy();
+                }
             }
             else
-            {
-               unlink("$start_dir/$file");
                 $dialog->destroy();
-            }
         }
         else
-            $dialog->destroy();
+            unlink($start_dir.'/'.$file);
         change_dir('none');
     }
 }
@@ -734,7 +754,7 @@ function change_dir($act = '', $dir = '')
     $action_menu['copy']->set_sensitive(FALSE);
     $action_menu['new_file']->set_sensitive(TRUE);
     $action_menu['new_dir']->set_sensitive(TRUE);
-    if (file_exists($_config['dir'].'/bufer'))
+    if (file_exists(BUFER_FILE))
     {
         $action['paste']->set_sensitive(TRUE);
         $action_menu['clear_bufer']->set_sensitive(TRUE);
@@ -896,7 +916,7 @@ function close_window($window)
 {
     global $_config;
     
-    @unlink($_config['dir'].'/bufer');
+    @unlink(BUFER_FILE);
     Gtk::main_quit();
 }
 
@@ -909,7 +929,7 @@ function clear_bufer()
 {
     global $_config, $action, $action_menu;
     
-    @unlink($_config['dir'].'/bufer');
+    @unlink(BUFER_FILE);
     $action['paste']->set_sensitive(FALSE);
     $action_menu['clear_bufer']->set_sensitive(FALSE);
     $action_menu['paste']->set_sensitive(FALSE);
@@ -955,10 +975,10 @@ function preference()
     global $_config;
     
     $window = new GtkWindow();
+    $window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
     $window->set_position(Gtk::WIN_POS_CENTER);
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $window->set_size_request(400, 200);
-    $window->set_skip_taskbar_hint(TRUE);
     $window->set_resizable(FALSE);
     $window->set_title('Параметры FlightFiles');
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
@@ -971,28 +991,34 @@ function preference()
     $table = new GtkTable();
     
     $label_hidden_files = new GtkCheckButton('Показывать скрытые файлы и папки');
+    $ask_delete = new GtkCheckButton('Требовать подтверждение удаления файлов/папок');
     $label_home_dir = new GtkLabel('Начинать с:');
     $radio_home = new GtkRadioButton(NULL, 'Домашнаей папки');
     $radio_root = new GtkRadioButton($radio_home, 'Корневой папки');
     
     if ($_config['hidden_files'] == 'on')
         $label_hidden_files->set_active(TRUE);
+    if ($_config['ask_delete'] == 'on')
+        $ask_delete->set_active(TRUE);
     if ($_config['start_dir'] == '/')
         $radio_root->set_active(TRUE);
     else
         $radio_home->set_active(FALSE);
     
     $label_hidden_files->set_alignment(0,0);
+    $ask_delete->set_alignment(0,0);
     $label_home_dir->set_alignment(0,0);
     
-    $label_hidden_files->connect('toggled', 'check_button_write');
+    $label_hidden_files->connect('toggled', 'check_button_write', 'hidden_files');
+    $ask_delete->connect('toggled', 'check_button_write', 'ask_delete');
     $radio_home->connect_simple('toggled', 'radio_button_write', 'HOME_DIR', 'home');
     $radio_root->connect_simple('toggled', 'radio_button_write', 'HOME_DIR', 'root');
     
     $table->attach($label_hidden_files, 0, 2, 0, 1, Gtk::FILL, Gtk::FILL);
-    $table->attach($label_home_dir, 0, 2, 1, 2, Gtk::FILL, Gtk::FILL);
-    $table->attach($radio_home, 0, 1, 2, 3, Gtk::FILL, Gtk::FILL);
-    $table->attach($radio_root, 1, 2, 2, 3, Gtk::FILL, Gtk::FILL);
+    $table->attach($ask_delete, 0, 2, 1, 2, Gtk::FILL, Gtk::FILL);
+    $table->attach($label_home_dir, 0, 2, 2, 3, Gtk::FILL, Gtk::FILL);
+    $table->attach($radio_home, 0, 1, 3, 4, Gtk::FILL, Gtk::FILL);
+    $table->attach($radio_root, 1, 2, 3, 4, Gtk::FILL, Gtk::FILL);
     
     $notebook->append_page($table, new GtkLabel('Основные'));
     
@@ -1012,7 +1038,7 @@ function preference()
     $check_text_list = new GtkCheckButton('Использовать системный шрифт');
     $check_text_list->connect('toggled', 'check_font', $entry_font_select, $button_font_select);
     
-    if (!file_exists($_config['dir'].'/fonts'))
+    if (!file_exists(FONT_FILE))
     {
         $check_text_list->set_active(TRUE);
         $entry_font_select->set_sensitive(FALSE);
@@ -1023,7 +1049,7 @@ function preference()
         $check_text_list->set_active(FALSE);
         $entry_font_select->set_sensitive(TRUE);
         $button_font_select->set_sensitive(TRUE);
-        $entry_font_select->set_text(file_get_contents($_config['dir'].'/fonts'));
+        $entry_font_select->set_text(file_get_contents(FONT_FILE));
     }
     
     $table->attach($label_text_list, 0, 1, 0, 1, Gtk::FILL, Gtk::FILL);
@@ -1054,7 +1080,7 @@ function check_font($check, $entry, $button)
         $entry->set_text('');
         $cell_renderer->set_property('font',  '');
         change_dir('none');
-        @unlink($_config['dir'].'/fonts');
+        @unlink(FONT_FILE);
     }
 }
 
@@ -1065,15 +1091,15 @@ function font_select($entry)
     $dialog = new GtkFontSelectionDialog('Выбрать шрифт');
     $dialog->set_position(Gtk::WIN_POS_CENTER_ALWAYS);
     $dialog->set_preview_text('Файловый менджер FlightFiles');
-    if (file_exists($_config['dir'].'/fonts'))
-        $dialog->set_font_name(file_get_contents($_config['dir'].'/fonts'));
+    if (file_exists(FONT_FILE))
+        $dialog->set_font_name(file_get_contents(FONT_FILE));
     $dialog->show_all();
     $dialog->run();
     
     $font_name = $dialog->get_font_name();
     $entry->set_text($font_name);
     
-    $fopen = fopen($_config['dir'].'/fonts', 'w+');
+    $fopen = fopen(FONT_FILE, 'w+');
     fwrite($fopen, $font_name);
     fclose($fopen);
     
@@ -1094,8 +1120,8 @@ function radio_button_write($param, $value)
 {
     global $_config;
     
-    $file = file($_config['dir'].'/FlightFiles.conf');
-    $fopen = fopen($_config['dir'].'/FlightFiles.conf', 'w+');
+    $file = file(CONFIG_FILE);
+    $fopen = fopen(CONFIG_FILE, 'w+');
     if ($value == 'home')
         $value = $_ENV['HOME'];
     else
@@ -1119,21 +1145,31 @@ function radio_button_write($param, $value)
  * Функция производит запись в конфигурационный файл
  * при изменении значения флажка в окне настроек.
  */
-function check_button_write($check)
+function check_button_write($check, $param)
 {
     global $_config;
     
-    $hidden_files = $check->get_active() ? 'on' : 'off';
+    $value = $check->get_active() ? 'on' : 'off';
     
-    $file = file($_config['dir'].'/FlightFiles.conf');
-    $fopen = fopen($_config['dir'].'/FlightFiles.conf', 'w+');
+    $file = file(CONFIG_FILE);
+    $fopen = fopen(CONFIG_FILE, 'w+');
     for ($i = 0; $i < count($file); $i++)
     {
         $explode = explode(' ', trim($file[$i]));
-        if ($explode[0] == 'HIDDEN_FILES')
-            fwrite($fopen, 'HIDDEN_FILES '.$hidden_files."\n");
-        else
-            fwrite($fopen, trim($file[$i])."\n");
+        if ($param == 'hidden_files')
+        {
+            if ($explode[0] == 'HIDDEN_FILES')
+                fwrite($fopen, 'HIDDEN_FILES '.$value."\n");
+            else
+                fwrite($fopen, trim($file[$i])."\n");
+        }
+        elseif ($param == 'ask_delete')
+        {
+            if ($explode[0] == 'ASK_DELETE')
+                fwrite($fopen, 'ASK_DELETE '.$value."\n");
+            else
+                fwrite($fopen, trim($file[$i])."\n");
+        }
     }
     fclose($fopen);
     
@@ -1150,12 +1186,12 @@ function bookmarks_edit()
     global $selection_bookmarks;
     
     $window = new GtkWindow();
+    $window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
     $window->set_size_request(600, 220);
     $window->set_skip_taskbar_hint(TRUE);
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $window->set_title('Управление закладками');
-    $window->set_modal(TRUE);
     
     $table = new GtkTable();
     
@@ -1238,7 +1274,7 @@ function bookmarks_list($model)
 {
     global $_config;
     
-    $file_bookmarks = file($_config['dir'].'/bookmarks');
+    $file_bookmarks = @file(BOOKMARKS_FILE);
     $data = array();
     for ($i = 0; $i < count ($file_bookmarks); $i++)
     {
@@ -1263,7 +1299,7 @@ function selection_bookmarks($selection, $name_entry, $path_entry, $button_delet
     $name_entry->set_text($name);
     $button_delete->set_sensitive(TRUE);
     $button_ok->set_sensitive(TRUE);
-    $file_bookmarks = file($_config['dir'].'/bookmarks');
+    $file_bookmarks = file(BOOKMARKS_FILE);
     for ($i = 0; $i < count($file_bookmarks); $i++)
     {
         if (trim($file_bookmarks[$i]) == $name)
@@ -1285,8 +1321,8 @@ function bookmarks_delete($name_entry, $path_entry)
     
     list($model, $iter) = $selection_bookmarks->get_selected();
     $name = $model->get_value($iter, 0);
-    $file_bookmarks = file($_config['dir'].'/bookmarks');
-    $fopen = fopen($_config['dir'].'/bookmarks', 'w+');
+    $file_bookmarks = file(BOOKMARKS_FILE);
+    $fopen = fopen(BOOKMARKS_FILE, 'w+');
     for ($i = 0; $i < count($file_bookmarks); $i++)
     {
         if (trim($file_bookmarks[$i]) != $name)
@@ -1316,8 +1352,8 @@ function bookmarks_save_change($name_entry, $path_entry)
     $name = $name_entry->get_text();
     $path = $path_entry->get_text();
     
-    $file_array = file($_config['dir'].'/bookmarks');
-    $fopen = fopen($_config['dir'].'/bookmarks', 'w+');
+    $file_array = file(BOOKMARKS_FILE);
+    $fopen = fopen(BOOKMARKS_FILE, 'w+');
     for ($i = 0; $i < count($file_array); $i++)
     {
         if (trim($file_array[$i]) == $name_old)
@@ -1344,7 +1380,7 @@ function bookmark_add($bool = FALSE)
 {
     global $_config, $selection_bookmarks, $start_dir, $sub_menu;
     
-    $fopen = fopen($_config['dir'].'/bookmarks', 'a+');
+    $fopen = fopen(BOOKMARKS_FILE, 'a+');
     if ($bool === TRUE)
     {
         if ($start_dir == '/')
@@ -1433,9 +1469,9 @@ function bookmarks_menu()
     $sub_menu['bookmarks'] = new GtkMenu();
     $menu['bookmarks']->set_submenu($sub_menu['bookmarks']);
 
-    if (file_exists($_config['dir'].'/bookmarks') AND filesize($_config['dir'].'/bookmarks') != 0)
+    if (file_exists(BOOKMARKS_FILE) AND filesize(BOOKMARKS_FILE) != 0)
     {
-        $file_bookmarks = file($_config['dir'].'/bookmarks');
+        $file_bookmarks = file(BOOKMARKS_FILE);
         for ($i = 0; $i < count($file_bookmarks); $i++)
         {
             $action_menu['bookmarks'.$i] = new GtkAction($i, trim($file_bookmarks[$i]), '', Gtk::STOCK_DIRECTORY);
@@ -1473,8 +1509,8 @@ function bookmarks_menu()
 function shortcuts()
 {
     $window = new GtkWindow;
+    $window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
     $window->set_size_request(400, -1);
-    $window->set_position(Gtk::WIN_POS_CENTER);
     $window->set_title('Сочетания клавиш');
     $window->set_resizable(FALSE);
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
