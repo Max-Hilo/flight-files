@@ -1,15 +1,28 @@
 #!/usr/bin/php
 <?php
 
-// Папка вспомогательных файлов программы
-$_config['dir'] = './configuration';
-
-// Удаляем файл буфера,
-// если он по каким-либо причинам ещё не удалён
-@unlink($_config['dir'].'/'.$_config['bufer']);
+/**
+ * Файловый менеджер FlightFiles
+ * 
+ * @copyright Copyright (C) 2009, Вавилов Егор (Shecspi)
+ * @license http://www.opensource.org/licenses/mit-license.php MIT License
+ * @link http://code.google.com/p/flight-files Домашняя страница проекта
+ */
 
 // Логотип программы
-define (ICON_PROGRAM, './logo.svg');
+define ('ICON_PROGRAM', './logo_program.png');
+// Файл с настройками программы
+define ('CONFIG_FILE', './configuration/FlightFiles.conf');
+// Файл с настройками шрифта
+define ('FONT_FILE', './configuration/font');
+// Файл буфера обмена
+define ('BUFER_FILE', './configuration/bufer');
+// Файл закладок
+define ('BOOKMARKS_FILE', './configuration/bookmarks');
+
+// Удаляем файл буфера обмена,
+// если он по каким-либо причинам ещё не удалён
+@unlink(BUFER_FILE);
 
 include 'FlightFiles.data.php';
 
@@ -288,8 +301,8 @@ current_dir();
 
 $tree_view = new GtkTreeView($store);
 $cell_renderer = new GtkCellRendererText();
-if (file_exists($_config['dir'].'/fonts'))
-    $cell_renderer->set_property('font',  file_get_contents($_config['dir'].'/fonts'));
+if (file_exists(FONT_FILE))
+    $cell_renderer->set_property('font',  file_get_contents(FONT_FILE));
 
 $selection = $tree_view->get_selection();
 $selection->connect('changed', 'on_selection');
