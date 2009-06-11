@@ -39,10 +39,23 @@ function on_button($view, $event)
             @$iter = $store->get_iter($path);
             @$file = $store->get_value($iter, 0);
             if (is_dir($start_dir.'/'.$file))
-                change_dir('open', $file);
-            if (mime_content_type($start_dir.'/'.$file) == 'text/plain' OR
-                mime_content_type($start_dir.'/'.$file) == 'text/html')
+            {
+                // При нехватке прав для просмотра директории
+                if (!is_readable($start_dir.'/'.$file))
+                    alert('У вас недостаточно прав для просмотра указанной директории!');
+                else
+                    change_dir('open', $file);
+            }
+            elseif (is_file($start_dir.'/'.$file))
+            {
+                if (!is_readable($start_dir.'/'.$file))
+                    alert('У вас недостаточно прав для просмотра указанного файла!');
+                elseif (mime_content_type($start_dir.'/'.$file) == 'text/plain' OR
+                    mime_content_type($start_dir.'/'.$file) == 'text/html')
+                {
                     text_view($file);
+                }
+            }
         }
         return FALSE;
     }
@@ -336,7 +349,7 @@ function properties($file)
     $window = new GtkWindow();
     $window->set_position(Gtk::WIN_POS_CENTER);
     $window->set_title('Свойства '.$file);
-    $window->set_icon(GdkPixbuf::new_from_file('logo.svg'));
+    $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $window->set_size_request(500, -1);
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
     
@@ -700,7 +713,7 @@ function change_dir($act = '', $dir = '')
     elseif ($act == 'open')
         $new_dir = $start_dir.'/'.$dir;
     elseif ($act == 'bookmarks')
-    $new_dir = $dir;
+        $new_dir = $dir;
     else
         $new_dir = dirname($start_dir);
     
@@ -781,7 +794,8 @@ function alert($msg)
 {
     $dialog = new GtkDialog('Сообщение', NULL, Gtk::DIALOG_MODAL, array(Gtk::STOCK_OK, Gtk::RESPONSE_OK));
     $dialog->set_position(Gtk::WIN_POS_CENTER_ALWAYS);
-    $dialog->set_icon(GdkPixbuf::new_from_file('logo.svg'));
+    $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+    $dialog->set_skip_taskbar_hint(TRUE);
     $dialog->set_resizable(FALSE);
     $top_area = $dialog->vbox;
     $top_area->pack_start($hbox = new GtkHBox());
@@ -912,8 +926,9 @@ function about()
     global $_config;
     
     $dialog = new GtkAboutDialog();
-    $dialog->set_icon(GdkPixbuf::new_from_file('logo.svg'));
-    $dialog->set_logo(GdkPixbuf::new_from_file('logo.svg'));
+    $dialog->set_skip_taskbar_hint(TRUE);
+    $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+    $dialog->set_logo(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $dialog->set_program_name('FlightFiles');
     $dialog->set_version('0.1.0');
     $dialog->set_comments("Небольшой файловый менеджер, написанный на языке PHP\n".
@@ -941,8 +956,9 @@ function preference()
     
     $window = new GtkWindow();
     $window->set_position(Gtk::WIN_POS_CENTER);
-    $window->set_icon(GdkPixbuf::new_from_file('logo.svg'));
+    $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $window->set_size_request(400, 200);
+    $window->set_skip_taskbar_hint(TRUE);
     $window->set_resizable(FALSE);
     $window->set_title('Параметры FlightFiles');
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
@@ -1136,7 +1152,8 @@ function bookmarks_edit()
     $window = new GtkWindow();
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
     $window->set_size_request(600, 220);
-    $window->set_icon(GdkPixbuf::new_from_file('logo.svg'));
+    $window->set_skip_taskbar_hint(TRUE);
+    $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $window->set_title('Управление закладками');
     $window->set_modal(TRUE);
     
@@ -1361,7 +1378,7 @@ function text_view($file)
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
     $window->set_size_request(700, 400);
     $window->set_position(Gtk::WIN_POS_CENTER);
-    $window->set_icon(GdkPixbuf::new_from_file('logo.svg'));
+    $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $window->set_title('Текстовый редактор');
     
     $vbox = new GtkVBox();
@@ -1451,6 +1468,40 @@ function bookmarks_menu()
 
     foreach ($menu_item as $value)
         $sub_menu['bookmarks']->append($value);
+}
+
+function shortcuts()
+{
+    $window = new GtkWindow;
+    $window->set_size_request(400, -1);
+    $window->set_position(Gtk::WIN_POS_CENTER);
+    $window->set_title('Сочетания клавиш');
+    $window->set_resizable(FALSE);
+    $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+    $window->set_skip_taskbar_hint(TRUE);
+    $window->connect_simple('destroy', array('Gtk', 'main_quit'));
+    
+    $vbox = new GtkVBox;
+    $array = array(
+                    array('Создать файл', 'Ctrl+N'),
+                    array('Создать папку', 'Ctrl+Shift+N'),
+                    array('Закрыть программу', 'Ctrl+Q'),
+                    array('Копировать', 'Ctrl+C'),
+                    array('Вставить', 'Ctrl+V'));
+    $model = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING);
+    $view = new GtkTreeView($model);
+    $render = new GtkCellRendererText;
+    $view->append_column($column = new GtkTreeViewColumn('Назначение', $render, 'text', 0));
+    $column->set_expand(TRUE);
+    $view->append_column(new GtkTreeViewColumn('Сочетание клавиш', $render, 'text', 1));
+    foreach ($array as $value)
+    {
+        $model->append(array($value[0], $value[1]));
+    }
+    
+    $window->add($view);
+    $window->show_all();
+    Gtk::main();
 }
 
 ?>

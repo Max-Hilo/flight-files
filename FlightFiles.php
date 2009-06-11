@@ -1,3 +1,4 @@
+#!/usr/bin/php
 <?php
 
 // Папка вспомогательных файлов программы
@@ -7,13 +8,16 @@ $_config['dir'] = './configuration';
 // если он по каким-либо причинам ещё не удалён
 @unlink($_config['dir'].'/'.$_config['bufer']);
 
+// Логотип программы
+define (ICON_PROGRAM, './logo.svg');
+
 include 'FlightFiles.data.php';
 
 config_parser();
 
 $window = new GtkWindow();
-$window->set_icon(GdkPixbuf::new_from_file('logo.svg'));
-$window->set_size_request(750, 600);
+$window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+$window->set_default_size(750, 600);
 $window->set_position(Gtk::WIN_POS_CENTER);
 $window->set_title('Фаловый менеджер FlightFiles');
 $window->connect_simple('destroy', 'close_window', $window);
@@ -22,7 +26,12 @@ $window->add_accel_group($accel_group);
 $action_group = new GtkActionGroup('menubar');
 
 // Стартовая директория
-$start_dir = $_config['start_dir'];
+if (empty($argv[1]))
+    $start_dir = $_config['start_dir'];
+elseif (!file_exists($argv[1]))
+    $start_dir = $_config['start_dir'];
+else
+    $start_dir = $argv[1];
 
 $store = new GtkListStore(
                           GObject::TYPE_STRING,
@@ -138,6 +147,12 @@ unset($menu_item);
 $sub_menu['help'] = new GtkMenu();
 $menu['help']->set_submenu($sub_menu['help']);
 
+$action_menu['shortcuts'] = new GtkAction('SHORTCUTS', 'Сочетания клавиш', '', Gtk::STOCK_INFO);
+$menu_item['shortcuts'] = $action_menu['shortcuts']->create_menu_item();
+$action_menu['shortcuts']->connect_simple('activate', 'shortcuts');
+
+$menu_item['separator_one'] = new GtkSeparatorMenuItem;
+
 $action_menu['about'] = new GtkAction('ABOUT', 'О программе', '', Gtk::STOCK_ABOUT);
 $menu_item['about'] = $action_menu['about']->create_menu_item();
 $action_menu['about']->connect_simple('activate', 'about');
@@ -161,6 +176,8 @@ $action['up'] = new GtkAction('UP', 'Вверх',
                   'Перейти на уровень выше', Gtk::STOCK_GO_UP);
 $toolitem['up'] = $action['up']->create_tool_item();
 $action['up']->connect_simple('activate', 'change_dir');
+if ($start_dir == '/')
+    $action['up']->set_sensitive(FALSE);
 $toolbar->insert($toolitem['up'], -1);
 
 /**
