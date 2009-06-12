@@ -553,22 +553,16 @@ function delete($file)
             $result = $dialog->run();
             if ($result == Gtk::RESPONSE_YES)
             {
-                if (!is_writable($start_dir.'/'.$file))
-                {
-                    $dialog->destroy();
-                    alert('У вас недостаточно прав на выполнение данной операции!');
-                }
-                else
-                {
-                    unlink($start_dir.'/'.$file);
-                    $dialog->destroy();
-                }
+                unlink($start_dir.'/'.$file);
+                $dialog->destroy();
             }
             else
                 $dialog->destroy();
         }
         else
+        {
             unlink($start_dir.'/'.$file);
+        }
         change_dir('none');
     }
 }
@@ -950,7 +944,7 @@ function about()
     $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $dialog->set_logo(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $dialog->set_program_name('FlightFiles');
-    $dialog->set_version('0.1.0');
+    $dialog->set_version(VERSION_PROGRAM);
     $dialog->set_comments("Небольшой файловый менеджер, написанный на языке PHP\n".
                           "с использованием библиотеки PHP-GTK2.");
     $dialog->set_copyright('Copyright © 2009 Shecspi');
