@@ -9,18 +9,22 @@
  * @link http://code.google.com/p/flight-files Домашняя страница проекта
  */
 
-// Логотип программы
-define ('ICON_PROGRAM', './logo_program.png');
-// Файл с настройками программы
-define ('CONFIG_FILE', './configuration/FlightFiles.conf');
-// Файл с настройками шрифта
-define ('FONT_FILE', './configuration/font');
-// Файл буфера обмена
-define ('BUFER_FILE', './configuration/bufer');
-// Файл закладок
-define ('BOOKMARKS_FILE', './configuration/bookmarks');
+// Папка с файлами программы
+define ('SHARE_PROGRAM', '.');
 // Версия программы
-define ('VERSION_PROGRAM', trim(file_get_contents('./VERSION')));
+define ('VERSION_PROGRAM', trim(file_get_contents(SHARE_PROGRAM.'/VERSION')));
+// Логотип программы
+define ('ICON_PROGRAM', SHARE_PROGRAM.'/logo_program.png');
+// Папка с файлами настроек
+define ('CONFIG_DIR', './configuration');
+// Файл с настройками программы
+define ('CONFIG_FILE', CONFIG_DIR.'/FlightFiles.conf');
+// Файл с настройками шрифта
+define ('FONT_FILE', CONFIG_DIR.'/font');
+// Файл буфера обмена
+define ('BUFER_FILE', CONFIG_DIR.'/bufer');
+// Файл закладок
+define ('BOOKMARKS_FILE',  CONFIG_DIR.'/bookmarks');
 
 if ($argv[1] == '--version' OR $argv[1] == '-v')
 {
@@ -28,11 +32,22 @@ if ($argv[1] == '--version' OR $argv[1] == '-v')
     exit();
 }
 
+if (!file_exists(CONFIG_DIR))
+{
+    mkdir(CONFIG_DIR);
+}
+if (!file_exists(CONFIG_FILE))
+{
+    $fopen = fopen(CONFIG_FILE, 'w+');
+    fwrite($fopen, "HIDDEN_FILES off\nHOME_DIR /\nASK_DELETE on");
+    fclose($fopen);
+}
+
 // Удаляем файл буфера обмена,
 // если он по каким-либо причинам ещё не удалён
 @unlink(BUFER_FILE);
 
-include 'FlightFiles.data.php';
+include SHARE_PROGRAM.'/FlightFiles.data.php';
 
 config_parser();
 
@@ -41,7 +56,7 @@ $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
 $window->set_default_size(750, 600);
 $window->set_position(Gtk::WIN_POS_CENTER);
 $window->set_title('Фаловый менеджер FlightFiles');
-$window->connect_simple('destroy', 'close_window', $window);
+$window->connect_simple('destroy', 'close_window');
 $accel_group = new GtkAccelGroup();
 $window->add_accel_group($accel_group);
 $action_group = new GtkActionGroup('menubar');

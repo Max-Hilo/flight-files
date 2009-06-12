@@ -906,10 +906,8 @@ function delete_all($type)
  *
  * При закрытии окна программы данная функция удаляет файл буфера обмена.
  */
-function close_window($window)
+function close_window()
 {
-    global $_config;
-    
     @unlink(BUFER_FILE);
     Gtk::main_quit();
 }
@@ -1472,12 +1470,13 @@ function bookmarks_menu()
             $menu_item = $action_menu['bookmarks'.$i]->create_menu_item();
             $action_menu['bookmarks'.$i]->connect_simple('activate', 'change_dir', 'bookmarks', trim($file_bookmarks[$i+1]));
             $sub_menu['bookmarks']->append($menu_item);
+            unset($menu_item);
             $i++;
         }
         
         unset($menu_item);
         
-        $menu_item['separator_two'] = new GtkSeparatorMenuItem();
+        $menu_item['separator'] = new GtkSeparatorMenuItem();
     }
 
     $action_menu['bookmarks_add'] = new GtkAction('BOOKMARKS_ADD', 'Добавить в закладки', '', Gtk::STOCK_ADD);
