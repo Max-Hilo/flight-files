@@ -19,6 +19,14 @@ define ('FONT_FILE', './configuration/font');
 define ('BUFER_FILE', './configuration/bufer');
 // Файл закладок
 define ('BOOKMARKS_FILE', './configuration/bookmarks');
+// Версия программы
+define ('VERSION_PROGRAM', trim(file_get_contents('./VERSION')));
+
+if ($argv[1] == '--version' OR $argv[1] == '-v')
+{
+    echo VERSION_PROGRAM."\n";
+    exit();
+}
 
 // Удаляем файл буфера обмена,
 // если он по каким-либо причинам ещё не удалён
