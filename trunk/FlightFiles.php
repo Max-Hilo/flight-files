@@ -10,13 +10,15 @@
  */
 
 // Папка с файлами программы
-define ('SHARE_PROGRAM', '.');
+define ('SHARE_DIR', '.');
 // Версия программы
-define ('VERSION_PROGRAM', trim(file_get_contents(SHARE_PROGRAM.'/VERSION')));
+define ('VERSION_PROGRAM', trim(file_get_contents(SHARE_DIR.'/VERSION')));
 // Логотип программы
-define ('ICON_PROGRAM', SHARE_PROGRAM.'/logo_program.png');
+define ('ICON_PROGRAM', SHARE_DIR.'/logo_program.png');
 // Папка с файлами настроек
 define ('CONFIG_DIR', './configuration');
+// Папка с файлами локализации
+define ('LANG_DIR', CONFIG_DIR.'/languages');
 // Файл с настройками программы
 define ('CONFIG_FILE', CONFIG_DIR.'/FlightFiles.conf');
 // Файл с настройками шрифта
@@ -47,7 +49,15 @@ if (!file_exists(CONFIG_FILE))
 // если он по каким-либо причинам ещё не удалён
 @unlink(BUFER_FILE);
 
-include SHARE_PROGRAM.'/FlightFiles.data.php';
+// Основной языковой файл
+include SHARE_DIR.'/default_lang.php';
+
+// Пользовательский языковой файл
+$explode = explode('.', $_SERVER['LANG']);
+if (file_exists(LANG_DIR.'/'.$explode[0].'.php'))
+    include LANG_DIR.'/'.$explode[0].'.php';
+
+include SHARE_DIR.'/FlightFiles.data.php';
 
 config_parser();
 
@@ -55,7 +65,7 @@ $window = new GtkWindow();
 $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
 $window->set_default_size(750, 600);
 $window->set_position(Gtk::WIN_POS_CENTER);
-$window->set_title('Фаловый менеджер FlightFiles');
+$window->set_title($lang['title_program']);
 $window->connect_simple('destroy', 'close_window');
 $accel_group = new GtkAccelGroup();
 $window->add_accel_group($accel_group);
@@ -83,10 +93,10 @@ $vbox = new GtkVBox();
 
 $menubar = new GtkMenuBar();
 
-$menu['file'] = new GtkMenuItem('_Файл');
-$menu['edit'] = new GtkMenuItem('_Правка');
-$menu['bookmarks'] = new GtkMenuItem('_Закладки');
-$menu['help'] = new GtkMenuItem('_Справка');
+$menu['file'] = new GtkMenuItem($lang['menu']['file']);
+$menu['edit'] = new GtkMenuItem($lang['menu']['edit']);
+$menu['bookmarks'] = new GtkMenuItem($lang['menu']['bookmarks']);
+$menu['help'] = new GtkMenuItem($lang['menu']['help']);
 
 foreach ($menu as $value)
     $menubar->append($value);
@@ -97,7 +107,7 @@ foreach ($menu as $value)
 $sub_menu['file'] = new GtkMenu();
 $menu['file']->set_submenu($sub_menu['file']);
 
-$action_menu['new_file'] = new GtkAction('NEW_FILE', 'Создать файл', '', Gtk::STOCK_NEW);
+$action_menu['new_file'] = new GtkAction('NEW_FILE', $lang['menu']['new_file'], '', Gtk::STOCK_NEW);
 $accel['new_file'] = '<control>N';
 $action_group->add_action_with_accel($action_menu['new_file'], $accel['new_file']);
 $action_menu['new_file']->set_accel_group($accel_group);
@@ -107,7 +117,7 @@ $action_menu['new_file']->connect_simple('activate', 'new_element', 'file');
 if (!is_writable($start_dir))
     $action_menu['new_file']->set_sensitive(FALSE);
 
-$action_menu['new_dir'] = new GtkAction('NEW_DIR', 'Создать папку', '', Gtk::STOCK_DIRECTORY);
+$action_menu['new_dir'] = new GtkAction('NEW_DIR', $lang['menu']['new_dir'], '', Gtk::STOCK_DIRECTORY);
 $accel['new_dir'] = '<shift><control>N';
 $action_group->add_action_with_accel($action_menu['new_dir'], $accel['new_dir']);
 $action_menu['new_dir']->set_accel_group($accel_group);
@@ -119,14 +129,14 @@ if (!is_writable($start_dir))
 
 $menu_item['separator_one'] = new GtkSeparatorMenuItem();
 
-$action_menu['clear_bufer'] = new GtkAction('CLEAR_BUFER', 'Очистить буфер обмена', '', Gtk::STOCK_CLEAR);
+$action_menu['clear_bufer'] = new GtkAction('CLEAR_BUFER', $lang['menu']['clear_bufer'], '', Gtk::STOCK_CLEAR);
 $menu_item['clear_bufer'] = $action_menu['clear_bufer']->create_menu_item();
 $action_menu['clear_bufer']->connect_simple('activate', 'clear_bufer');
 $action_menu['clear_bufer']->set_sensitive(FALSE);
 
 $menu_item['separator_two'] = new GtkSeparatorMenuItem();
 
-$action_menu['close'] = new GtkAction('CLOSE', 'Закрыть', '', Gtk::STOCK_CLOSE);
+$action_menu['close'] = new GtkAction('CLOSE', $lang['menu']['close'], '', Gtk::STOCK_CLOSE);
 $accel['close'] = '<control>Q';
 $action_group->add_action_with_accel($action_menu['close'], $accel['close']);
 $action_menu['close']->set_accel_group($accel_group);
@@ -144,7 +154,7 @@ unset($menu_item);
 $sub_menu['edit'] = new GtkMenu();
 $menu['edit']->set_submenu($sub_menu['edit']);
 
-$action_menu['copy'] = new GtkAction('COPY', 'Копировать', '', Gtk::STOCK_COPY);
+$action_menu['copy'] = new GtkAction('COPY', $lang['menu']['copy'], '', Gtk::STOCK_COPY);
 $accel['copy'] = '<control>C';
 $action_group->add_action_with_accel($action_menu['copy'], $accel['copy']);
 $action_menu['copy']->set_accel_group($accel_group);
@@ -153,7 +163,7 @@ $menu_item['copy'] = $action_menu['copy']->create_menu_item();
 $action_menu['copy']->connect_simple('activate', 'bufer_file', '', 'copy');
 $action_menu['copy']->set_sensitive(FALSE);
 
-$action_menu['paste'] = new GtkAction('PASTE', 'Вставить', '', Gtk::STOCK_PASTE);
+$action_menu['paste'] = new GtkAction('PASTE', $lang['menu']['paste'], '', Gtk::STOCK_PASTE);
 $accel['paste'] = '<control>V';
 $action_group->add_action_with_accel($action_menu['paste'], $accel['paste']);
 $action_menu['paste']->set_accel_group($accel_group);
@@ -164,7 +174,7 @@ $action_menu['paste']->set_sensitive(FALSE);
 
 $menu_item['separator_one'] = new GtkSeparatorMenuItem();
 
-$action_menu['preference'] = new GtkAction('PREFERENCE', 'Параметры', '', Gtk::STOCK_PREFERENCES);
+$action_menu['preference'] = new GtkAction('PREFERENCE', $lang['menu']['preference'], '', Gtk::STOCK_PREFERENCES);
 $menu_item['preference'] = $action_menu['preference']->create_menu_item();
 $action_menu['preference']->connect_simple('activate', 'preference');
 
@@ -174,6 +184,8 @@ foreach ($menu_item as $value)
 /**
  * Меню "Закладки"
  */
+$sub_menu['bookmarks'] = new GtkMenu();
+$menu['bookmarks']->set_submenu($sub_menu['bookmarks']);
 bookmarks_menu();
 
 /**
@@ -183,13 +195,13 @@ unset($menu_item);
 $sub_menu['help'] = new GtkMenu();
 $menu['help']->set_submenu($sub_menu['help']);
 
-$action_menu['shortcuts'] = new GtkAction('SHORTCUTS', 'Сочетания клавиш', '', Gtk::STOCK_INFO);
+$action_menu['shortcuts'] = new GtkAction('SHORTCUTS', $lang['menu']['shortcuts'], '', Gtk::STOCK_INFO);
 $menu_item['shortcuts'] = $action_menu['shortcuts']->create_menu_item();
 $action_menu['shortcuts']->connect_simple('activate', 'shortcuts');
 
 $menu_item['separator_one'] = new GtkSeparatorMenuItem;
 
-$action_menu['about'] = new GtkAction('ABOUT', 'О программе', '', Gtk::STOCK_ABOUT);
+$action_menu['about'] = new GtkAction('ABOUT', $lang['menu']['about'], '', Gtk::STOCK_ABOUT);
 $menu_item['about'] = $action_menu['about']->create_menu_item();
 $action_menu['about']->connect_simple('activate', 'about');
 
@@ -208,85 +220,86 @@ $toolbar = new GtkToolBar();
  * Кнопка "Вверх".
  * При нажатии вызывается функция change_dir().
  */
-$action['up'] = new GtkAction('UP', 'Вверх',
-                  'Перейти на уровень выше', Gtk::STOCK_GO_UP);
+$action['up'] = new GtkAction('UP', $lang['toolbar']['up'], $lang['toolbar']['up_hint'], Gtk::STOCK_GO_UP);
 $toolitem['up'] = $action['up']->create_tool_item();
 $action['up']->connect_simple('activate', 'change_dir');
 if ($start_dir == '/')
     $action['up']->set_sensitive(FALSE);
-$toolbar->insert($toolitem['up'], -1);
+
+/**
+ * Кнопка "Корень".
+ * При нажатии вызывается функция change_dir('bookmarks', '/').
+ */
+$action['root'] = new GtkAction('ROOT', $lang['toolbar']['root'], $lang['toolbar']['root_hint'], Gtk::STOCK_HARDDISK);
+$toolitem['root'] = $action['root']->create_tool_item();
+$action['root']->connect_simple('activate', 'change_dir', 'bookmarks', '/');
+if ($start_dir == '/')
+    $action['root']->set_sensitive(FALSE);
 
 /**
  * Кнопка "Домой".
  * При нажатии вызывается функция change_dir('home').
  */
-$action['home'] = new GtkAction('HOME', 'Домой',
-                'Перейти в домашнюю папку - '.$_ENV['HOME'], Gtk::STOCK_HOME);
+$action['home'] = new GtkAction('HOME', $lang['toolbar']['home'], $lang['toolbar']['home_hint'].' - "'.$_ENV['HOME'].'"', Gtk::STOCK_HOME);
 $toolitem['home'] = $action['home']->create_tool_item();
 $action['home']->connect_simple('activate', 'change_dir', 'home');
 if ($start_dir == $_ENV['HOME'])
     $action['home']->set_sensitive(FALSE);
-$toolbar->insert($toolitem['home'], -1);
 
 /**
  * Разделитель.
  */
-$toolbar->insert(new GtkSeparatorToolItem(), -1);
+$toolitem['separator_one'] = new GtkSeparatorToolItem();
 
 /**
  * Кнопка "Обновить".
  * При нажатии вызывается функция change_dir('none').
  */
-$action['refresh'] = new GtkAction('REFRESH', 'Обновить',
-                   'Обновить список файлов и папок', Gtk::STOCK_REFRESH);
+$action['refresh'] = new GtkAction('REFRESH', $lang['toolbar']['refresh'], $lang['toolbar']['refresh_hint'], Gtk::STOCK_REFRESH);
 $toolitem['refresh'] = $action['refresh']->create_tool_item();
 $action['refresh']->connect_simple('activate', 'change_dir', 'none');
-$toolbar->insert($toolitem['refresh'], -1);
 
 /**
  * Разделитель.
  */
-$toolbar->insert(new GtkSeparatorToolItem(), -1);
+$toolitem['separator_two'] = new GtkSeparatorToolItem();
 
 /**
  * Кнопка "Создать файл".
  * При нажатии на кнопку вызывается функция new_element('file').
  */
-$action['new_file'] = new GtkAction('NEW_FILE', 'Создать файл',
-                    'Создать пустой файл в текущей директории', Gtk::STOCK_NEW);
+$action['new_file'] = new GtkAction('NEW_FILE', $lang['toolbar']['new_file'], $lang['toolbar']['new_file_hint'], Gtk::STOCK_NEW);
 $toolitem['new_file'] = $action['new_file']->create_tool_item();
 $action['new_file']->connect_simple('activate', 'new_element', 'file');
 if (!is_writable($start_dir))
     $action['new_file']->set_sensitive(FALSE);
-$toolbar->insert($toolitem['new_file'], -1);
 
 /**
  * Кнопка "Создать папку".
  * При нажатии на кнопку вызывается функция new_element('dir').
  */
-$action['new_dir'] = new GtkAction('NEW_DIR', 'Создать папку',
-                   'Создать папку в текущей директории', Gtk::STOCK_DIRECTORY);
+$action['new_dir'] = new GtkAction('NEW_DIR', $lang['toolbar']['new_dir'], $lang['toolbar']['new_dir_hint'], Gtk::STOCK_DIRECTORY);
 $toolitem['new_dir'] = $action['new_dir']->create_tool_item();
 $action['new_dir']->connect_simple('activate', 'new_element', 'dir');
 if (!is_writable($start_dir))
     $action['new_dir']->set_sensitive(FALSE);
-$toolbar->insert($toolitem['new_dir'], -1);
 
 /**
  * Разделитель.
  */
-$toolbar->insert(new GtkSeparatorToolItem(), -1);
+$toolitem['separator_three'] = new GtkSeparatorToolItem();
 
 /**
  * Кнопка "Вставить".
  * При нажатии на кнопку вызывается функция paste_file().
  */
-$action['paste'] = new GtkAction('PASTE', 'Вставить',
-                 'Вставить элемент из буфера обмена в текущую папку', Gtk::STOCK_PASTE);
+$action['paste'] = new GtkAction('PASTE', $lang['toolbar']['paste'], $lang['toolbar']['paste_hint'], Gtk::STOCK_PASTE);
 $toolitem['paste'] = $action['paste']->create_tool_item();
 $action['paste']->connect_simple('activate', 'paste_file');
 $action['paste']->set_sensitive(FALSE);
-$toolbar->insert($toolitem['paste'], -1);
+
+foreach ($toolitem as $value)
+    $toolbar->insert($value, -1);
 
 $vbox->pack_start($toolbar, FALSE, FALSE);
 
@@ -297,7 +310,7 @@ $vbox->pack_start($toolbar, FALSE, FALSE);
 $hbox = new GtkHBox();
 $vbox->pack_start($hbox, FALSE, FALSE);
 
-$label_current_dir = new GtkLabel('Текущий каталог:  ');
+$label_current_dir = new GtkLabel($lang['addressbar']['label']);
 $entry_current_dir = new GtkEntry($start_dir);
 $button_change_dir = new GtkButton();
 
@@ -305,7 +318,7 @@ $button_hbox = new GtkHBox();
 $button_change_dir->add($button_hbox);
 $button_hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_REDO, Gtk::ICON_SIZE_BUTTON));
 $button_hbox->pack_start(new GtkLabel());
-$button_hbox->pack_start(new GtkLabel('Сменить'));
+$button_hbox->pack_start(new GtkLabel($lang['addressbar']['button']));
 
 $entry_current_dir->connect_simple('activate', 'change_dir', 'user');
 $button_change_dir->connect_simple('clicked', 'change_dir', 'user');
@@ -333,17 +346,17 @@ $selection->connect('changed', 'on_selection');
 ///////////////////
 ///// Колонки /////
 ///////////////////
-$column_file = new GtkTreeViewColumn('Название', $cell_renderer, 'text', 0);
+$column_file = new GtkTreeViewColumn($lang['column']['title'], $cell_renderer, 'text', 0);
 $column_file->set_expand(TRUE);
 $column_file->set_sort_column_id(0);
 
-$column_df = new GtkTreeViewColumn('Папка/файл', $cell_renderer, 'text', 1);
+$column_df = new GtkTreeViewColumn($lang['column']['type'], $cell_renderer, 'text', 1);
 $column_df->set_sort_column_id(1);
 
-$column_size = new GtkTreeViewColumn('Размер', $cell_renderer, 'text', 2);
+$column_size = new GtkTreeViewColumn($lang['column']['size'], $cell_renderer, 'text', 2);
 $column_size->set_sort_column_id(2);
 
-$column_mtime = new GtkTreeViewColumn('Дата изменения', $cell_renderer, 'text', 3);
+$column_mtime = new GtkTreeViewColumn($lang['column']['mtime'], $cell_renderer, 'text', 3);
 $column_mtime->set_sizing(Gtk::TREE_VIEW_COLUMN_FIXED);
 $column_mtime->set_fixed_width(150);
 $column_mtime->set_sort_column_id(3);
