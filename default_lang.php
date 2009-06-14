@@ -6,6 +6,7 @@ $lang['title_program']              = 'Фаловый менеджер FlightFil
 
 $lang['menu']['file']               = '_Файл';
 $lang['menu']['edit']               = '_Правка';
+$lang['menu']['view']               = '_Вид';
 $lang['menu']['bookmarks']          = '_Закладки';
 $lang['menu']['help']               = '_Справка';
 $lang['menu']['new_file']           = 'Создать файл';
@@ -15,6 +16,9 @@ $lang['menu']['close']              = 'Закрыть';
 $lang['menu']['copy']               = 'Копировать';
 $lang['menu']['paste']              = 'Вставить';
 $lang['menu']['preference']         = 'Параметры';
+$lang['menu']['toolbar_view']       = 'Панель инструментов';
+$lang['menu']['addresbar_view']     = 'Адресная строка';
+$lang['menu']['statusbar_view']     = 'Строка состояния';
 $lang['menu']['bookmarks_add']      = 'Добавить в закладки';
 $lang['menu']['bookmarks_edit']     = 'Изменить закладки';
 $lang['menu']['shortcuts']          = 'Сочетания клавиш';
@@ -96,7 +100,7 @@ $lang['properties']['owner']        = 'Владелец:';
 $lang['properties']['group']        = 'Группа:';
 $lang['properties']['perms']        = 'Права доступа:';
 $lang['properties']['perms_text']   = 'В текстовом виде:';
-$lang['properties']['perms_tab']   = 'Права';
+$lang['properties']['perms_tab']    = 'Права';
 
 $lang['alert']['title']             = 'Внимание';
 $lang['alert']['bufer_clear']       = 'Буфер обмена очищен';

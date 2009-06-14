@@ -95,6 +95,7 @@ $menubar = new GtkMenuBar();
 
 $menu['file'] = new GtkMenuItem($lang['menu']['file']);
 $menu['edit'] = new GtkMenuItem($lang['menu']['edit']);
+$menu['view'] = new GtkMenuItem($lang['menu']['view']);
 $menu['bookmarks'] = new GtkMenuItem($lang['menu']['bookmarks']);
 $menu['help'] = new GtkMenuItem($lang['menu']['help']);
 
@@ -182,6 +183,31 @@ foreach ($menu_item as $value)
     $sub_menu['edit']->append($value);
 
 /**
+ * Меню "Вид"
+ */
+unset($menu_item);
+$sub_menu['view'] = new GtkMenu;
+$menu['view']->set_submenu($sub_menu['view']);
+
+$action_menu['toolbar_view'] = new GtkToggleAction('TOOLBAR_VIEW', $lang['menu']['toolbar_view'], '', '');
+$menu_item['toolbar_view'] = $action_menu['toolbar_view']->create_menu_item();
+$action_menu['toolbar_view']->set_active(TRUE);
+$action_menu['toolbar_view']->connect('activate', 'toolbar_view');
+
+$action_menu['addressbar_view'] = new GtkToggleAction('ADDRESSBAR_VIEW', $lang['menu']['addresbar_view'], '', '');
+$menu_item['addressbar_view'] = $action_menu['addressbar_view']->create_menu_item();
+$action_menu['addressbar_view']->set_active(TRUE);
+$action_menu['addressbar_view']->connect('activate', 'addressbar_view');
+
+$action_menu['statusbar_view'] = new GtkToggleAction('STATUSBAR_VIEW', $lang['menu']['statusbar_view'], '', '');
+$menu_item['statusbar_view'] = $action_menu['statusbar_view']->create_menu_item();
+$action_menu['statusbar_view']->set_active(TRUE);
+$action_menu['statusbar_view']->connect('activate', 'statusbar_view');
+
+foreach ($menu_item as $value)
+    $sub_menu['view']->append($value);
+
+/**
  * Меню "Закладки"
  */
 $sub_menu['bookmarks'] = new GtkMenu();
@@ -214,122 +240,13 @@ $vbox->pack_start($menubar, FALSE, FALSE, 0);
 ///// Панель инструментов /////
 ///////////////////////////////
 
-$toolbar = new GtkToolBar();
-
-/**
- * Кнопка "Вверх".
- * При нажатии вызывается функция change_dir().
- */
-$action['up'] = new GtkAction('UP', $lang['toolbar']['up'], $lang['toolbar']['up_hint'], Gtk::STOCK_GO_UP);
-$toolitem['up'] = $action['up']->create_tool_item();
-$action['up']->connect_simple('activate', 'change_dir');
-if ($start_dir == '/')
-    $action['up']->set_sensitive(FALSE);
-
-/**
- * Кнопка "Корень".
- * При нажатии вызывается функция change_dir('bookmarks', '/').
- */
-$action['root'] = new GtkAction('ROOT', $lang['toolbar']['root'], $lang['toolbar']['root_hint'], Gtk::STOCK_HARDDISK);
-$toolitem['root'] = $action['root']->create_tool_item();
-$action['root']->connect_simple('activate', 'change_dir', 'bookmarks', '/');
-if ($start_dir == '/')
-    $action['root']->set_sensitive(FALSE);
-
-/**
- * Кнопка "Домой".
- * При нажатии вызывается функция change_dir('home').
- */
-$action['home'] = new GtkAction('HOME', $lang['toolbar']['home'], $lang['toolbar']['home_hint'].' - "'.$_ENV['HOME'].'"', Gtk::STOCK_HOME);
-$toolitem['home'] = $action['home']->create_tool_item();
-$action['home']->connect_simple('activate', 'change_dir', 'home');
-if ($start_dir == $_ENV['HOME'])
-    $action['home']->set_sensitive(FALSE);
-
-/**
- * Разделитель.
- */
-$toolitem['separator_one'] = new GtkSeparatorToolItem();
-
-/**
- * Кнопка "Обновить".
- * При нажатии вызывается функция change_dir('none').
- */
-$action['refresh'] = new GtkAction('REFRESH', $lang['toolbar']['refresh'], $lang['toolbar']['refresh_hint'], Gtk::STOCK_REFRESH);
-$toolitem['refresh'] = $action['refresh']->create_tool_item();
-$action['refresh']->connect_simple('activate', 'change_dir', 'none');
-
-/**
- * Разделитель.
- */
-$toolitem['separator_two'] = new GtkSeparatorToolItem();
-
-/**
- * Кнопка "Создать файл".
- * При нажатии на кнопку вызывается функция new_element('file').
- */
-$action['new_file'] = new GtkAction('NEW_FILE', $lang['toolbar']['new_file'], $lang['toolbar']['new_file_hint'], Gtk::STOCK_NEW);
-$toolitem['new_file'] = $action['new_file']->create_tool_item();
-$action['new_file']->connect_simple('activate', 'new_element', 'file');
-if (!is_writable($start_dir))
-    $action['new_file']->set_sensitive(FALSE);
-
-/**
- * Кнопка "Создать папку".
- * При нажатии на кнопку вызывается функция new_element('dir').
- */
-$action['new_dir'] = new GtkAction('NEW_DIR', $lang['toolbar']['new_dir'], $lang['toolbar']['new_dir_hint'], Gtk::STOCK_DIRECTORY);
-$toolitem['new_dir'] = $action['new_dir']->create_tool_item();
-$action['new_dir']->connect_simple('activate', 'new_element', 'dir');
-if (!is_writable($start_dir))
-    $action['new_dir']->set_sensitive(FALSE);
-
-/**
- * Разделитель.
- */
-$toolitem['separator_three'] = new GtkSeparatorToolItem();
-
-/**
- * Кнопка "Вставить".
- * При нажатии на кнопку вызывается функция paste_file().
- */
-$action['paste'] = new GtkAction('PASTE', $lang['toolbar']['paste'], $lang['toolbar']['paste_hint'], Gtk::STOCK_PASTE);
-$toolitem['paste'] = $action['paste']->create_tool_item();
-$action['paste']->connect_simple('activate', 'paste_file');
-$action['paste']->set_sensitive(FALSE);
-
-foreach ($toolitem as $value)
-    $toolbar->insert($value, -1);
-
-$vbox->pack_start($toolbar, FALSE, FALSE);
+$toolbar = toolbar();
 
 //////////////////////////
 ///// Адреная строка /////
 //////////////////////////
 
-$hbox = new GtkHBox();
-$vbox->pack_start($hbox, FALSE, FALSE);
-
-$label_current_dir = new GtkLabel($lang['addressbar']['label']);
-$entry_current_dir = new GtkEntry($start_dir);
-$button_change_dir = new GtkButton();
-
-$button_hbox = new GtkHBox();
-$button_change_dir->add($button_hbox);
-$button_hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_REDO, Gtk::ICON_SIZE_BUTTON));
-$button_hbox->pack_start(new GtkLabel());
-$button_hbox->pack_start(new GtkLabel($lang['addressbar']['button']));
-
-$entry_current_dir->connect_simple('activate', 'change_dir', 'user');
-$button_change_dir->connect_simple('clicked', 'change_dir', 'user');
-
-$hbox->pack_start(new GtkLabel(' '), FALSE, FALSE);
-$hbox->pack_start($label_current_dir, FALSE, FALSE);
-$hbox->pack_start(new GtkLabel(' '), FALSE, FALSE);
-$hbox->pack_start($entry_current_dir);
-$hbox->pack_start(new GtkLabel(' '), FALSE, FALSE);
-$hbox->pack_start($button_change_dir, FALSE, FALSE);
-$hbox->pack_start(new GtkLabel(' '), FALSE, FALSE);
+$addressbar = addressbar();
 
 /////////////////////////////
 
