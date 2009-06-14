@@ -35,7 +35,7 @@ function config_parser()
  */
 function on_button($view, $event)
 {
-    global $_config, $store, $start_dir, $lang;
+    global $store, $start_dir, $lang;
     
     // Если нажата левая кнопка, то...
     if ($event->button == 1)
@@ -260,7 +260,7 @@ function _rename($file)
  */
 function bufer_file($file = '', $act)
 {
-    global $_config, $start_dir, $action, $action_menu, $selection;
+    global $start_dir, $action, $action_menu, $selection;
     
     if (empty($file))
     {
@@ -285,7 +285,7 @@ function bufer_file($file = '', $act)
  */
 function paste_file()
 {
-    global $_config, $start_dir, $lang;
+    global $start_dir, $lang;
     
     $file_array = file(BUFER_FILE);
     $file = trim($file_array[0]);
@@ -711,7 +711,7 @@ function convert_size($file)
  */
 function change_dir($act = '', $dir = '')
 {
-    global $vbox, $store, $start_dir, $entry_current_dir, $action, $action_menu, $_config, $lang;
+    global $vbox, $store, $start_dir, $entry_current_dir, $action, $action_menu, $lang;
     
     // Устанавливаем новое значение текущей директории
     if ($act == 'user')
@@ -921,7 +921,7 @@ function close_window()
  */
 function clear_bufer()
 {
-    global $_config, $action, $action_menu, $lang;
+    global $action, $action_menu, $lang;
     
     @unlink(BUFER_FILE);
     $action['paste']->set_sensitive(FALSE);
@@ -937,7 +937,7 @@ function clear_bufer()
  */
 function about()
 {
-    global $_config, $lang;
+    global $lang;
     
     $dialog = new GtkAboutDialog();
     $dialog->set_skip_taskbar_hint(TRUE);
@@ -1052,7 +1052,7 @@ function preference()
 
 function check_font($check, $entry, $button)
 {
-    global $_config, $cell_renderer;
+    global $cell_renderer;
     
     if ($check->get_active() === FALSE)
     {
@@ -1072,7 +1072,7 @@ function check_font($check, $entry, $button)
 
 function font_select($entry)
 {
-    global $_config, $cell_renderer, $lang;
+    global $cell_renderer, $lang;
     
     $dialog = new GtkFontSelectionDialog($lang['font']['title']);
     $dialog->set_position(Gtk::WIN_POS_CENTER_ALWAYS);
@@ -1104,8 +1104,6 @@ function font_select($entry)
  */
 function radio_button_write($param, $value)
 {
-    global $_config;
-    
     $file = file(CONFIG_FILE);
     $fopen = fopen(CONFIG_FILE, 'w+');
     if ($value == 'home')
@@ -1133,8 +1131,6 @@ function radio_button_write($param, $value)
  */
 function check_button_write($check, $param)
 {
-    global $_config;
-    
     $value = $check->get_active() ? 'on' : 'off';
     
     $file = file(CONFIG_FILE);
@@ -1261,11 +1257,9 @@ function bookmarks_edit()
  */
 function bookmarks_list($model)
 {
-    global $_config;
-    
     $file_bookmarks = @file(BOOKMARKS_FILE);
     $data = array();
-    for ($i = 0; $i < count ($file_bookmarks); $i++)
+    for ($i = 0; $i < count($file_bookmarks); $i++)
     {
         $data[] = array(trim($file_bookmarks[$i]));
         $i++;
@@ -1281,8 +1275,6 @@ function bookmarks_list($model)
  */
 function selection_bookmarks($selection, $array)
 {
-    global $_config;
-    
     list($model, $iter) = $selection->get_selected();
     @$name = $model->get_value($iter, 0);
     $array['name_label']->set_sensitive(TRUE);
@@ -1310,7 +1302,7 @@ function selection_bookmarks($selection, $array)
  */
 function bookmarks_delete($array)
 {
-    global $_config, $selection_bookmarks, $action_menu, $sub_menu;
+    global $selection_bookmarks, $action_menu, $sub_menu;
     
     list($model, $iter) = $selection_bookmarks->get_selected();
     $name = $model->get_value($iter, 0);
@@ -1346,7 +1338,7 @@ function bookmarks_delete($array)
  */
 function bookmarks_save_change($array)
 {
-    global $_config, $selection_bookmarks, $sub_menu;
+    global $selection_bookmarks, $sub_menu;
     
     list($model, $iter) = $selection_bookmarks->get_selected();
     $name_old = $model->get_value($iter, 0);
@@ -1482,7 +1474,7 @@ function on_selection($selection)
 
 function bookmarks_menu()
 {
-    global $menu_item, $menu, $accel_group, $action_group, $_config, $sub_menu, $action_menu, $lang;
+    global $menu_item, $menu, $accel_group, $action_group, $sub_menu, $action_menu, $lang;
     
     unset($menu_item);
 
@@ -1555,6 +1547,178 @@ function shortcuts()
     $window->add($view);
     $window->show_all();
     Gtk::main();
+}
+
+function toolbar_view($widget)
+{
+    global $toolbar;
+    
+    $value = $widget->get_active() ? 'on' : 'off';
+    if ($value == 'off')
+    {
+        $toolbar->hide();
+    }
+    else
+    {
+        $toolbar->show_all();
+    }
+}
+
+function addressbar_view($widget)
+{
+    global $addressbar;
+    
+    $value = $widget->get_active() ? 'on' : 'off';
+    if ($value == 'off')
+    {
+        $addressbar->hide();
+    }
+    else
+    {
+        $addressbar->show_all();
+    }
+}
+
+function statusbar_view($widget)
+{
+    global $status;
+    
+    $value = $widget->get_active() ? 'on' : 'off';
+    if ($value == 'off')
+    {
+        $status->hide();
+    }
+    else
+    {
+        $status->show_all();
+    }
+}
+
+function addressbar()
+{
+    global $vbox, $lang, $start_dir, $entry_current_dir;
+    
+    $addressbar = new GtkHBox();
+    $vbox->pack_start($addressbar, FALSE, FALSE);
+
+    $label_current_dir = new GtkLabel($lang['addressbar']['label']);
+    $entry_current_dir = new GtkEntry($start_dir);
+    $button_change_dir = new GtkButton();
+
+    $button_hbox = new GtkHBox();
+    $button_change_dir->add($button_hbox);
+    $button_hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_REDO, Gtk::ICON_SIZE_BUTTON));
+    $button_hbox->pack_start(new GtkLabel());
+    $button_hbox->pack_start(new GtkLabel($lang['addressbar']['button']));
+
+    $entry_current_dir->connect_simple('activate', 'change_dir', 'user');
+    $button_change_dir->connect_simple('clicked', 'change_dir', 'user');
+
+    $addressbar->pack_start(new GtkLabel(' '), FALSE, FALSE);
+    $addressbar->pack_start($label_current_dir, FALSE, FALSE);
+    $addressbar->pack_start(new GtkLabel(' '), FALSE, FALSE);
+    $addressbar->pack_start($entry_current_dir);
+    $addressbar->pack_start(new GtkLabel(' '), FALSE, FALSE);
+    $addressbar->pack_start($button_change_dir, FALSE, FALSE);
+    $addressbar->pack_start(new GtkLabel(' '), FALSE, FALSE);
+    
+    return $addressbar;
+}
+
+function toolbar()
+{
+    global $vbox, $action, $lang, $start_dir;
+    
+    $toolbar = new GtkToolBar();
+
+    /**
+     * Кнопка "Вверх".
+     * При нажатии вызывается функция change_dir().
+     */
+    $action['up'] = new GtkAction('UP', $lang['toolbar']['up'], $lang['toolbar']['up_hint'], Gtk::STOCK_GO_UP);
+    $toolitem['up'] = $action['up']->create_tool_item();
+    $action['up']->connect_simple('activate', 'change_dir');
+    if ($start_dir == '/')
+        $action['up']->set_sensitive(FALSE);
+
+    /**
+     * Кнопка "Корень".
+     * При нажатии вызывается функция change_dir('bookmarks', '/').
+     */
+    $action['root'] = new GtkAction('ROOT', $lang['toolbar']['root'], $lang['toolbar']['root_hint'], Gtk::STOCK_HARDDISK);
+    $toolitem['root'] = $action['root']->create_tool_item();
+    $action['root']->connect_simple('activate', 'change_dir', 'bookmarks', '/');
+    if ($start_dir == '/')
+        $action['root']->set_sensitive(FALSE);
+
+    /**
+     * Кнопка "Домой".
+     * При нажатии вызывается функция change_dir('home').
+     */
+    $action['home'] = new GtkAction('HOME', $lang['toolbar']['home'], $lang['toolbar']['home_hint'].' - "'.$_ENV['HOME'].'"', Gtk::STOCK_HOME);
+    $toolitem['home'] = $action['home']->create_tool_item();
+    $action['home']->connect_simple('activate', 'change_dir', 'home');
+    if ($start_dir == $_ENV['HOME'])
+        $action['home']->set_sensitive(FALSE);
+
+    /**
+     * Разделитель.
+     */
+    $toolitem['separator_one'] = new GtkSeparatorToolItem();
+
+    /**
+     * Кнопка "Обновить".
+     * При нажатии вызывается функция change_dir('none').
+     */
+    $action['refresh'] = new GtkAction('REFRESH', $lang['toolbar']['refresh'], $lang['toolbar']['refresh_hint'], Gtk::STOCK_REFRESH);
+    $toolitem['refresh'] = $action['refresh']->create_tool_item();
+    $action['refresh']->connect_simple('activate', 'change_dir', 'none');
+
+    /**
+     * Разделитель.
+     */
+    $toolitem['separator_two'] = new GtkSeparatorToolItem();
+
+    /**
+     * Кнопка "Создать файл".
+     * При нажатии на кнопку вызывается функция new_element('file').
+     */
+    $action['new_file'] = new GtkAction('NEW_FILE', $lang['toolbar']['new_file'], $lang['toolbar']['new_file_hint'], Gtk::STOCK_NEW);
+    $toolitem['new_file'] = $action['new_file']->create_tool_item();
+    $action['new_file']->connect_simple('activate', 'new_element', 'file');
+    if (!is_writable($start_dir))
+        $action['new_file']->set_sensitive(FALSE);
+
+    /**
+     * Кнопка "Создать папку".
+     * При нажатии на кнопку вызывается функция new_element('dir').
+     */
+    $action['new_dir'] = new GtkAction('NEW_DIR', $lang['toolbar']['new_dir'], $lang['toolbar']['new_dir_hint'], Gtk::STOCK_DIRECTORY);
+    $toolitem['new_dir'] = $action['new_dir']->create_tool_item();
+    $action['new_dir']->connect_simple('activate', 'new_element', 'dir');
+    if (!is_writable($start_dir))
+        $action['new_dir']->set_sensitive(FALSE);
+
+    /**
+     * Разделитель.
+     */
+    $toolitem['separator_three'] = new GtkSeparatorToolItem();
+
+    /**
+     * Кнопка "Вставить".
+     * При нажатии на кнопку вызывается функция paste_file().
+     */
+    $action['paste'] = new GtkAction('PASTE', $lang['toolbar']['paste'], $lang['toolbar']['paste_hint'], Gtk::STOCK_PASTE);
+    $toolitem['paste'] = $action['paste']->create_tool_item();
+    $action['paste']->connect_simple('activate', 'paste_file');
+    $action['paste']->set_sensitive(FALSE);
+
+    foreach ($toolitem as $value)
+        $toolbar->insert($value, -1);
+
+    $vbox->pack_start($toolbar, FALSE, FALSE);
+    
+    return $toolbar;
 }
 
 ?>
