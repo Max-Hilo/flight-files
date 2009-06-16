@@ -1235,7 +1235,7 @@ function bookmarks_edit()
     $scrolled = new GtkScrolledWindow();
     $scrolled->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
     
-    $model = new GtkListStore(GObject::TYPE_STRING);
+    $model = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING);
     
     $view = new GtkTreeView($model);
     $scrolled->add($view);
@@ -1244,6 +1244,9 @@ function bookmarks_edit()
     
     $column_name = new GtkTreeViewColumn($lang['bookmarks']['bookmarks'], $cell_renderer, 'text', 0);
     $view->append_column($column_name);
+    $column_id = new GtkTreeViewColumn('ID', $cell_renderer, 'text', 1);
+    $column_id->set_visible(FALSE);
+    $view->append_column($column_id);
     
     bookmarks_list($model);
     
@@ -1263,16 +1266,12 @@ function bookmarks_edit()
  */
 function bookmarks_list($model)
 {
-    $file_bookmarks = @file(BOOKMARKS_FILE);
-    $data = array();
-    for ($i = 0; $i < count($file_bookmarks); $i++)
-    {
-        $data[] = array(trim($file_bookmarks[$i]));
-        $i++;
-    }
+    global $sqlite;
     
-    for ($i = 0; $i < count($data); $i++)
-        $model->append($data[$i]);
+    $data = array();
+    $query = sqlite_query($sqlite['bookmarks'], "SELECT * FROM bookmarks");
+    while ($row = sqlite_fetch_array($query))
+        $model->append(array($row['title'], $row['id']));
 }
 
 /**
@@ -1281,25 +1280,22 @@ function bookmarks_list($model)
  */
 function selection_bookmarks($selection, $array)
 {
+    global $sqlite;
+    
     list($model, $iter) = $selection->get_selected();
-    @$name = $model->get_value($iter, 0);
+    @$id = $model->get_value($iter, 1);
+    
     $array['name_label']->set_sensitive(TRUE);
     $array['name_entry']->set_sensitive(TRUE);
     $array['path_label']->set_sensitive(TRUE);
     $array['path_entry']->set_sensitive(TRUE);
     $array['button_ok']->set_sensitive(TRUE);
     $array['button_delete']->set_sensitive(TRUE);
-    $array['name_entry']->set_text($name);
-    $file_bookmarks = file(BOOKMARKS_FILE);
-    for ($i = 0; $i < count($file_bookmarks); $i++)
-    {
-        if (trim($file_bookmarks[$i]) == $name)
-        {
-            $array['path_entry']->set_text(trim($file_bookmarks[$i+1]));
-            break;
-        }
-        $i++;
-    }
+    
+    $query = sqlite_query($sqlite['bookmarks'], "SELECT path, title FROM bookmarks WHERE id = '$id'");
+    $row = sqlite_fetch_array($query);
+    $array['name_entry']->set_text($row['title']);
+    $array['path_entry']->set_text($row['path']);
 }
 
 /**
@@ -1308,18 +1304,12 @@ function selection_bookmarks($selection, $array)
  */
 function bookmarks_delete($array)
 {
-    global $selection_bookmarks, $action_menu, $sub_menu;
+    global $selection_bookmarks, $action_menu, $sub_menu, $sqlite;
     
     list($model, $iter) = $selection_bookmarks->get_selected();
-    $name = $model->get_value($iter, 0);
-    $file_bookmarks = file(BOOKMARKS_FILE);
-    $fopen = fopen(BOOKMARKS_FILE, 'w+');
-    for ($i = 0; $i < count($file_bookmarks); $i++)
-    {
-        if (trim($file_bookmarks[$i]) != $name)
-            fwrite($fopen, trim($file_bookmarks[$i])."\n".trim($file_bookmarks[$i+1])."\n");
-        $i++;
-    }
+    $id = $model->get_value($iter, 1);
+    
+    sqlite_query($sqlite['bookmarks'], "DELETE FROM bookmarks WHERE id = '$id'");
     
     $model->clear();
     bookmarks_list($model);
@@ -1344,23 +1334,14 @@ function bookmarks_delete($array)
  */
 function bookmarks_save_change($array)
 {
-    global $selection_bookmarks, $sub_menu;
+    global $selection_bookmarks, $sub_menu, $sqlite;
     
     list($model, $iter) = $selection_bookmarks->get_selected();
-    $name_old = $model->get_value($iter, 0);
-    $name = $array['name_entry']->get_text();
-    $path = $array['path_entry']->get_text();
+    $id = $model->get_value($iter, 1);
+    $title = sqlite_escape_string($array['name_entry']->get_text());
+    $path = sqlite_escape_string($array['path_entry']->get_text());
     
-    $file_array = file(BOOKMARKS_FILE);
-    $fopen = fopen(BOOKMARKS_FILE, 'w+');
-    for ($i = 0; $i < count($file_array); $i++)
-    {
-        if (trim($file_array[$i]) == $name_old)
-            fwrite($fopen, $name."\n".$path."\n");
-        else
-            fwrite($fopen, trim($file_array[$i])."\n".trim($file_array[$i+1])."\n");
-        $i++;
-    }
+    sqlite_query($sqlite['bookmarks'], "UPDATE bookmarks SET title = '$title', path = '$path' WHERE id = '$id'");
     
     $model->clear();
     bookmarks_list($model);
@@ -1385,22 +1366,24 @@ function bookmarks_save_change($array)
  */
 function bookmark_add($bool = FALSE, $array = '')
 {
-    global $selection_bookmarks, $start_dir, $sub_menu, $lang;
+    global $selection_bookmarks, $start_dir, $sub_menu, $lang, $sqlite;
     
-    $fopen = fopen(BOOKMARKS_FILE, 'a+');
+    // Добавление в закладки текущей директории из меню
     if ($bool === TRUE)
     {
         if ($start_dir == '/')
             $basename = $lang['bookmarks']['root'];
         else
             $basename = basename($start_dir);
-        fwrite($fopen, $basename."\n".$start_dir."\n");
-        fclose($fopen);
+        $title = sqlite_escape_string($basename);
+        $path = sqlite_escape_string($start_dir);
+        sqlite_query($sqlite['bookmarks'], "INSERT INTO bookmarks(path, title) VALUES('$path', '$title')");
     }
+    // Добавление корневой директории из окна управления закладками
     else
     {
-        fwrite ($fopen, $lang['bookmarks']['new']."\n/\n");
-        fclose($fopen);
+        $title = sqlite_escape_string($lang['bookmarks']['new']);
+        sqlite_query($sqlite['bookmarks'], "INSERT INTO bookmarks(path, title) VALUES('/', '$title')");
         
         list($model, $iter) = $selection_bookmarks->get_selected();
         
@@ -1480,38 +1463,37 @@ function on_selection($selection)
 
 function bookmarks_menu()
 {
-    global $menu_item, $menu, $accel_group, $action_group, $sub_menu, $action_menu, $lang;
+    global $menu_item, $menu, $accel_group, $action_group, $sub_menu, $action_menu, $lang, $sqlite;
     
     unset($menu_item);
 
-    if (file_exists(BOOKMARKS_FILE) AND filesize(BOOKMARKS_FILE) != 0)
+    $query = sqlite_query($sqlite['bookmarks'], "SELECT * FROM bookmarks");
+    if (sqlite_num_rows($query) == 0)
     {
-        $file_bookmarks = file(BOOKMARKS_FILE);
-        for ($i = 0; $i < count($file_bookmarks); $i++)
+        $sub_menu['bookmarks']->append($item = new GtkMenuItem('Закладок нет'));
+        $item->set_sensitive(FALSE);
+        $sub_menu['bookmarks']->append(new GtkSeparatorMenuItem);
+    }
+    else
+    {
+        $i = 0;
+        while ($row = sqlite_fetch_array($query))
         {
-            $action_menu['bookmarks'.$i] = new GtkAction($i, trim($file_bookmarks[$i]), '', Gtk::STOCK_DIRECTORY);
+            $action_menu['bookmarks'.$i] = new GtkAction('f', $row['title'], '', Gtk::STOCK_DIRECTORY);
             $menu_item = $action_menu['bookmarks'.$i]->create_menu_item();
-            $action_menu['bookmarks'.$i]->connect_simple('activate', 'change_dir', 'bookmarks', trim($file_bookmarks[$i+1]));
+            $action_menu['bookmarks'.$i]->connect_simple('activate', 'change_dir', 'bookmarks', $row['path']);
             $sub_menu['bookmarks']->append($menu_item);
             unset($menu_item);
             $i++;
         }
-        $sub_menu['bookmarks']->append(new GtkSeparatorMenuItem());
+        $sub_menu['bookmarks']->append(new GtkSeparatorMenuItem);
     }
 
     $action_menu['bookmarks_add'] = new GtkAction('BOOKMARKS_ADD', $lang['menu']['bookmarks_add'], '', Gtk::STOCK_ADD);
-    //$accel['bookmarks_add'] = '<control>D';
-    //$action_group->add_action_with_accel($action_menu['bookmarks_add'], $accel['bookmarks_add']);
-    //$action_menu['bookmarks_add']->set_accel_group($accel_group);
-    //$action_menu['bookmarks_add']->connect_accelerator();
     $menu_item['bookmarks_add'] = $action_menu['bookmarks_add']->create_menu_item();
     $action_menu['bookmarks_add']->connect_simple('activate', 'bookmark_add', TRUE);
 
     $action_menu['bookmarks_edit'] = new GtkAction('BOOKMARKS_EDIT', $lang['menu']['bookmarks_edit'], '', Gtk::STOCK_EDIT);
-    //$accel['bookmarks_edit'] = '<control>B';
-    //$action_group->add_action_with_accel($action_menu['bookmarks_edit'], $accel['bookmarks_edit']);
-    //$action_menu['bookmarks_edit']->set_accel_group($accel_group);
-    //$action_menu['bookmarks_edit']->connect_accelerator();
     $menu_item['bookmarks_edit'] = $action_menu['bookmarks_edit']->create_menu_item();
     $action_menu['bookmarks_edit']->connect_simple('activate', 'bookmarks_edit');
 

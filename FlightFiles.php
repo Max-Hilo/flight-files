@@ -26,28 +26,28 @@ define ('FONT_FILE', CONFIG_DIR.'/font');
 // Файл буфера обмена
 define ('BUFER_FILE', CONFIG_DIR.'/bufer');
 // Файл закладок
-define ('BOOKMARKS_FILE',  CONFIG_DIR.'/bookmarks');
+define ('BOOKMARKS_FILE',  CONFIG_DIR.'/bookmarks.sqlite');
 
+// Выводим версию программы
 if ($argv[1] == '--version' OR $argv[1] == '-v')
 {
     echo VERSION_PROGRAM."\n";
     exit();
 }
 
+// Создаём папку с конфигами
 if (!file_exists(CONFIG_DIR))
 {
     mkdir(CONFIG_DIR);
 }
+
+// Создаём главный конфиг
 if (!file_exists(CONFIG_FILE))
 {
     $fopen = fopen(CONFIG_FILE, 'w+');
-    fwrite($fopen, "HIDDEN_FILES off\nHOME_DIR /\nASK_DELETE on");
+    fwrite($fopen, "HIDDEN_FILES off\nHOME_DIR /\nASK_DELETE on\nTOOLBAR_VIEW on\nADDRESSBAR_VIEW on\nSTATUSBAR_VIEW on");
     fclose($fopen);
 }
-
-// Удаляем файл буфера обмена,
-// если он по каким-либо причинам ещё не удалён
-@unlink(BUFER_FILE);
 
 // Основной языковой файл
 include SHARE_DIR.'/default_lang.php';
@@ -57,7 +57,22 @@ $explode = explode('.', $_SERVER['LANG']);
 if (file_exists(LANG_DIR.'/'.$explode[0].'.php'))
     include LANG_DIR.'/'.$explode[0].'.php';
 
+// Файл с функциями программы
 include SHARE_DIR.'/FlightFiles.data.php';
+
+// Удаляем файл буфера обмена, если он по каким-либо причинам ещё не удалён
+@unlink(BUFER_FILE);
+
+// Подключаемся к базе данных
+if (!file_exists(BOOKMARKS_FILE))
+{
+    $sqlite['bookmarks'] = sqlite_open(BOOKMARKS_FILE);
+    sqlite_query($sqlite['bookmarks'], "CREATE TABLE bookmarks(id INTEGER PRIMARY KEY, path, title)");
+}
+else
+{
+    $sqlite['bookmarks'] = sqlite_open(BOOKMARKS_FILE);
+}
 
 config_parser();
 
