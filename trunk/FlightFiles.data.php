@@ -15,24 +15,16 @@
  */
 function config_parser()
 {
-    global $_config;
+    global $_config, $sqlite;
     
-    $file_array = file(CONFIG_FILE);
-    for ($i = 0; $i < count($file_array); $i++)
+    $array = array('HIDDEN_FILES', 'HOME_DIR', 'ASK_DELETE',
+                   'TOOLBAR_VIEW', 'ADDRESSBAR_VIEW', 'STATUSBAR_VIEW',
+                   'FONT_LIST');
+    foreach ($array as $value)
     {
-        $explode = explode(' ', trim($file_array[$i]));
-        if (trim($explode[0]) == 'HIDDEN_FILES')
-            $_config['hidden_files'] = trim($explode[1]);
-        elseif (trim($explode[0]) == 'HOME_DIR')
-            $_config['start_dir'] = trim($explode[1]);
-        elseif (trim($explode[0]) == 'ASK_DELETE')
-            $_config['ask_delete'] = trim($explode[1]);
-        elseif (trim($explode[0]) == 'TOOLBAR_VIEW')
-            $_config['toolbar_view'] = trim($explode[1]);
-        elseif (trim($explode[0]) == 'ADDRESSBAR_VIEW')
-            $_config['addressbar_view'] = trim($explode[1]);
-        elseif (trim($explode[0]) == 'STATUSBAR_VIEW')
-            $_config['statusbar_view'] = trim($explode[1]);
+        $query = sqlite_query($sqlite, "SELECT * FROM config WHERE key = '$value'");
+        $sfa = sqlite_fetch_array($query);
+        $_config[strtolower($value)] = $sfa['value'];
     }
 }
 
@@ -992,7 +984,7 @@ function preference()
         $label_hidden_files->set_active(TRUE);
     if ($_config['ask_delete'] == 'on')
         $ask_delete->set_active(TRUE);
-    if ($_config['start_dir'] == '/')
+    if ($_config['home_dir'] == '/')
         $radio_root->set_active(TRUE);
     else
         $radio_home->set_active(FALSE);
@@ -1003,8 +995,8 @@ function preference()
     
     $label_hidden_files->connect('toggled', 'check_button_write', 'hidden_files');
     $ask_delete->connect('toggled', 'check_button_write', 'ask_delete');
-    $radio_home->connect_simple('toggled', 'radio_button_write', 'HOME_DIR', 'home');
-    $radio_root->connect_simple('toggled', 'radio_button_write', 'HOME_DIR', 'root');
+    $radio_home->connect_simple('toggled', 'radio_button_write', 'HOME_DIR', $_ENV['HOME']);
+    $radio_root->connect_simple('toggled', 'radio_button_write', 'HOME_DIR', '/');
     
     $table->attach($label_hidden_files, 0, 3, 0, 1, Gtk::FILL, Gtk::FILL);
     $table->attach($ask_delete, 0, 3, 1, 2, Gtk::FILL, Gtk::FILL);
@@ -1030,7 +1022,7 @@ function preference()
     $check_text_list = new GtkCheckButton($lang['preference']['system_font']);
     $check_text_list->connect('toggled', 'check_font', $entry_font_select, $button_font_select);
     
-    if (!file_exists(FONT_FILE))
+    if (empty($_config['font_list']))
     {
         $check_text_list->set_active(TRUE);
         $entry_font_select->set_sensitive(FALSE);
@@ -1041,7 +1033,7 @@ function preference()
         $check_text_list->set_active(FALSE);
         $entry_font_select->set_sensitive(TRUE);
         $button_font_select->set_sensitive(TRUE);
-        $entry_font_select->set_text(file_get_contents(FONT_FILE));
+        $entry_font_select->set_text($_config['font_list']);
     }
     
     $table->attach($label_text_list, 0, 1, 0, 1, Gtk::FILL, Gtk::FILL);
@@ -1058,7 +1050,7 @@ function preference()
 
 function check_font($check, $entry, $button)
 {
-    global $cell_renderer;
+    global $cell_renderer, $sqlite;
     
     if ($check->get_active() === FALSE)
     {
@@ -1067,33 +1059,35 @@ function check_font($check, $entry, $button)
     }
     else
     {
+        sqlite_query($sqlite, "UPDATE config SET value = '' WHERE key = 'FONT_LIST'");
         $entry->set_sensitive(FALSE);
         $button->set_sensitive(FALSE);
         $entry->set_text('');
         $cell_renderer->set_property('font',  '');
         change_dir('none');
-        @unlink(FONT_FILE);
     }
 }
 
+/**
+ * Создаёт диалог GtkFontSelectionDialog
+ * и производит запись выбранного шрифта в базу данных.
+ */
 function font_select($entry)
 {
-    global $cell_renderer, $lang;
+    global $cell_renderer, $lang, $_config, $sqlite;
     
     $dialog = new GtkFontSelectionDialog($lang['font']['title']);
     $dialog->set_position(Gtk::WIN_POS_CENTER_ALWAYS);
     $dialog->set_preview_text($lang['font']['preview']);
-    if (file_exists(FONT_FILE))
-        $dialog->set_font_name(file_get_contents(FONT_FILE));
+    if ($_config['font_list'])
+        $dialog->set_font_name($_config['font_list']);
     $dialog->show_all();
     $dialog->run();
     
     $font_name = $dialog->get_font_name();
     $entry->set_text($font_name);
     
-    $fopen = fopen(FONT_FILE, 'w+');
-    fwrite($fopen, $font_name);
-    fclose($fopen);
+    sqlite_query($sqlite, "UPDATE config SET value = '$font_name' WHERE key = 'FONT_LIST'");
     
     $cell_renderer->set_property('font',  $font_name);
     change_dir('none');
@@ -1103,28 +1097,17 @@ function font_select($entry)
 
 /**
  *
- * Функция производит запись в конфигурационный файл
+ * Функция производит запись в базу данных
  * при изменении значения радио-кнопки в окне настроек.
  * @param string $param Изменяемый параметр
  * @param string $value Новое значение параметра
  */
 function radio_button_write($param, $value)
 {
-    $file = file(CONFIG_FILE);
-    $fopen = fopen(CONFIG_FILE, 'w+');
-    if ($value == 'home')
-        $value = $_ENV['HOME'];
-    else
-        $value = '/';
-    for ($i = 0; $i < count($file); $i++)
-    {
-        $explode = explode(' ', trim($file[$i]));
-        if ($explode[0] == $param)
-            fwrite($fopen, $param.' '.$value."\n");
-        else
-            fwrite($fopen, trim($file[$i])."\n");
-    }
-    fclose($fopen);
+    global $sqlite;
+    
+    $param = strtoupper($param);
+    sqlite_query($sqlite, "UPDATE config SET value = '$value' WHERE key = '$param'");
     
     // Обновляем главное окно
     change_dir('none');
@@ -1132,34 +1115,17 @@ function radio_button_write($param, $value)
 
 /**
  *
- * Функция производит запись в конфигурационный файл
+ * Функция производит запись в базу данных
  * при изменении значения флажка в окне настроек.
  */
 function check_button_write($check, $param)
 {
+    global $sqlite;
+    
     $value = $check->get_active() ? 'on' : 'off';
     
-    $file = file(CONFIG_FILE);
-    $fopen = fopen(CONFIG_FILE, 'w+');
-    for ($i = 0; $i < count($file); $i++)
-    {
-        $explode = explode(' ', trim($file[$i]));
-        if ($param == 'hidden_files')
-        {
-            if ($explode[0] == 'HIDDEN_FILES')
-                fwrite($fopen, 'HIDDEN_FILES '.$value."\n");
-            else
-                fwrite($fopen, trim($file[$i])."\n");
-        }
-        elseif ($param == 'ask_delete')
-        {
-            if ($explode[0] == 'ASK_DELETE')
-                fwrite($fopen, 'ASK_DELETE '.$value."\n");
-            else
-                fwrite($fopen, trim($file[$i])."\n");
-        }
-    }
-    fclose($fopen);
+    $param = strtoupper($param);
+    sqlite_query($sqlite, "UPDATE config SET value = '$value' WHERE key = '$param'");
     
     // Обновляем главное окно
     change_dir('none');
@@ -1269,7 +1235,7 @@ function bookmarks_list($model)
     global $sqlite;
     
     $data = array();
-    $query = sqlite_query($sqlite['bookmarks'], "SELECT * FROM bookmarks");
+    $query = sqlite_query($sqlite, "SELECT * FROM bookmarks");
     while ($row = sqlite_fetch_array($query))
         $model->append(array($row['title'], $row['id']));
 }
@@ -1292,7 +1258,7 @@ function selection_bookmarks($selection, $array)
     $array['button_ok']->set_sensitive(TRUE);
     $array['button_delete']->set_sensitive(TRUE);
     
-    $query = sqlite_query($sqlite['bookmarks'], "SELECT path, title FROM bookmarks WHERE id = '$id'");
+    $query = sqlite_query($sqlite, "SELECT path, title FROM bookmarks WHERE id = '$id'");
     $row = sqlite_fetch_array($query);
     $array['name_entry']->set_text($row['title']);
     $array['path_entry']->set_text($row['path']);
@@ -1309,7 +1275,7 @@ function bookmarks_delete($array)
     list($model, $iter) = $selection_bookmarks->get_selected();
     $id = $model->get_value($iter, 1);
     
-    sqlite_query($sqlite['bookmarks'], "DELETE FROM bookmarks WHERE id = '$id'");
+    sqlite_query($sqlite, "DELETE FROM bookmarks WHERE id = '$id'");
     
     $model->clear();
     bookmarks_list($model);
@@ -1341,7 +1307,7 @@ function bookmarks_save_change($array)
     $title = sqlite_escape_string($array['name_entry']->get_text());
     $path = sqlite_escape_string($array['path_entry']->get_text());
     
-    sqlite_query($sqlite['bookmarks'], "UPDATE bookmarks SET title = '$title', path = '$path' WHERE id = '$id'");
+    sqlite_query($sqlite, "UPDATE bookmarks SET title = '$title', path = '$path' WHERE id = '$id'");
     
     $model->clear();
     bookmarks_list($model);
@@ -1377,13 +1343,13 @@ function bookmark_add($bool = FALSE, $array = '')
             $basename = basename($start_dir);
         $title = sqlite_escape_string($basename);
         $path = sqlite_escape_string($start_dir);
-        sqlite_query($sqlite['bookmarks'], "INSERT INTO bookmarks(path, title) VALUES('$path', '$title')");
+        sqlite_query($sqlite, "INSERT INTO bookmarks(path, title) VALUES('$path', '$title')");
     }
     // Добавление корневой директории из окна управления закладками
     else
     {
         $title = sqlite_escape_string($lang['bookmarks']['new']);
-        sqlite_query($sqlite['bookmarks'], "INSERT INTO bookmarks(path, title) VALUES('/', '$title')");
+        sqlite_query($sqlite, "INSERT INTO bookmarks(path, title) VALUES('/', '$title')");
         
         list($model, $iter) = $selection_bookmarks->get_selected();
         
@@ -1467,7 +1433,7 @@ function bookmarks_menu()
     
     unset($menu_item);
 
-    $query = sqlite_query($sqlite['bookmarks'], "SELECT * FROM bookmarks");
+    $query = sqlite_query($sqlite, "SELECT * FROM bookmarks");
     if (sqlite_num_rows($query) == 0)
     {
         $sub_menu['bookmarks']->append($item = new GtkMenuItem('Закладок нет'));
@@ -1537,82 +1503,34 @@ function shortcuts()
     Gtk::main();
 }
 
-function toolbar_view($widget)
+function panel_view($widget, $key)
 {
-    global $toolbar;
+    global $toolbar, $addressbar, $status, $sqlite;
     
     $value = $widget->get_active() ? 'on' : 'off';
-    if ($value == 'off')
-    {
-        $toolbar->hide();
-    }
-    else
-    {
-        $toolbar->show_all();
-    }
-    $file = file(CONFIG_FILE);
-    $fopen = fopen(CONFIG_FILE, 'w+');
-    for ($i = 0; $i < count($file); $i++)
-    {
-        $explode = explode(' ', $file[$i]);
-        if ($explode[0] == 'TOOLBAR_VIEW')
-            fwrite($fopen, 'TOOLBAR_VIEW '.$value."\n");
-        else
-            fwrite($fopen, trim($file[$i])."\n");
-    }
-    fclose($fopen);
-}
-
-function addressbar_view($widget)
-{
-    global $addressbar;
+    sqlite_query($sqlite, "UPDATE config SET value = '$value' WHERE key = '$key'");
     
-    $value = $widget->get_active() ? 'on' : 'off';
-    if ($value == 'off')
+    if ($key == 'TOOLBAR_VIEW')
     {
-        $addressbar->hide();
-    }
-    else
-    {
-        $addressbar->show_all();
-    }
-    $file = file(CONFIG_FILE);
-    $fopen = fopen(CONFIG_FILE, 'w+');
-    for ($i = 0; $i < count($file); $i++)
-    {
-        $explode = explode(' ', $file[$i]);
-        if ($explode[0] == 'ADDRESSBAR_VIEW')
-            fwrite($fopen, 'ADDRESSBAR_VIEW '.$value."\n");
+        if ($value == 'on')
+            $toolbar->show();
         else
-            fwrite($fopen, trim($file[$i])."\n");
+            $toolbar->hide();
     }
-    fclose($fopen);
-}
-
-function statusbar_view($widget)
-{
-    global $status;
-    
-    $value = $widget->get_active() ? 'on' : 'off';
-    if ($value == 'off')
+    elseif ($key == 'ADDRESSBAR_VIEW')
     {
-        $status->hide();
-    }
-    else
-    {
-        $status->show_all();
-    }
-    $file = file(CONFIG_FILE);
-    $fopen = fopen(CONFIG_FILE, 'w+');
-    for ($i = 0; $i < count($file); $i++)
-    {
-        $explode = explode(' ', $file[$i]);
-        if ($explode[0] == 'STATUSBAR_VIEW')
-            fwrite($fopen, 'STATUSBAR_VIEW '.$value."\n");
+        if ($value == 'on')
+            $addressbar->show();
         else
-            fwrite($fopen, trim($file[$i])."\n");
+            $addressbar->hide();
     }
-    fclose($fopen);
+    elseif ($key == 'STATUSBAR_VIEW')
+    {
+        if ($value == 'on')
+            $status->show();
+        else
+            $status->hide();
+    }
 }
 
 ?>
