@@ -11,42 +11,24 @@
 
 // Папка с файлами программы
 define ('SHARE_DIR', '.');
-// Версия программы
-define ('VERSION_PROGRAM', trim(file_get_contents(SHARE_DIR.'/VERSION')));
-// Логотип программы
-define ('ICON_PROGRAM', SHARE_DIR.'/logo_program.png');
 // Папка с файлами настроек
 define ('CONFIG_DIR', './configuration');
 // Папка с файлами локализации
 define ('LANG_DIR', CONFIG_DIR.'/languages');
-// Файл с настройками программы
-define ('CONFIG_FILE', CONFIG_DIR.'/FlightFiles.conf');
-// Файл с настройками шрифта
-define ('FONT_FILE', CONFIG_DIR.'/font');
 // Файл буфера обмена
 define ('BUFER_FILE', CONFIG_DIR.'/bufer');
-// Файл закладок
-define ('BOOKMARKS_FILE',  CONFIG_DIR.'/bookmarks.sqlite');
+// Файл базы данных
+define ('DATABASE', CONFIG_DIR.'/database.sqlite');
+// Версия программы
+define ('VERSION_PROGRAM', trim(file_get_contents(SHARE_DIR.'/VERSION')));
+// Логотип программы
+define ('ICON_PROGRAM', SHARE_DIR.'/logo_program.png');
 
 // Выводим версию программы
 if ($argv[1] == '--version' OR $argv[1] == '-v')
 {
     echo VERSION_PROGRAM."\n";
     exit();
-}
-
-// Создаём папку с конфигами
-if (!file_exists(CONFIG_DIR))
-{
-    mkdir(CONFIG_DIR);
-}
-
-// Создаём главный конфиг
-if (!file_exists(CONFIG_FILE))
-{
-    $fopen = fopen(CONFIG_FILE, 'w+');
-    fwrite($fopen, "HIDDEN_FILES off\nHOME_DIR /\nASK_DELETE on\nTOOLBAR_VIEW on\nADDRESSBAR_VIEW on\nSTATUSBAR_VIEW on");
-    fclose($fopen);
 }
 
 // Основной языковой файл
@@ -63,15 +45,29 @@ include SHARE_DIR.'/FlightFiles.data.php';
 // Удаляем файл буфера обмена, если он по каким-либо причинам ещё не удалён
 @unlink(BUFER_FILE);
 
-// Подключаемся к базе данных
-if (!file_exists(BOOKMARKS_FILE))
+// Создаём папку с конфигами
+if (!file_exists(CONFIG_DIR))
 {
-    $sqlite['bookmarks'] = sqlite_open(BOOKMARKS_FILE);
-    sqlite_query($sqlite['bookmarks'], "CREATE TABLE bookmarks(id INTEGER PRIMARY KEY, path, title)");
+    mkdir(CONFIG_DIR);
+}
+
+// Подключаемся к базе данных
+if (!file_exists(DATABASE))
+{
+    $sqlite = sqlite_open(DATABASE);
+    sqlite_query($sqlite, "CREATE TABLE bookmarks(id INTEGER PRIMARY KEY, path, title)");
+    sqlite_query($sqlite, "CREATE TABLE config(key, value)");
+    sqlite_query($sqlite, "INSERT INTO config(key, value) VALUES('HIDDEN_FILES', 'off');".
+                          "INSERT INTO config(key, value) VALUES('HOME_DIR', '/');".
+                          "INSERT INTO config(key, value) VALUES('ASK_DELETE', 'on');".
+                          "INSERT INTO config(key, value) VALUES('TOOLBAR_VIEW', 'on');".
+                          "INSERT INTO config(key, value) VALUES('ADDRESSBAR_VIEW', 'on');".
+                          "INSERT INTO config(key, value) VALUES('STATUSBAR_VIEW', 'on');".
+                          "INSERT INTO config(key, value) VALUES('FONT_LIST', '');");
 }
 else
 {
-    $sqlite['bookmarks'] = sqlite_open(BOOKMARKS_FILE);
+    $sqlite = sqlite_open(DATABASE);
 }
 
 config_parser();
@@ -88,9 +84,9 @@ $action_group = new GtkActionGroup('menubar');
 
 // Стартовая директория
 if (empty($argv[1]))
-    $start_dir = $_config['start_dir'];
+    $start_dir = $_config['home_dir'];
 elseif (!file_exists($argv[1]))
-    $start_dir = $_config['start_dir'];
+    $start_dir = $_config['home_dir'];
 else
     $start_dir = $argv[1];
 
@@ -209,19 +205,19 @@ $action_menu['toolbar_view'] = new GtkToggleAction('TOOLBAR_VIEW', $lang['menu']
 $menu_item['toolbar_view'] = $action_menu['toolbar_view']->create_menu_item();
 if ($_config['toolbar_view'] == 'on')
     $action_menu['toolbar_view']->set_active(TRUE);
-$action_menu['toolbar_view']->connect('activate', 'toolbar_view');
+$action_menu['toolbar_view']->connect('activate', 'panel_view', 'TOOLBAR_VIEW');
 
 $action_menu['addressbar_view'] = new GtkToggleAction('ADDRESSBAR_VIEW', $lang['menu']['addresbar_view'], '', '');
 $menu_item['addressbar_view'] = $action_menu['addressbar_view']->create_menu_item();
 if ($_config['addressbar_view'] == 'on')
     $action_menu['addressbar_view']->set_active(TRUE);
-$action_menu['addressbar_view']->connect('activate', 'addressbar_view');
+$action_menu['addressbar_view']->connect('activate', 'panel_view', 'ADDRESSBAR_VIEW');
 
 $action_menu['statusbar_view'] = new GtkToggleAction('STATUSBAR_VIEW', $lang['menu']['statusbar_view'], '', '');
 $menu_item['statusbar_view'] = $action_menu['statusbar_view']->create_menu_item();
 if ($_config['statusbar_view'] == 'on')
     $action_menu['statusbar_view']->set_active(TRUE);
-$action_menu['statusbar_view']->connect('activate', 'statusbar_view');
+$action_menu['statusbar_view']->connect('activate', 'panel_view', 'STATUSBAR_VIEW');
 
 foreach ($menu_item as $value)
     $sub_menu['view']->append($value);
@@ -397,8 +393,8 @@ current_dir();
 
 $tree_view = new GtkTreeView($store);
 $cell_renderer = new GtkCellRendererText();
-if (file_exists(FONT_FILE))
-    $cell_renderer->set_property('font',  file_get_contents(FONT_FILE));
+if (!empty($_config['font_list']))
+    $cell_renderer->set_property('font',  $_config['font_list']);
 
 $selection = $tree_view->get_selection();
 $selection->connect('changed', 'on_selection');
