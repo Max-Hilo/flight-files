@@ -1436,7 +1436,7 @@ function bookmarks_menu()
     $query = sqlite_query($sqlite, "SELECT * FROM bookmarks");
     if (sqlite_num_rows($query) == 0)
     {
-        $sub_menu['bookmarks']->append($item = new GtkMenuItem('Закладок нет'));
+        $sub_menu['bookmarks']->append($item = new GtkMenuItem($lang['menu']['not_bookmarks']));
         $item->set_sensitive(FALSE);
         $sub_menu['bookmarks']->append(new GtkSeparatorMenuItem);
     }

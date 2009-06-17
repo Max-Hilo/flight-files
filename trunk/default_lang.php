@@ -19,6 +19,7 @@ $lang['menu']['preference']         = 'Параметры';
 $lang['menu']['toolbar_view']       = 'Панель инструментов';
 $lang['menu']['addresbar_view']     = 'Адресная строка';
 $lang['menu']['statusbar_view']     = 'Строка состояния';
+$lang['menu']['not_bookmarks']      = 'Закладок нет';
 $lang['menu']['bookmarks_add']      = 'Добавить в закладки';
 $lang['menu']['bookmarks_edit']     = 'Изменить закладки';
 $lang['menu']['shortcuts']          = 'Сочетания клавиш';
