@@ -1137,7 +1137,7 @@ function check_button_write($check, $param)
  */
 function bookmarks_edit()
 {
-    global $selection_bookmarks, $lang;
+    global $selection_bookmarks, $lang, $sqlite;
     
     $window = new GtkWindow();
     $window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
@@ -1150,6 +1150,7 @@ function bookmarks_edit()
     $table = new GtkTable();
     
     $array['button_delete'] = new GtkButton($lang['bookmarks']['delete']);
+    $array['button_delete_all'] = new GtkButton($lang['bookmarks']['delete_all']);
     
     /**
      * Поля ввода
@@ -1168,6 +1169,7 @@ function bookmarks_edit()
     $array['button_ok']->set_image(GtkImage::new_from_stock(Gtk::STOCK_OK, Gtk::ICON_SIZE_BUTTON));
     $array['button_ok']->set_sensitive(FALSE);
     $array['button_ok']->connect_simple('clicked', 'bookmarks_save_change', $array);
+    $array['button_ok']->set_tooltip_text($lang['bookmarks']['save_hint']);
     
     $vbox = new GtkVBox();
     $vbox->pack_start($array['name_label'], FALSE, FALSE);
@@ -1178,7 +1180,7 @@ function bookmarks_edit()
     $vbox->pack_start(new GtkLabel(''), FALSE, FALSE);
     $vbox->pack_start($array['button_ok'], FALSE, FALSE);
     
-    $table->attach($vbox, 2, 3, 0, 1, Gtk::FILL, Gtk::FILL);
+    $table->attach($vbox, 3, 4, 0, 1, Gtk::FILL, Gtk::FILL);
     
     /**
      * Кнопки
@@ -1186,14 +1188,21 @@ function bookmarks_edit()
     $array['button_delete']->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_BUTTON));
     $array['button_delete']->set_sensitive(FALSE);
     $array['button_delete']->connect_simple('clicked', 'bookmarks_delete', $array);
-    
+    $array['button_delete']->set_tooltip_text($lang['bookmarks']['delete_hint']);
     $table->attach($array['button_delete'], 0, 1, 1, 2, Gtk::FILL, Gtk::FILL);
+    
+    $array['button_delete_all']->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_BUTTON));
+    if (sqlite_num_rows(sqlite_query($sqlite, "SELECT * FROM bookmarks")) == 0)
+        $array['button_delete_all']->set_sensitive(FALSE);
+    $array['button_delete_all']->connect_simple('clicked', 'bookmarks_delete', $array, 'all');
+    $array['button_delete_all']->set_tooltip_text($lang['bookmarks']['delete_all_hint']);
+    $table->attach($array['button_delete_all'], 1, 2, 1, 2, Gtk::FILL, GTK::FILL);
     
     $array['button_add'] = new GtkButton($lang['bookmarks']['add']);
     $array['button_add']->set_image(GtkImage::new_from_stock(Gtk::STOCK_ADD, Gtk::ICON_SIZE_BUTTON));
     $array['button_add']->connect_simple('clicked', 'bookmark_add', FALSE, $array);
-    
-    $table->attach($array['button_add'], 1, 2, 1, 2, Gtk::FILL, Gtk::FILL);
+    $array['button_add']->set_tooltip_text($lang['bookmarks']['add_hint']);
+    $table->attach($array['button_add'], 2, 3, 1, 2, Gtk::FILL, Gtk::FILL);
     
     /**
      * Список закладок
@@ -1219,7 +1228,7 @@ function bookmarks_edit()
     $selection_bookmarks = $view->get_selection();
     $selection_bookmarks->connect('changed', 'selection_bookmarks', $array);
     
-    $table->attach($scrolled, 0, 2, 0, 1);
+    $table->attach($scrolled, 0, 3, 0, 1);
     
     $window->add($table);
     $window->show_all();
@@ -1268,14 +1277,24 @@ function selection_bookmarks($selection, $array)
  *
  * Функция удаляет выбранную закладку.
  */
-function bookmarks_delete($array)
+function bookmarks_delete($array, $all = '')
 {
     global $selection_bookmarks, $action_menu, $sub_menu, $sqlite;
     
     list($model, $iter) = $selection_bookmarks->get_selected();
-    $id = $model->get_value($iter, 1);
     
-    sqlite_query($sqlite, "DELETE FROM bookmarks WHERE id = '$id'");
+    if ($all == 'all')
+    {
+        sqlite_query($sqlite, "DELETE FROM bookmarks");
+        $array['button_delete_all']->set_sensitive(FALSE);
+    }
+    else
+    {
+        $id = $model->get_value($iter, 1);
+        sqlite_query($sqlite, "DELETE FROM bookmarks WHERE id = '$id'");
+        if (sqlite_num_rows(sqlite_query($sqlite, "SELECT * FROM bookmarks")) == 0)
+            $array['button_delete_all']->set_sensitive(FALSE);
+    }
     
     $model->clear();
     bookmarks_list($model);
@@ -1364,6 +1383,7 @@ function bookmark_add($bool = FALSE, $array = '')
         $array['path_entry']->set_sensitive(FALSE);
         $array['button_ok']->set_sensitive(FALSE);
         $array['button_delete']->set_sensitive(FALSE);
+        $array['button_delete_all']->set_sensitive(TRUE);
     }
     
     // Изменяем меню
