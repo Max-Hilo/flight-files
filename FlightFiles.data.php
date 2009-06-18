@@ -31,35 +31,61 @@ function config_parser()
 /**
  * Функция определяет действия, выполняемые при нажатии кнопкой мыши по строке.
  */
-function on_button($view, $event)
+function on_button($view, $event, $type)
 {
-    global $store, $start_dir, $lang;
+    global $panel, $lang, $store, $action_menu, $action, $start, $entry_current_dir;
+    
+    $panel = $type;
+    
+    $action['up']->set_sensitive(TRUE);
+    $action['root']->set_sensitive(TRUE);
+    $action['home']->set_sensitive(TRUE);
+    
+    if ($start[$panel] == '/')
+    {
+        $action['up']->set_sensitive(FALSE);
+        $action['root']->set_sensitive(FALSE);
+    }
+    elseif ($start[$panel] == $_ENV['HOME'])
+    {
+        $action['home']->set_sensitive(FALSE);
+    }
+    
+    $entry_current_dir->set_text($start[$panel]);
+    
+    $path_array = $view->get_path_at_pos($event->x, $event->y);
+    $path = $path_array[0][0];
+    
+    @$iter = $store[$panel]->get_iter($path);
+    @$file = $store[$panel]->get_value($iter, 0);
+    @$dir_file = $store[$panel]->get_value($iter, 1);
+    @$size = $store[$panel]->get_value($iter, 2);
     
     // Если нажата левая кнопка, то...
     if ($event->button == 1)
     {
+        if (!empty($file))
+            $action_menu['copy']->set_sensitive(TRUE);
+        else
+            return FALSE;
+        
         // При двойном клике по папке открываем её
         if ($event->type == Gdk::_2BUTTON_PRESS)
         {
-            $path_array = $view->get_path_at_pos($event->x, $event->y);
-            $path = $path_array[0][0];
-            
-            @$iter = $store->get_iter($path);
-            @$file = $store->get_value($iter, 0);
-            if (is_dir($start_dir.'/'.$file))
+            if (is_dir($start[$panel].'/'.$file))
             {
                 // При нехватке прав для просмотра директории
-                if (!is_readable($start_dir.'/'.$file))
+                if (!is_readable($start[$panel].'/'.$file))
                     alert($lang['alert']['chmod_read_dir']);
                 else
                     change_dir('open', $file);
             }
-            elseif (is_file($start_dir.'/'.$file))
+            elseif (is_file($start[$panel].'/'.$file))
             {
-                if (!is_readable($start_dir.'/'.$file))
+                if (!is_readable($start[$panel].'/'.$file))
                     alert($lang['alert']['chmod_read_file']);
-                elseif (mime_content_type($start_dir.'/'.$file) == 'text/plain' OR
-                    mime_content_type($start_dir.'/'.$file) == 'text/html')
+                elseif (mime_content_type($start[$panel].'/'.$file) == 'text/plain' OR
+                    mime_content_type($start[$panel].'/'.$file) == 'text/html')
                 {
                     text_view($file);
                 }
@@ -73,18 +99,10 @@ function on_button($view, $event)
     // Если нажата правая кнопка, то показываем контекстное меню
     elseif ($event->button == 3)
     {
-        $path_array = $view->get_path_at_pos($event->x, $event->y);
-        $path = $path_array[0][0];
-        
-        @$iter = $store->get_iter($path);
-        @$file = $store->get_value($iter, 0);
-        @$type = $store->get_value($iter, 1);
-        @$size = $store->get_value($iter, 2);
-        
         // Создаём меню
         $menu = new GtkMenu();
         
-        if ($type == '<FILE>')
+        if ($dir_file == '<FILE>')
         {
             $copy = new GtkImageMenuItem(Gtk::STOCK_COPY);
             $cut = new GtkImageMenuItem(Gtk::STOCK_CUT);
@@ -103,18 +121,17 @@ function on_button($view, $event)
             // Расчитывать контрольную сумму для пустых файлов бессмысленно
             if ($size == '0 '.$lang['size']['b'])
             {
-                $md5->set_sensitive(FALSE);
-                $sha1->set_sensitive(FALSE);
+                $checksum->set_sensitive(FALSE);
             }
-            if (!is_writable($start_dir))
+            if (!is_writable($start[$panel]))
             {
                 $cut->set_sensitive(FALSE);
                 $rename->set_sensitive(FALSE);
                 $delete->set_sensitive(FALSE);
             }
             
-            if (@mime_content_type($start_dir.'/'.$file) == 'text/plain' OR
-                @mime_content_type($start_dir.'/'.$file) == 'text/html')
+            if (@mime_content_type($start[$panel].'/'.$file) == 'text/plain' OR
+                @mime_content_type($start[$panel].'/'.$file) == 'text/html')
             {
                 $open = new GtkMenuItem($lang['popup']['open_text_file']);
                 $menu->append($open);
@@ -135,11 +152,11 @@ function on_button($view, $event)
             $cut->connect_simple('activate', 'bufer_file', $file, 'cut');
             $rename->connect_simple('activate', '_rename', $file);
             $delete->connect_simple('activate', 'delete', $file);
-            $md5->connect_simple('activate', 'checksum_dialog', $file, 'MD5');
-            $sha1->connect_simple('activate', 'checksum_dialog', $file, 'SHA1');
-            $properties->connect_simple('activate', 'properties', $file);
+            $md5->connect_simple('activate', 'checksum_dialog', $start[$panel].'/'.$file, 'MD5');
+            $sha1->connect_simple('activate', 'checksum_dialog', $start[$panel].'/'.$file, 'SHA1');
+            $properties->connect_simple('activate', 'properties', $start[$panel].'/'.$file);
         }
-        elseif ($type == '<DIR>')
+        elseif ($dir_file == '<DIR>')
         {
             $open = new GtkImageMenuItem(Gtk::STOCK_OPEN);
             $copy = new GtkImageMenuItem(Gtk::STOCK_COPY);
@@ -147,7 +164,7 @@ function on_button($view, $event)
             $rename = new GtkMenuItem($lang['popup']['rename_dir']);
             $delete = new GtkMenuItem($lang['popup']['delete_dir']);
             
-            if (!is_writable($start_dir))
+            if (!is_writable($start[$panel]))
             {
                 $cut->set_sensitive(FALSE);
                 $rename->set_sensitive(FALSE);
@@ -175,12 +192,12 @@ function on_button($view, $event)
             $new_dir = new GtkMenuItem($lang['popup']['new_dir']);
             $paste = new GtkImageMenuItem(Gtk::STOCK_PASTE);
             
-            if (!is_writable($start_dir))
+            if (!is_writable($start[$panel]))
             {
                 $new_file->set_sensitive(FALSE);
                 $new_dir->set_sensitive(FALSE);
             }
-            if (!file_exists(BUFER_FILE) OR !is_writable($start_dir))
+            if (!file_exists(BUFER_FILE) OR !is_writable($start[$panel]))
                 $paste->set_sensitive(FALSE);
             
             $menu->append($new_file);
@@ -203,7 +220,7 @@ function on_button($view, $event)
 
 function _rename($file)
 {
-    global $start_dir, $lang;
+    global $start, $panel, $lang;
     
     $dialog = new GtkDialog(
         $lang['rename']['title'],
@@ -231,17 +248,17 @@ function _rename($file)
         }
         else
         {
-            if (file_exists($start_dir.'/'.$new_name) AND $new_name != $file)
+            if (file_exists($start[$panel].'/'.$new_name) AND $new_name != $file)
             {
                 $dialog->destroy();
-                if (is_dir($start_dir.'/'.$new_name))
+                if (is_dir($start[$panel].'/'.$new_name))
                     alert($lang['alert']['dir_exists_rename']);
                 else
                     alert($lang['alert']['file_exists_rename']);
                 _rename($file);
             }
             else
-                rename($start_dir.'/'.$file, $start_dir.'/'.$entry->get_text());
+                rename($start[$panel].'/'.$file, $start[$panel].'/'.$entry->get_text());
             $dialog->destroy();
         }
     }
@@ -258,19 +275,19 @@ function _rename($file)
  */
 function bufer_file($file = '', $act)
 {
-    global $start_dir, $action, $action_menu, $selection;
+    global $start, $panel, $action, $action_menu, $selection;
     
     if (empty($file))
     {
-        list($model, $iter) = $selection->get_selected();
-        @$file = $model->get_value($iter, 0);
+        list($model, $iter) = $selection[$panel]->get_selected();
+        $file = $model->get_value($iter, 0);
     }
     
     $fopen = fopen(BUFER_FILE, 'w+');
-    fwrite($fopen, $start_dir.'/'.$file."\n".$act);
+    fwrite($fopen, $start[$panel].'/'.$file."\n".$act);
     fclose($fopen);
     $action_menu['clear_bufer']->set_sensitive(TRUE);
-    if (is_writable($start_dir))
+    if (is_writable($start[$panel]))
     {
         $action['paste']->set_sensitive(TRUE);
         $action_menu['paste']->set_sensitive(TRUE);
@@ -283,34 +300,34 @@ function bufer_file($file = '', $act)
  */
 function paste_file()
 {
-    global $start_dir, $lang;
+    global $start, $panel, $lang;
     
     $file_array = file(BUFER_FILE);
     $file = trim($file_array[0]);
     $action = trim($file_array[1]);
     $dest = basename($file);
-    if (is_file($start_dir.'/'.$dest) AND is_file($file))
+    if (is_file($start[$panel].'/'.$dest) AND is_file($file))
        alert($lang['alert']['file_exists_paste']);
-    elseif (is_dir($start_dir.'/'.$dest) AND is_dir($file))
+    elseif (is_dir($start[$panel].'/'.$dest) AND is_dir($file))
         alert($lang['alert']['dir_exists_paste']);
     else
     {
     if ($action == 'copy')
     {
         if (is_file($file))
-            copy($file, $start_dir.'/'.$dest);
+            copy($file, $start[$panel].'/'.$dest);
         elseif (is_dir($file))
         {
-            mkdir($start_dir.'/'.$dest);
-            _copy($file, $start_dir.'/'.$dest);
+            mkdir($start[$panel].'/'.$dest);
+            _copy($file, $start[$panel].'/'.$dest);
         }
     }
     elseif ($action == 'cut')
     {
         if (is_file($file))
-            rename($file, $start_dir.'/'.$dest);
+            rename($file, $start[$panel].'/'.$dest);
         elseif (is_dir($file))
-            exec('mv '.$file.' '.$start_dir.'/'.$dest);
+            exec('mv '.$file.' '.$start[$panel].'/'.$dest);
     }
     change_dir('none');
     }
@@ -342,158 +359,14 @@ function _copy($source_dir, $dest_dir)
 
 /**
  *
- * Функция выводит окно со свойствами для указанного файла.
- * @param string $file Адрес файла, для которого необходимо произвести операцию
- */
-function properties($file)
-{
-    global $start_dir, $lang;
-    
-    $window = new GtkWindow();
-    $window->set_position(Gtk::WIN_POS_CENTER);
-    $window->set_title(str_replace('%s', $file, $lang['properties']['title']));
-    $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
-    $window->set_size_request(500, -1);
-    $window->connect_simple('destroy', array('Gtk', 'main_quit'));
-    
-    $notebook = new GtkNotebook();
-    
-    //////////////////////////////
-    ///// Вкладка "Основные" /////
-    //////////////////////////////
-    
-    $table = new GtkTable();
-    
-    $label_name = new GtkLabel($lang['properties']['name']);
-    $label_size = new GtkLabel($lang['properties']['size']);
-    $label_path = new GtkLabel($lang['properties']['path']);
-    $label_mtime = new GtkLabel($lang['properties']['mtime']);
-    $label_atime = new GtkLabel($lang['properties']['atime']);
-    $name = new GtkEntry($file);
-    $size = new GtkLabel(convert_size($file));
-    $path = new GtkLabel($start_dir);
-    $mtime = new GtkLabel(date('d.m.Y G:i:s', filemtime($start_dir.'/'.$file)));
-    $atime = new GtkLabel(date('d.m.Y G:i:s', fileatime($start_dir.'/'.$file)));
-    
-    $label_name->set_alignment(1,0);
-    $label_size->set_alignment(1,0);
-    $label_path->set_alignment(1,0);
-    $label_mtime->set_alignment(1,0);
-    $label_atime->set_alignment(1,0);
-    $size->set_alignment(0,0);
-    $path->set_alignment(0,0);
-    $mtime->set_alignment(0,0);
-    $atime->set_alignment(0,0);
-    
-    $table->attach($label_name, 0, 1, 0, 1, Gtk::FILL, Gtk::FILL, 10);
-    $table->attach($name, 1, 2, 0, 1);
-    $table->attach(new GtkLabel(), 0, 2, 2, 3);
-    $table->attach($label_size, 0, 1, 3, 4, Gtk::FILL, Gtk::FILL);
-    $table->attach($size, 1, 2, 3, 4);
-    $table->attach($label_path, 0, 1, 4, 5, Gtk::FILL, Gtk::FILL);
-    $table->attach($path, 1, 2, 4, 5);
-    $table->attach(new GtkLabel(), 0, 2, 5, 6);
-    $table->attach($label_mtime, 0, 1, 6, 7, Gtk::FILL, Gtk::FILL);
-    $table->attach($mtime, 1, 2, 6, 7);
-    $table->attach($label_atime, 0, 1, 7, 8, Gtk::FILL, Gtk::FILL);
-    $table->attach($atime, 1, 2, 7, 8);
-    
-    $table->set_col_spacing(0, 10);
-    
-    $notebook->append_page($table, new GtkLabel($lang['properties']['general']));
-    
-    ///////////////////////////
-    ///// Вкладка "Права" /////
-    ///////////////////////////
-    
-    $table = new GtkTable();
-    
-    $label_owner = new GtkLabel($lang['properties']['owner']);
-    $label_group = new GtkLabel($lang['properties']['group']);
-    $label_perms = new GtkLabel($lang['properties']['perms']);
-    $label_perms_text = new GtkLabel($lang['properties']['perms_text']);
-    $owner = posix_getpwuid(fileowner($start_dir.'/'.$file));
-    $owner = new GtkLabel($owner['name'].' - '.str_replace(',', '', $owner['gecos']));
-    $group = posix_getpwuid(filegroup($start_dir.'/'.$file));
-    $group = new GtkLabel($group['name']);
-    $perm = substr(sprintf('%o', fileperms($start_dir.'/'.$file)), -4);
-    $perms = new GtkLabel($perm);
-    if (substr($perm, 0, 1) == '1')
-        $perms_text .= 'd';
-    else
-        $perms_text .= '-';
-    for ($i = 1; $i <= 3; $i++)
-    {
-        switch (substr($perm, $i, 1))
-        {
-            case 0:
-                $perms_text .= '---';
-                break;
-            case 1:
-                $perms_text .= '--x';
-                break;
-            case 2:
-                $perms_text .= '-w-';
-                break;
-            case 3:
-                $perms_text .= '-wx';
-                break;
-            case 4:
-                $perms_text .= 'r--';
-                break;
-            case 5:
-                $perms_text .= 'r-x';
-                break;
-            case 6:
-                $perms_text .= 'rw-';
-                break;
-            case 7:
-                $perms_text .= 'rwx';
-                break;
-        }
-    }
-    $perms_text = new GtkLabel($perms_text);
-    
-    $label_owner->set_alignment(1,0);
-    $label_group->set_alignment(1,0);
-    $label_perms->set_alignment(1,0);
-    $label_perms_text->set_alignment(1,0);
-    $owner->set_alignment(0,0);
-    $group->set_alignment(0,0);
-    $perms->set_alignment(0,0);
-    $perms_text->set_alignment(0,0);
-    
-    $table->attach($label_owner, 0, 1, 0, 1, Gtk::FILL, Gtk::FILL, 10, 5);
-    $table->attach($owner, 1, 2, 0, 1, Gtk::FILL, Gtk::FILL, 10, 5);
-    $table->attach($label_group, 0, 1, 1, 2, Gtk::FILL, Gtk::FILL, 10, 5);
-    $table->attach($group, 1, 2, 1, 2, Gtk::FILL, Gtk::FILL, 10, 5);
-    $table->attach($label_perms, 0, 1, 2, 3, Gtk::FILL, Gtk::FILL, 10, 5);
-    $table->attach($perms, 1, 2, 2, 3, Gtk::FILL, Gtk::FILL, 10, 5);
-    $table->attach($label_perms_text, 0, 1, 3, 4, Gtk::FILL, Gtk::FILL, 10, 5);
-    $table->attach($perms_text, 1, 2, 3, 4, Gtk::FILL, Gtk::FILL, 10, 5);
-    
-    $table->set_col_spacing(0, 10);
-    
-    $notebook->append_page($table, new GtkLabel($lang['properties']['perms_tab']));
-    
-    $vbox = new GtkVBox();
-    $vbox->pack_start($notebook, FALSE, FALSE);
-    
-    $window->add($vbox);
-    $window->show_all();
-    Gtk::main();
-}
-
-/**
- *
  * Функция удаляет выбранный файл/папку, предварительно спросив подтверждения у пользователя.
  * @param string $file Адрес файла, для которого необходимо произвести операцию
  */
 function delete($file)
 {
-    global $start_dir, $_config, $lang;
+    global $start, $_config, $panel, $lang;
     
-    if (is_dir($start_dir.'/'.$file))
+    if (is_dir($start[$panel].'/'.$file))
     {
         if ($_config['ask_delete'] == 'on')
         {
@@ -516,11 +389,11 @@ function delete($file)
             $dialog->show_all();
             $result = $dialog->run();
             if ($result == Gtk::RESPONSE_YES)
-                rm($start_dir.'/'.$file, $start_dir.'/'.$file);
+                rm($start[$panel].'/'.$file, $start_dir.'/'.$file);
             $dialog->destroy();
         }
         else
-            rm($start_dir.'/'.$file);
+            rm($start[$panel].'/'.$file);
         change_dir('none');
     }
     else
@@ -547,7 +420,7 @@ function delete($file)
             $result = $dialog->run();
             if ($result == Gtk::RESPONSE_YES)
             {
-                unlink($start_dir.'/'.$file);
+                unlink($start[$panel].'/'.$file);
                 $dialog->destroy();
             }
             else
@@ -555,7 +428,7 @@ function delete($file)
         }
         else
         {
-            unlink($start_dir.'/'.$file);
+            unlink($start[$panel].'/'.$file);
         }
         change_dir('none');
     }
@@ -585,57 +458,11 @@ function rm($dir)
 }
 
 /**
- *
- * Функция выводит диалоговое окно, в котором отображается
- * контрольная сумма указанного файла.
- * @param string $file Адрес файла, для которого необходимо произвести операцию
- * @param string $alg Алгоритм шифрования (поддерживается MD5 и SHA1)
- */
-function checksum_dialog($file, $alg)
-{
-    global $start_dir, $lang;
-    
-    $dialog = new GtkDialog(str_replace('%s', $alg, $lang['checksum']['title']), NULL, Gtk::DIALOG_MODAL);
-    $dialog->set_position(Gtk::WIN_POS_CENTER);
-    $dialog->set_size_request(400, -1);
-    $vbox = $dialog->vbox;
-    $vbox->pack_start(new GtkLabel(str_replace('%s', $file, $lang['checksum']['text'])));
-    $vbox->pack_start($hbox = new GtkHBox());
-    $hbox->pack_start(
-                      GtkImage::new_from_stock(Gtk::STOCK_DIALOG_INFO, Gtk::ICON_SIZE_DIALOG),
-                      FALSE,
-                      FALSE
-                    );
-    if ($alg == 'MD5')
-    {
-        $hbox->pack_start(
-                          new GtkEntry(md5_file($start_dir.'/'.$file), 32),
-                          TRUE,
-                          TRUE
-                        );
-    }
-    elseif ($alg == 'SHA1')
-    {
-        $hbox->pack_start(
-                          new GtkEntry(sha1_file($start_dir.'/'.$file), 40),
-                          TRUE,
-                          TRUE
-                        );
-    }
-    
-    $dialog->add_button(Gtk::STOCK_OK, Gtk::RESPONSE_OK);
-    $dialog->set_has_separator(FALSE);
-    $dialog->show_all();
-    $dialog->run();
-    $dialog->destroy();
-}
-
-/**
  * Функция выводит список файлов и папок в текущей директории.
  */
-function current_dir()
+function current_dir($panel)
 {
-    global $store, $start_dir, $_config, $count_element, $count_dir, $count_file;
+    global $store, $_config, $count_element, $count_dir, $count_file, $start;
     
     // Получаем настройки программы
     config_parser();
@@ -644,7 +471,7 @@ function current_dir()
     $count_dir = 0;
     $count_file = 0;
     
-    $opendir = opendir($start_dir);
+    $opendir = opendir($start[$panel]);
     
     while (FALSE !== ($file = readdir($opendir)))
     {
@@ -660,28 +487,23 @@ function current_dir()
         }
         
         // Заполняем колонки для файлов...
-        if (is_file($start_dir.'/'.$file))
+        if (is_file($start[$panel].'/'.$file))
         {
-            $store->append(array(
-                                 $file,
-                                 '<FILE>',
-                                 convert_size($file),
-                                 date('d.m.Y G:i:s', filemtime($start_dir.'/'.$file))
-                                ));
+            $store[$panel]->append(array($file, '<FILE>', convert_size($file), date('d.m.Y G:i:s', filemtime($start[$panel].'/'.$file))));
             $count_file++;
         }
         // ... и папок
-        elseif (is_dir($start_dir.'/'.$file))
+        elseif (is_dir($start[$panel].'/'.$file))
         {
-            $store->append(array($file, '<DIR>', '', ''));
+            $store[$panel]->append(array($file, '<DIR>', '', ''));
             $count_dir++;
         }
         
         $count_element++;
     }
     
-    $store->set_sort_column_id(0, Gtk::SORT_ASCENDING);
-    $store->set_sort_column_id(1, Gtk::SORT_ASCENDING);
+    $store[$panel]->set_sort_column_id(0, Gtk::SORT_ASCENDING);
+    $store[$panel]->set_sort_column_id(1, Gtk::SORT_ASCENDING);
 }
 
 /**
@@ -690,9 +512,9 @@ function current_dir()
  */
 function convert_size($file)
 {
-    global $start_dir, $lang;
+    global $lang, $start, $panel;
     
-    $size_byte = filesize($start_dir.'/'.$file);
+    $size_byte = filesize($start[$panel].'/'.$file);
     if ($size_byte >= 0 AND $size_byte < 1024)
         return $size_byte.' '.$lang['size']['b'];
     elseif ($size_byte >= 1024 AND $size_byte < 1048576)
@@ -709,29 +531,31 @@ function convert_size($file)
  */
 function change_dir($act = '', $dir = '')
 {
-    global $vbox, $store, $start_dir, $entry_current_dir, $action, $action_menu, $lang;
+    global $vbox, $entry_current_dir, $action, $action_menu, $lang, $panel, $store, $start;
     
     // Устанавливаем новое значение текущей директории
     if ($act == 'user')
         $new_dir = $entry_current_dir->get_text();
     elseif ($act == 'none')
-        $new_dir = $start_dir;
+        $new_dir = $start[$panel];
     elseif ($act == 'home')
         $new_dir = $_ENV['HOME'];
     elseif ($act == 'open')
-        $new_dir = $start_dir.'/'.$dir;
+        $new_dir = $start[$panel].'/'.$dir;
     elseif ($act == 'bookmarks')
         $new_dir = $dir;
     else
-        $new_dir = dirname($start_dir);
+        $new_dir = dirname($start[$panel]);
     
     // Если указанной директории не существует, то информируем пользователя об этом
     if (!file_exists($new_dir))
+    {
         alert($lang['alert']['dir_not_exists']);
+    }
     else
-        $start_dir = $new_dir;
+        $start[$panel] = $new_dir;
     
-    $start_dir = preg_replace ('#/+#', '/', $start_dir);
+    $start[$panel] = preg_replace ('#/+#', '/', $start[$panel]);
     
     // Делаем неактивными некоторые кнопки на панели инструментов и пункты меню
     $action['up']->set_sensitive(TRUE);
@@ -749,14 +573,14 @@ function change_dir($act = '', $dir = '')
         $action_menu['clear_bufer']->set_sensitive(TRUE);
         $action_menu['paste']->set_sensitive(TRUE);
     }
-    if ($start_dir == '/')
+    if ($start[$panel] == '/')
     {
         $action['up']->set_sensitive(FALSE);
         $action['root']->set_sensitive(FALSE);
     }
-    if ($start_dir == $_ENV['HOME'])
+    if ($start[$panel] == $_ENV['HOME'])
         $action['home']->set_sensitive(FALSE);
-    if (!is_writable($start_dir))
+    if (!is_writable($start[$panel]))
     {
         $action_menu['new_file']->set_sensitive(FALSE);
         $action_menu['new_dir']->set_sensitive(FALSE);
@@ -767,15 +591,15 @@ function change_dir($act = '', $dir = '')
     }
     
     // Очищаем список
-    $store->clear();
+    $store[$panel]->clear();
     
     // Выводим имеющиеся в директории файлы и папки
-    current_dir();
+    current_dir($panel);
     
     status_bar();
     
     // Устанавливаем новое значение в адресную строку
-    $entry_current_dir->set_text($start_dir);
+    $entry_current_dir->set_text($start[$panel]);
 }
 
 /**
@@ -833,9 +657,9 @@ function alert($msg)
  */
 function new_element($type)
 {
-    global $start_dir, $lang;
+    global $start, $lang, $panel;
     
-    if (!is_writable($start_dir))
+    if (!is_writable($start[$panel]))
     {
         alert($lang['alert']['new_not_chmod']);
         return FALSE;
@@ -843,16 +667,16 @@ function new_element($type)
     
     if ($type == 'file')
     {
-        if (!file_exists($start_dir.'/'.$lang['new']['file']))
-            fclose(fopen($start_dir.'/'.$lang['new']['file'], 'a+'));
+        if (!file_exists($start[$panel].'/'.$lang['new']['file']))
+            fclose(fopen($start[$panel].'/'.$lang['new']['file'], 'a+'));
         else
         {
             $i = 2;
             while (TRUE)
             {
-                if (!file_exists($start_dir.'/'.$lang['new']['file'].' '.$i))
+                if (!file_exists($start[$panel].'/'.$lang['new']['file'].' '.$i))
                 {
-                    fclose(fopen($start_dir.'/'.$lang['new']['file'].' '.$i, 'a+'));
+                    fclose(fopen($start[$panel].'/'.$lang['new']['file'].' '.$i, 'a+'));
                     break;
                 }
                 else
@@ -862,16 +686,16 @@ function new_element($type)
     }
     elseif ($type == 'dir')
     {
-        if (!file_exists($start_dir.'/'.$lang['new']['dir']))
-            mkdir($start_dir.'/'.$lang['new']['dir']);
+        if (!file_exists($start[$panel].'/'.$lang['new']['dir']))
+            mkdir($start[$panel].'/'.$lang['new']['dir']);
         else
         {
             $i = 2;
             while (TRUE)
             {
-                if (!file_exists($start_dir.'/'.$lang['new']['dir'].' '.$i))
+                if (!file_exists($start[$panel].'/'.$lang['new']['dir'].' '.$i))
                 {
-                    mkdir($start_dir.'/'.$lang['new']['dir'].' '.$i);
+                    mkdir($start[$panel].'/'.$lang['new']['dir'].' '.$i);
                     break;
                 }
                 else
@@ -926,30 +750,6 @@ function clear_bufer()
     $action_menu['clear_bufer']->set_sensitive(FALSE);
     $action_menu['paste']->set_sensitive(FALSE);
     alert($lang['alert']['bufer_clear']);
-}
-
-/**
- *
- * Функция выводит диалоговое окно, в котором указана
- * информация о программе, разработчике и лицензии.
- */
-function about()
-{
-    global $lang;
-    
-    $dialog = new GtkAboutDialog();
-    $dialog->set_skip_taskbar_hint(TRUE);
-    $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
-    $dialog->set_logo(GdkPixbuf::new_from_file(ICON_PROGRAM));
-    $dialog->set_program_name('FlightFiles');
-    $dialog->set_version(VERSION_PROGRAM);
-    $dialog->set_comments($lang['about']['comments']);
-    $dialog->set_copyright('Copyright © 2009 Shecspi');
-    $dialog->set_website('http://code.google.com/p/flight-files/');
-    $dialog->set_authors(array('Вавилов Егор (Shecspi) <shecspi@gmail.com>'));
-    $dialog->set_license($lang['about']['license']);
-    $dialog->run();
-    $dialog->destroy();
 }
 
 /**
@@ -1351,17 +1151,17 @@ function bookmarks_save_change($array)
  */
 function bookmark_add($bool = FALSE, $array = '')
 {
-    global $selection_bookmarks, $start_dir, $sub_menu, $lang, $sqlite;
+    global $selection_bookmarks, $start, $panel, $sub_menu, $lang, $sqlite;
     
     // Добавление в закладки текущей директории из меню
     if ($bool === TRUE)
     {
-        if ($start_dir == '/')
+        if ($start[$panel] == '/')
             $basename = $lang['bookmarks']['root'];
         else
-            $basename = basename($start_dir);
+            $basename = basename($start[$panel]);
         $title = sqlite_escape_string($basename);
-        $path = sqlite_escape_string($start_dir);
+        $path = sqlite_escape_string($start[$panel]);
         sqlite_query($sqlite, "INSERT INTO bookmarks(path, title) VALUES('$path', '$title')");
     }
     // Добавление корневой директории из окна управления закладками
@@ -1394,7 +1194,7 @@ function bookmark_add($bool = FALSE, $array = '')
 
 function text_view($file)
 {
-    global $start_dir;
+    global $start, $panel;
     
     $window = new GtkWindow();
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
@@ -1411,7 +1211,7 @@ function text_view($file)
     $text_buffer = new GtkTextBuffer();
     $text_view = new GtkTextView();
     
-    $text_buffer->set_text(file_get_contents($start_dir.'/'.$file));
+    $text_buffer->set_text(file_get_contents($start[$panel].'/'.$file));
     
     $text_view->set_buffer($text_buffer);
     $text_view->set_editable(TRUE);
@@ -1427,7 +1227,7 @@ function text_view($file)
     $status_bar = new GtkStatusBar();
     
     $path_id = $status_bar->get_context_id('path');
-    $status_bar->push($path_id, $lang['text_view']['statusbar'].' '.(($start_dir == '/') ? '' : $start_dir).'/'.$file);
+    $status_bar->push($path_id, $lang['text_view']['statusbar'].' '.(($start[$panel] == '/') ? '' : $start[$panel]).'/'.$file);
     
     $vbox->pack_start($scroll, TRUE, TRUE);
     $vbox->pack_start($status_bar, FALSE, FALSE);
@@ -1435,16 +1235,6 @@ function text_view($file)
     $window->add($vbox);
     $window->show_all();
     Gtk::main();
-}
-
-function on_selection($selection)
-{
-    global $action_menu, $start_dir;
-    
-    list($model, $iter) = $selection->get_selected();
-    @$file = $model->get_value($iter, 0);
-    if (!empty($file))
-        $action_menu['copy']->set_sensitive(TRUE);
 }
 
 function bookmarks_menu()
@@ -1551,6 +1341,31 @@ function panel_view($widget, $key)
         else
             $status->hide();
     }
+}
+
+function columns($tree_view, $cell_renderer)
+{
+    global $lang;
+    
+    $column_file = new GtkTreeViewColumn($lang['column']['title'], $cell_renderer, 'text', 0);
+    $column_file->set_expand(TRUE);
+    $column_file->set_sort_column_id(0);
+
+    $column_df = new GtkTreeViewColumn($lang['column']['type'], $cell_renderer, 'text', 1);
+    $column_df->set_sort_column_id(1);
+
+    $column_size = new GtkTreeViewColumn($lang['column']['size'], $cell_renderer, 'text', 2);
+    $column_size->set_sort_column_id(2);
+
+    $column_mtime = new GtkTreeViewColumn($lang['column']['mtime'], $cell_renderer, 'text', 3);
+    $column_mtime->set_sizing(Gtk::TREE_VIEW_COLUMN_FIXED);
+    $column_mtime->set_fixed_width(150);
+    $column_mtime->set_sort_column_id(3);
+
+    $tree_view->append_column($column_file);
+    $tree_view->append_column($column_df);
+    $tree_view->append_column($column_size);
+    $tree_view->append_column($column_mtime);
 }
 
 ?>

@@ -39,8 +39,11 @@ $explode = explode('.', $_SERVER['LANG']);
 if (file_exists(LANG_DIR.'/'.$explode[0].'.php'))
     include LANG_DIR.'/'.$explode[0].'.php';
 
-// Файл с функциями программы
+// Файлы с функциями программы
 include SHARE_DIR.'/FlightFiles.data.php';
+include SHARE_DIR.'/about.php';
+include SHARE_DIR.'/checksum.php';
+include SHARE_DIR.'/properties.php';
 
 // Удаляем файл буфера обмена, если он по каким-либо причинам ещё не удалён
 @unlink(BUFER_FILE);
@@ -70,32 +73,34 @@ else
     $sqlite = sqlite_open(DATABASE);
 }
 
+// Активная панель по умолчанию
+$panel = 'left';
+
 config_parser();
 
 $window = new GtkWindow();
 $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
-$window->set_default_size(750, 600);
+$window->set_default_size(1100, 700);
 $window->set_position(Gtk::WIN_POS_CENTER);
 $window->set_title($lang['title_program']);
+//$window->maximize();
 $window->connect_simple('destroy', 'close_window');
 $accel_group = new GtkAccelGroup();
 $window->add_accel_group($accel_group);
 $action_group = new GtkActionGroup('menubar');
 
 // Стартовая директория
-if (empty($argv[1]))
-    $start_dir = $_config['home_dir'];
-elseif (!file_exists($argv[1]))
-    $start_dir = $_config['home_dir'];
+if (empty($argv[1]) OR !file_exists($argv[1]))
+{
+    $start['left'] = $_config['home_dir'];
+    $start['right'] = $_config['home_dir'];
+}
 else
-    $start_dir = $argv[1];
+{
+    $start['left'] = $argv[1];
+    $start['right'] = $argv[1];
+}
 
-$store = new GtkListStore(
-                          GObject::TYPE_STRING,
-                          GObject::TYPE_STRING,
-                          GObject::TYPE_STRING,
-                          GObject::TYPE_STRING
-                          );
 $vbox = new GtkVBox();
 $vbox->show();
 
@@ -127,7 +132,7 @@ $action_menu['new_file']->set_accel_group($accel_group);
 $action_menu['new_file']->connect_accelerator();
 $menu_item['new_file'] = $action_menu['new_file']->create_menu_item();
 $action_menu['new_file']->connect_simple('activate', 'new_element', 'file');
-if (!is_writable($start_dir))
+if (!is_writable($start['right']))
     $action_menu['new_file']->set_sensitive(FALSE);
 
 $action_menu['new_dir'] = new GtkAction('NEW_DIR', $lang['menu']['new_dir'], '', Gtk::STOCK_DIRECTORY);
@@ -137,7 +142,7 @@ $action_menu['new_dir']->set_accel_group($accel_group);
 $action_menu['new_dir']->connect_accelerator();
 $menu_item['new_dir'] = $action_menu['new_dir']->create_menu_item();
 $action_menu['new_dir']->connect_simple('activate', 'new_element', 'dir');
-if (!is_writable($start_dir))
+if (!is_writable($start['right']))
     $action_menu['new_dir']->set_sensitive(FALSE);
 
 $menu_item['separator_one'] = new GtkSeparatorMenuItem();
@@ -265,7 +270,7 @@ $toolbar = new GtkToolBar();
 $action['up'] = new GtkAction('UP', $lang['toolbar']['up'], $lang['toolbar']['up_hint'], Gtk::STOCK_GO_UP);
 $toolitem['up'] = $action['up']->create_tool_item();
 $action['up']->connect_simple('activate', 'change_dir');
-if ($start_dir == '/')
+if ($start['right'] == '/')
     $action['up']->set_sensitive(FALSE);
 
 /**
@@ -280,7 +285,7 @@ $toolitem['separator_one'] = new GtkSeparatorToolItem();
 $action['root'] = new GtkAction('ROOT', $lang['toolbar']['root'], $lang['toolbar']['root_hint'], Gtk::STOCK_HARDDISK);
 $toolitem['root'] = $action['root']->create_tool_item();
 $action['root']->connect_simple('activate', 'change_dir', 'bookmarks', '/');
-if ($start_dir == '/')
+if ($start['right'] == '/')
     $action['root']->set_sensitive(FALSE);
 
 /**
@@ -290,7 +295,7 @@ if ($start_dir == '/')
 $action['home'] = new GtkAction('HOME', $lang['toolbar']['home'], $lang['toolbar']['home_hint'].' - "'.$_ENV['HOME'].'"', Gtk::STOCK_HOME);
 $toolitem['home'] = $action['home']->create_tool_item();
 $action['home']->connect_simple('activate', 'change_dir', 'home');
-if ($start_dir == $_ENV['HOME'])
+if ($start['right'] == $_ENV['HOME'])
     $action['home']->set_sensitive(FALSE);
 
 /**
@@ -318,7 +323,7 @@ $toolitem['separator_three'] = new GtkSeparatorToolItem();
 $action['new_file'] = new GtkAction('NEW_FILE', $lang['toolbar']['new_file'], $lang['toolbar']['new_file_hint'], Gtk::STOCK_NEW);
 $toolitem['new_file'] = $action['new_file']->create_tool_item();
 $action['new_file']->connect_simple('activate', 'new_element', 'file');
-if (!is_writable($start_dir))
+if (!is_writable($start['right']))
     $action['new_file']->set_sensitive(FALSE);
 
 /**
@@ -328,7 +333,7 @@ if (!is_writable($start_dir))
 $action['new_dir'] = new GtkAction('NEW_DIR', $lang['toolbar']['new_dir'], $lang['toolbar']['new_dir_hint'], Gtk::STOCK_DIRECTORY);
 $toolitem['new_dir'] = $action['new_dir']->create_tool_item();
 $action['new_dir']->connect_simple('activate', 'new_element', 'dir');
-if (!is_writable($start_dir))
+if (!is_writable($start['right']))
     $action['new_dir']->set_sensitive(FALSE);
 
 /**
@@ -361,7 +366,7 @@ $vbox->pack_start($toolbar, FALSE, FALSE);
 $addressbar = new GtkHBox();
 
 $label_current_dir = new GtkLabel($lang['addressbar']['label']);
-$entry_current_dir = new GtkEntry($start_dir);
+$entry_current_dir = new GtkEntry($start['right']);
 $button_change_dir = new GtkButton();
 
 $button_hbox = new GtkHBox();
@@ -389,49 +394,67 @@ $vbox->pack_start($addressbar, FALSE, FALSE);
 
 /////////////////////////////
 
-current_dir();
+$hbox = new GtkHBox;
 
-$tree_view = new GtkTreeView($store);
+////////////////////////
+///// Левая панель /////
+////////////////////////
+$left = new GtkFrame;
+$left->set_shadow_type(Gtk::SHADOW_IN);
+
+$store['left'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING);
+
+current_dir('left');
+
+$tree_view_left = new GtkTreeView($store['left']);
+$selection['left'] = $tree_view_left->get_selection();
+$tree_view_left->connect('button-press-event', 'on_button', 'left');
 $cell_renderer = new GtkCellRendererText();
 if (!empty($_config['font_list']))
     $cell_renderer->set_property('font',  $_config['font_list']);
 
-$selection = $tree_view->get_selection();
-$selection->connect('changed', 'on_selection');
+columns($tree_view_left, $cell_renderer);
 
-///////////////////
-///// Колонки /////
-///////////////////
-$column_file = new GtkTreeViewColumn($lang['column']['title'], $cell_renderer, 'text', 0);
-$column_file->set_expand(TRUE);
-$column_file->set_sort_column_id(0);
+$scroll_left = new GtkScrolledWindow();
+$scroll_left->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_ALWAYS);
+$scroll_left->add($tree_view_left);
+$scroll_left->show_all();
 
-$column_df = new GtkTreeViewColumn($lang['column']['type'], $cell_renderer, 'text', 1);
-$column_df->set_sort_column_id(1);
+$left->add($scroll_left);
 
-$column_size = new GtkTreeViewColumn($lang['column']['size'], $cell_renderer, 'text', 2);
-$column_size->set_sort_column_id(2);
+/////////////////////////
+///// Правая панель /////
+/////////////////////////
+$right = new GtkFrame;
+$right->set_shadow_type(Gtk::SHADOW_IN);
 
-$column_mtime = new GtkTreeViewColumn($lang['column']['mtime'], $cell_renderer, 'text', 3);
-$column_mtime->set_sizing(Gtk::TREE_VIEW_COLUMN_FIXED);
-$column_mtime->set_fixed_width(150);
-$column_mtime->set_sort_column_id(3);
+$store['right'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING);
 
-$tree_view->append_column($column_file);
-$tree_view->append_column($column_df);
-$tree_view->append_column($column_size);
-$tree_view->append_column($column_mtime);
+current_dir('right');
 
-//////////////////
-///// Скролл /////
-//////////////////
+$tree_view_right = new GtkTreeView($store['right']);
+$selection['right'] = $tree_view_right->get_selection();
+$tree_view_right->connect('button-press-event', 'on_button', 'right');
+$cell_renderer = new GtkCellRendererText();
+if (!empty($_config['font_list']))
+    $cell_renderer->set_property('font',  $_config['font_list']);
 
-$scroll = new GtkScrolledWindow();
-$scroll->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_ALWAYS);
-$scroll->add($tree_view);
-$scroll->show_all();
-$vbox->pack_start($scroll);
-$tree_view->connect('button-press-event', 'on_button');
+columns($tree_view_right, $cell_renderer);
+
+$scroll_right = new GtkScrolledWindow();
+$scroll_right->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_ALWAYS);
+$scroll_right->add($tree_view_right);
+$scroll_right->show_all();
+
+$right->add($scroll_right);
+
+//////////////////////////
+
+$hbox->pack_start($left);
+$hbox->pack_start($right);
+$hbox->show_all();
+
+$vbox->pack_start($hbox);
 
 ////////////////////////////
 ///// Статусная панель /////
