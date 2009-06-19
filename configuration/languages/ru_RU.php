@@ -89,11 +89,14 @@ $lang['preference']['title']        = 'Параметры FlightFiles';
 $lang['preference']['hidden_files'] = 'Показывать скрытые файлы и папки';
 $lang['preference']['ask_delete']   = 'Требовать подтверждение удаления файлов/папок';
 $lang['preference']['home_dir']     = 'Начальная директория:';
+$lang['preference']['ask_close']    = 'Требовать подтверждение при выходе';
 $lang['preference']['general']      = 'Основные';
 $lang['preference']['font_list']    = 'Шрифт в списке:';
 $lang['preference']['change']       = '_Сменить';
 $lang['preference']['system_font']  = 'Использовать системный шрифт';
 $lang['preference']['fonts']        = 'Шрифты';
+$lang['preference']['lang']         = 'Язык программы:';
+$lang['preference']['lang_default'] = 'Язык по умолчанию';
 
 $lang['properties']['title']        = 'Свойства "%s"';
 $lang['properties']['name']         = 'Имя:';
@@ -154,5 +157,7 @@ $lang['text_view']['statusbar']     = 'Файл:';
 $lang['checksum']['title']          = 'Контрольная сумма - %s';
 $lang['checksum']['text']           = 'Файл - %s';
 
+$lang['close']['title']             = 'Закрыть FlightFiles';
+$lang['close']['text']              = 'Действительно закрыть FlightFiles?';
 
 ?>
