@@ -31,19 +31,13 @@ if ($argv[1] == '--version' OR $argv[1] == '-v')
     exit();
 }
 
-// Основной языковой файл
-include SHARE_DIR.'/default_lang.php';
-
-// Пользовательский языковой файл
-$explode = explode('.', $_SERVER['LANG']);
-if (file_exists(LANG_DIR.'/'.$explode[0].'.php'))
-    include LANG_DIR.'/'.$explode[0].'.php';
-
 // Файлы с функциями программы
 include SHARE_DIR.'/FlightFiles.data.php';
 include SHARE_DIR.'/about.php';
 include SHARE_DIR.'/checksum.php';
 include SHARE_DIR.'/properties.php';
+include SHARE_DIR.'/preference.php';
+include SHARE_DIR.'/bookmarks.php';
 
 // Удаляем файл буфера обмена, если он по каким-либо причинам ещё не удалён
 @unlink(BUFER_FILE);
@@ -63,20 +57,46 @@ if (!file_exists(DATABASE))
     sqlite_query($sqlite, "INSERT INTO config(key, value) VALUES('HIDDEN_FILES', 'off');".
                           "INSERT INTO config(key, value) VALUES('HOME_DIR', '/');".
                           "INSERT INTO config(key, value) VALUES('ASK_DELETE', 'on');".
+                          "INSERT INTO config(key, value) VALUES('ASK_CLOSE', 'on');".
                           "INSERT INTO config(key, value) VALUES('TOOLBAR_VIEW', 'on');".
                           "INSERT INTO config(key, value) VALUES('ADDRESSBAR_VIEW', 'on');".
                           "INSERT INTO config(key, value) VALUES('STATUSBAR_VIEW', 'on');".
-                          "INSERT INTO config(key, value) VALUES('FONT_LIST', '');");
+                          "INSERT INTO config(key, value) VALUES('FONT_LIST', '');".
+                          "INSERT INTO config(key, value) VALUES('LANGUAGE', '');");
 }
 else
 {
     $sqlite = sqlite_open(DATABASE);
 }
 
+config_parser();
+
+// Основной языковой файл
+include SHARE_DIR.'/default_lang.php';
+
+// Пользовательский языковой файл
+if (!empty($_config['language']))
+{
+    if (file_exists(LANG_DIR.'/'.$_config['language'].'.php'))
+    {
+        include LANG_DIR.'/'.$_config['language'].'.php';
+    }
+    else
+    {
+        $explode = explode('.', $_SERVER['LANG']);
+        if (file_exists(LANG_DIR.'/'.$explode[0].'.php'))
+            include LANG_DIR.'/'.$explode[0].'.php';
+    }
+}
+else
+{
+    $explode = explode('.', $_SERVER['LANG']);
+    if (file_exists(LANG_DIR.'/'.$explode[0].'.php'))
+        include LANG_DIR.'/'.$explode[0].'.php';
+}
+
 // Активная панель по умолчанию
 $panel = 'left';
-
-config_parser();
 
 $window = new GtkWindow();
 $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
@@ -84,7 +104,7 @@ $window->set_default_size(1100, 700);
 $window->set_position(Gtk::WIN_POS_CENTER);
 $window->set_title($lang['title_program']);
 //$window->maximize();
-$window->connect_simple('destroy', 'close_window');
+$window->connect_simple('delete-event', 'close_window');
 $accel_group = new GtkAccelGroup();
 $window->add_accel_group($accel_group);
 $action_group = new GtkActionGroup('menubar');

@@ -9,9 +9,8 @@
  */
 
 /**
- *
- * Функция получает настройки из конфигурационного файла
- * и помещает их в массив $_config.
+ * Функция достаёт настройки из базы данных и
+ * помещает их в глобальную переменную $_config
  */
 function config_parser()
 {
@@ -19,7 +18,7 @@ function config_parser()
     
     $array = array('HIDDEN_FILES', 'HOME_DIR', 'ASK_DELETE',
                    'TOOLBAR_VIEW', 'ADDRESSBAR_VIEW', 'STATUSBAR_VIEW',
-                   'FONT_LIST');
+                   'FONT_LIST', 'ASK_CLOSE', 'LANGUAGE');
     foreach ($array as $value)
     {
         $query = sqlite_query($sqlite, "SELECT * FROM config WHERE key = '$value'");
@@ -148,10 +147,10 @@ function on_button($view, $event, $type)
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($properties);
             
-            $copy->connect_simple('activate', 'bufer_file', $file, 'copy');
-            $cut->connect_simple('activate', 'bufer_file', $file, 'cut');
-            $rename->connect_simple('activate', '_rename', $file);
-            $delete->connect_simple('activate', 'delete', $file);
+            $copy->connect_simple('activate', 'bufer_file', $start[$panel].'/'.$file, 'copy');
+            $cut->connect_simple('activate', 'bufer_file', $start[$panel].'/'.$file, 'cut');
+            $rename->connect_simple('activate', '_rename', $start[$panel].'/'.$file);
+            $delete->connect_simple('activate', 'delete', $start[$panel].'/'.$file);
             $md5->connect_simple('activate', 'checksum_dialog', $start[$panel].'/'.$file, 'MD5');
             $sha1->connect_simple('activate', 'checksum_dialog', $start[$panel].'/'.$file, 'SHA1');
             $properties->connect_simple('activate', 'properties', $start[$panel].'/'.$file);
@@ -181,10 +180,10 @@ function on_button($view, $event, $type)
             $menu->append($delete);
             
             $open->connect_simple('activate', 'change_dir', 'open', $file);
-            $copy->connect_simple('activate', 'bufer_file', $file, 'copy');
-            $cut->connect_simple('activate', 'bufer_file', $file, 'cut');
-            $rename->connect_simple('activate', '_rename', $file);
-            $delete->connect_simple('activate', 'delete', $file);
+            $copy->connect_simple('activate', 'bufer_file', $start[$panel].'/'.$file, 'copy');
+            $cut->connect_simple('activate', 'bufer_file', $start[$panel].'/'.$file, 'cut');
+            $rename->connect_simple('activate', '_rename', $start[$panel].'/'.$file);
+            $delete->connect_simple('activate', 'delete', $start[$panel].'/'.$file);
         }
         else
         {
@@ -218,9 +217,13 @@ function on_button($view, $event, $type)
     }
 }
 
-function _rename($file)
+/**
+ * Переименование выбранного файла/каталога.
+ * @param string $filename Файл/каталог, для которого необходимо выполнить операцию.
+ */
+function _rename($filename)
 {
-    global $start, $panel, $lang;
+    global $lang;
     
     $dialog = new GtkDialog(
         $lang['rename']['title'],
@@ -234,7 +237,7 @@ function _rename($file)
     $dialog->set_has_separator(FALSE);
     $vbox = $dialog->vbox;
     $vbox->pack_start($hbox = new GtkHBox());
-    $hbox->pack_start($entry = new GtkEntry(basename($file)));
+    $hbox->pack_start($entry = new GtkEntry(basename(basename($filename))));
     $dialog->show_all();
     $result = $dialog->run();
     if ($result == Gtk::RESPONSE_OK)
@@ -244,21 +247,21 @@ function _rename($file)
         {
             $dialog->destroy();
             alert($lang['alert']['empty_name']);
-            _rename($file);
+            _rename($filename);
         }
         else
         {
-            if (file_exists($start[$panel].'/'.$new_name) AND $new_name != $file)
+            if (file_exists(dirname($filename).'/'.$new_name) AND $new_name != basename($filename))
             {
                 $dialog->destroy();
-                if (is_dir($start[$panel].'/'.$new_name))
+                if (is_dir($filename))
                     alert($lang['alert']['dir_exists_rename']);
                 else
                     alert($lang['alert']['file_exists_rename']);
-                _rename($file);
+                _rename($filename);
             }
             else
-                rename($start[$panel].'/'.$file, $start[$panel].'/'.$entry->get_text());
+                rename($filename, dirname($filename).'/'.$entry->get_text());
             $dialog->destroy();
         }
     }
@@ -270,21 +273,21 @@ function _rename($file)
 /**
  *
  * Функция помещает адрес вырезанного/скопированного файла/каталога в файл буфера обмена.
- * @param string $file Адрес файла, для которого необходимо провести операцию
+ * @param string $filename Файл, для которого необходимо выполнить операцию.
  * @param string $action Иденификатор операции вырезания/копирования.
  */
-function bufer_file($file = '', $act)
+function bufer_file($filename = '', $act)
 {
     global $start, $panel, $action, $action_menu, $selection;
     
-    if (empty($file))
+    if (empty($filename))
     {
         list($model, $iter) = $selection[$panel]->get_selected();
         $file = $model->get_value($iter, 0);
     }
     
     $fopen = fopen(BUFER_FILE, 'w+');
-    fwrite($fopen, $start[$panel].'/'.$file."\n".$act);
+    fwrite($fopen, $filename."\n".$act);
     fclose($fopen);
     $action_menu['clear_bufer']->set_sensitive(TRUE);
     if (is_writable($start[$panel]))
@@ -295,8 +298,7 @@ function bufer_file($file = '', $act)
 }
 
 /**
- *
- * Функция копирует/вырезает файл, находящийся в буфере обмена.
+ * Копирование/вырезание файла, находящегося в буфере обмена.
  */
 function paste_file()
 {
@@ -358,15 +360,14 @@ function _copy($source_dir, $dest_dir)
 }
 
 /**
- *
  * Функция удаляет выбранный файл/папку, предварительно спросив подтверждения у пользователя.
- * @param string $file Адрес файла, для которого необходимо произвести операцию
+ * @param string $filename Адрес файла, для которого необходимо произвести операцию
  */
-function delete($file)
+function delete($filename)
 {
-    global $start, $_config, $panel, $lang;
+    global $_config, $lang;
     
-    if (is_dir($start[$panel].'/'.$file))
+    if (is_dir($filename))
     {
         if ($_config['ask_delete'] == 'on')
         {
@@ -384,16 +385,16 @@ function delete($file)
             $vbox = $dialog->vbox;
             $vbox->pack_start($hbox = new GtkHBox());
             $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
-            $text = str_replace('%s', $file, $lang['delete']['dir']);
+            $text = str_replace('%s', basename($filename), $lang['delete']['dir']);
             $hbox->pack_start(new GtkLabel($text));
             $dialog->show_all();
             $result = $dialog->run();
             if ($result == Gtk::RESPONSE_YES)
-                rm($start[$panel].'/'.$file, $start_dir.'/'.$file);
+                rm($filename);
             $dialog->destroy();
         }
         else
-            rm($start[$panel].'/'.$file);
+            rm($filename);
         change_dir('none');
     }
     else
@@ -414,13 +415,13 @@ function delete($file)
             $vbox = $dialog->vbox;
             $vbox->pack_start($hbox = new GtkHBox());
             $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
-            $text = str_replace('%s', $file, $lang['delete']['file']);
+            $text = str_replace('%s', basename($filename), $lang['delete']['file']);
             $hbox->pack_start(new GtkLabel($text));
             $dialog->show_all();
             $result = $dialog->run();
             if ($result == Gtk::RESPONSE_YES)
             {
-                unlink($start[$panel].'/'.$file);
+                unlink($filename);
                 $dialog->destroy();
             }
             else
@@ -428,7 +429,7 @@ function delete($file)
         }
         else
         {
-            unlink($start[$panel].'/'.$file);
+            unlink($filename);
         }
         change_dir('none');
     }
@@ -489,7 +490,7 @@ function current_dir($panel)
         // Заполняем колонки для файлов...
         if (is_file($start[$panel].'/'.$file))
         {
-            $store[$panel]->append(array($file, '<FILE>', convert_size($file), date('d.m.Y G:i:s', filemtime($start[$panel].'/'.$file))));
+            $store[$panel]->append(array($file, '<FILE>', convert_size($start[$panel].'/'.$file), date('d.m.Y G:i:s', filemtime($start[$panel].'/'.$file))));
             $count_file++;
         }
         // ... и папок
@@ -508,13 +509,13 @@ function current_dir($panel)
 
 /**
  * Функция переводит размер файла из байт в более удобные единицы.
- * @param string $file Адрес файла, для которого необходимо произвести операцию
+ * @param string $filename Адрес файла, для которого необходимо произвести операцию
  */
-function convert_size($file)
+function convert_size($filename)
 {
-    global $lang, $start, $panel;
+    global $panel, $lang;
     
-    $size_byte = filesize($start[$panel].'/'.$file);
+    $size_byte = filesize($filename);
     if ($size_byte >= 0 AND $size_byte < 1024)
         return $size_byte.' '.$lang['size']['b'];
     elseif ($size_byte >= 1024 AND $size_byte < 1048576)
@@ -609,7 +610,7 @@ function change_dir($act = '', $dir = '')
  */
 function status_bar()
 {
-    global $status, $start_dir, $count_element, $count_dir, $count_file, $lang;
+    global $status, $count_element, $count_dir, $count_file, $lang;
     
     $context_id = $status->get_context_id('count_elements');
     $status->push($context_id, '');
@@ -712,15 +713,13 @@ function new_element($type)
  */
 function delete_all($type)
 {
-    global $start_dir;
-    
     if ($type == 'file')
     {
-        $opendir = opendir($start_dir);
+        $opendir = opendir($start[$panel]);
         while (FALSE !== ($file = readdir($opendir)))
         {
-            if (is_file($start_dir.'/'.$file))
-                unlink($start_dir.'/'.$file);
+            if (is_file($start[$panel].'/'.$file))
+                unlink($start[$panel].'/'.$file);
         }
         change_dir('none');
     }
@@ -732,8 +731,48 @@ function delete_all($type)
  */
 function close_window()
 {
+    global $window, $_config, $lang;
+    
     @unlink(BUFER_FILE);
-    Gtk::main_quit();
+    //print_r($window->get_size());
+    
+    if ($_config['ask_close'] == 'on')
+    {
+        $dialog = new GtkDialog(
+            $lang['close']['title'],
+            NULL,
+            Gtk::DIALOG_MODAL,
+            array(
+                Gtk::STOCK_NO, Gtk::RESPONSE_NO,
+                Gtk::STOCK_YES, Gtk::RESPONSE_YES
+            )
+        );
+        $dialog->set_has_separator(FALSE);
+        $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+        $dialog->set_skip_taskbar_hint(TRUE);
+        $dialog->set_resizable(FALSE);
+        $vbox = $dialog->vbox;
+        $vbox->pack_start($hbox = new GtkHBox());
+        $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
+        $text = str_replace('%s', basename($filename), $lang['close']['text']);
+        $hbox->pack_start(new GtkLabel($text));
+        $dialog->show_all();
+        $result = $dialog->run();
+        if ($result == Gtk::RESPONSE_YES)
+        {
+            $dialog->destroy();
+            Gtk::main_quit();
+        }
+        else
+        {
+            $dialog->destroy();
+            return TRUE;
+        }
+    }
+    else
+    {
+        Gtk::main_quit();
+    }
 }
 
 /**
@@ -750,303 +789,6 @@ function clear_bufer()
     $action_menu['clear_bufer']->set_sensitive(FALSE);
     $action_menu['paste']->set_sensitive(FALSE);
     alert($lang['alert']['bufer_clear']);
-}
-
-/**
- * Функция выводит окно с настройками.
- */
-function preference()
-{
-    global $_config, $lang;
-    
-    $window = new GtkWindow();
-    $window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
-    $window->set_position(Gtk::WIN_POS_CENTER);
-    $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
-    $window->set_resizable(FALSE);
-    $window->set_title($lang['preference']['title']);
-    $window->connect_simple('destroy', array('Gtk', 'main_quit'));
-    
-    $notebook = new GtkNotebook();
-    
-    /**
-     * Вкладка "Основные".
-     */
-    $table = new GtkTable();
-    
-    $label_hidden_files = new GtkCheckButton($lang['preference']['hidden_files']);
-    $ask_delete = new GtkCheckButton($lang['preference']['ask_delete']);
-    $label_home_dir = new GtkLabel($lang['preference']['home_dir']);
-    $radio_home = new GtkRadioButton(NULL, $_ENV['HOME']);
-    $radio_root = new GtkRadioButton($radio_home, '/');
-    
-    if ($_config['hidden_files'] == 'on')
-        $label_hidden_files->set_active(TRUE);
-    if ($_config['ask_delete'] == 'on')
-        $ask_delete->set_active(TRUE);
-    if ($_config['home_dir'] == '/')
-        $radio_root->set_active(TRUE);
-    else
-        $radio_home->set_active(FALSE);
-    
-    $label_hidden_files->set_alignment(0,0);
-    $ask_delete->set_alignment(0,0);
-    $label_home_dir->set_alignment(0,0);
-    
-    $label_hidden_files->connect('toggled', 'check_button_write', 'hidden_files');
-    $ask_delete->connect('toggled', 'check_button_write', 'ask_delete');
-    $radio_home->connect_simple('toggled', 'radio_button_write', 'HOME_DIR', $_ENV['HOME']);
-    $radio_root->connect_simple('toggled', 'radio_button_write', 'HOME_DIR', '/');
-    
-    $table->attach($label_hidden_files, 0, 3, 0, 1, Gtk::FILL, Gtk::FILL);
-    $table->attach($ask_delete, 0, 3, 1, 2, Gtk::FILL, Gtk::FILL);
-    $table->attach($label_home_dir, 0, 1, 2, 3, Gtk::FILL, Gtk::FILL);
-    $table->attach($radio_home, 1, 2, 2, 3, Gtk::FILL, Gtk::FILL);
-    $table->attach($radio_root, 2, 3, 2, 3, Gtk::FILL, Gtk::FILL);
-    
-    $notebook->append_page($table, new GtkLabel($lang['preference']['general']));
-    
-    /**
-     * Вкладка "Шрифты".
-     */
-    $table = new GtkTable();
-    
-    $label_text_list = new GtkLabel($lang['preference']['font_list']);
-    
-    $label_text_list->modify_font(new PangoFontDescription('Bold'));
-    $label_text_list->set_alignment(0, 0);
-        
-    $entry_font_select = new GtkEntry();
-    $button_font_select = new GtkButton($lang['preference']['change']);
-    $button_font_select->connect_simple('clicked', 'font_select', $entry_font_select);
-    $check_text_list = new GtkCheckButton($lang['preference']['system_font']);
-    $check_text_list->connect('toggled', 'check_font', $entry_font_select, $button_font_select);
-    
-    if (empty($_config['font_list']))
-    {
-        $check_text_list->set_active(TRUE);
-        $entry_font_select->set_sensitive(FALSE);
-        $button_font_select->set_sensitive(FALSE);
-    }
-    else
-    {
-        $check_text_list->set_active(FALSE);
-        $entry_font_select->set_sensitive(TRUE);
-        $button_font_select->set_sensitive(TRUE);
-        $entry_font_select->set_text($_config['font_list']);
-    }
-    
-    $table->attach($label_text_list, 0, 1, 0, 1, Gtk::FILL, Gtk::FILL);
-    $table->attach($check_text_list, 0, 1, 1, 2, Gtk::FILL, Gtk::FILL);
-    $table->attach($entry_font_select, 0, 1, 2, 3, Gtk::FILL, Gtk::FILL);
-    $table->attach($button_font_select, 1, 2, 2, 3, Gtk::FILL, Gtk::FILL);
-    
-    $notebook->append_page($table, new GtkLabel($lang['preference']['fonts']));
-    
-    $window->add($notebook);
-    $window->show_all();
-    Gtk::main();
-}
-
-function check_font($check, $entry, $button)
-{
-    global $cell_renderer, $sqlite;
-    
-    if ($check->get_active() === FALSE)
-    {
-        $entry->set_sensitive(TRUE);
-        $button->set_sensitive(TRUE);
-    }
-    else
-    {
-        sqlite_query($sqlite, "UPDATE config SET value = '' WHERE key = 'FONT_LIST'");
-        $entry->set_sensitive(FALSE);
-        $button->set_sensitive(FALSE);
-        $entry->set_text('');
-        $cell_renderer->set_property('font',  '');
-        change_dir('none');
-    }
-}
-
-/**
- * Создаёт диалог GtkFontSelectionDialog
- * и производит запись выбранного шрифта в базу данных.
- */
-function font_select($entry)
-{
-    global $cell_renderer, $lang, $_config, $sqlite;
-    
-    $dialog = new GtkFontSelectionDialog($lang['font']['title']);
-    $dialog->set_position(Gtk::WIN_POS_CENTER_ALWAYS);
-    $dialog->set_preview_text($lang['font']['preview']);
-    if ($_config['font_list'])
-        $dialog->set_font_name($_config['font_list']);
-    $dialog->show_all();
-    $dialog->run();
-    
-    $font_name = $dialog->get_font_name();
-    $entry->set_text($font_name);
-    
-    sqlite_query($sqlite, "UPDATE config SET value = '$font_name' WHERE key = 'FONT_LIST'");
-    
-    $cell_renderer->set_property('font',  $font_name);
-    change_dir('none');
-    
-    $dialog->destroy();
-}
-
-/**
- *
- * Функция производит запись в базу данных
- * при изменении значения радио-кнопки в окне настроек.
- * @param string $param Изменяемый параметр
- * @param string $value Новое значение параметра
- */
-function radio_button_write($param, $value)
-{
-    global $sqlite;
-    
-    $param = strtoupper($param);
-    sqlite_query($sqlite, "UPDATE config SET value = '$value' WHERE key = '$param'");
-    
-    // Обновляем главное окно
-    change_dir('none');
-}
-
-/**
- *
- * Функция производит запись в базу данных
- * при изменении значения флажка в окне настроек.
- */
-function check_button_write($check, $param)
-{
-    global $sqlite;
-    
-    $value = $check->get_active() ? 'on' : 'off';
-    
-    $param = strtoupper($param);
-    sqlite_query($sqlite, "UPDATE config SET value = '$value' WHERE key = '$param'");
-    
-    // Обновляем главное окно
-    change_dir('none');
-}
-
-/**
- *
- * Функция выводит окно "Управление закладками".
- */
-function bookmarks_edit()
-{
-    global $selection_bookmarks, $lang, $sqlite;
-    
-    $window = new GtkWindow();
-    $window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
-    $window->connect_simple('destroy', array('Gtk', 'main_quit'));
-    $window->set_size_request(600, 220);
-    $window->set_skip_taskbar_hint(TRUE);
-    $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
-    $window->set_title($lang['bookmarks']['title']);
-    
-    $table = new GtkTable();
-    
-    $array['button_delete'] = new GtkButton($lang['bookmarks']['delete']);
-    $array['button_delete_all'] = new GtkButton($lang['bookmarks']['delete_all']);
-    
-    /**
-     * Поля ввода
-     */
-    $array['name_label'] = new GtkLabel($lang['bookmarks']['name']);
-    $array['name_label']->set_sensitive(FALSE);
-    $array['name_label']->set_alignment(0,0);
-    $array['name_entry'] = new GtkEntry();
-    $array['name_entry']->set_sensitive(FALSE);
-    $array['path_label'] = new GtkLabel($lang['bookmarks']['path']);
-    $array['path_label']->set_sensitive(FALSE);
-    $array['path_label']->set_alignment(0,0);
-    $array['path_entry'] = new GtkEntry();
-    $array['path_entry']->set_sensitive(FALSE);
-    $array['button_ok'] = new GtkButton($lang['bookmarks']['save']);
-    $array['button_ok']->set_image(GtkImage::new_from_stock(Gtk::STOCK_OK, Gtk::ICON_SIZE_BUTTON));
-    $array['button_ok']->set_sensitive(FALSE);
-    $array['button_ok']->connect_simple('clicked', 'bookmarks_save_change', $array);
-    $array['button_ok']->set_tooltip_text($lang['bookmarks']['save_hint']);
-    
-    $vbox = new GtkVBox();
-    $vbox->pack_start($array['name_label'], FALSE, FALSE);
-    $vbox->pack_start($array['name_entry'], FALSE, FALSE);
-    $vbox->pack_start(new GtkLabel(''), FALSE, FALSE);
-    $vbox->pack_start($array['path_label'], FALSE, FALSE);
-    $vbox->pack_start($array['path_entry'], FALSE, FALSE);
-    $vbox->pack_start(new GtkLabel(''), FALSE, FALSE);
-    $vbox->pack_start($array['button_ok'], FALSE, FALSE);
-    
-    $table->attach($vbox, 3, 4, 0, 1, Gtk::FILL, Gtk::FILL);
-    
-    /**
-     * Кнопки
-     */
-    $array['button_delete']->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_BUTTON));
-    $array['button_delete']->set_sensitive(FALSE);
-    $array['button_delete']->connect_simple('clicked', 'bookmarks_delete', $array);
-    $array['button_delete']->set_tooltip_text($lang['bookmarks']['delete_hint']);
-    $table->attach($array['button_delete'], 0, 1, 1, 2, Gtk::FILL, Gtk::FILL);
-    
-    $array['button_delete_all']->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_BUTTON));
-    if (sqlite_num_rows(sqlite_query($sqlite, "SELECT * FROM bookmarks")) == 0)
-        $array['button_delete_all']->set_sensitive(FALSE);
-    $array['button_delete_all']->connect_simple('clicked', 'bookmarks_delete', $array, 'all');
-    $array['button_delete_all']->set_tooltip_text($lang['bookmarks']['delete_all_hint']);
-    $table->attach($array['button_delete_all'], 1, 2, 1, 2, Gtk::FILL, GTK::FILL);
-    
-    $array['button_add'] = new GtkButton($lang['bookmarks']['add']);
-    $array['button_add']->set_image(GtkImage::new_from_stock(Gtk::STOCK_ADD, Gtk::ICON_SIZE_BUTTON));
-    $array['button_add']->connect_simple('clicked', 'bookmark_add', FALSE, $array);
-    $array['button_add']->set_tooltip_text($lang['bookmarks']['add_hint']);
-    $table->attach($array['button_add'], 2, 3, 1, 2, Gtk::FILL, Gtk::FILL);
-    
-    /**
-     * Список закладок
-     */
-    $scrolled = new GtkScrolledWindow();
-    $scrolled->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
-    
-    $model = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING);
-    
-    $view = new GtkTreeView($model);
-    $scrolled->add($view);
-    
-    $cell_renderer = new GtkCellRendererText();
-    
-    $column_name = new GtkTreeViewColumn($lang['bookmarks']['bookmarks'], $cell_renderer, 'text', 0);
-    $view->append_column($column_name);
-    $column_id = new GtkTreeViewColumn('ID', $cell_renderer, 'text', 1);
-    $column_id->set_visible(FALSE);
-    $view->append_column($column_id);
-    
-    bookmarks_list($model);
-    
-    $selection_bookmarks = $view->get_selection();
-    $selection_bookmarks->connect('changed', 'selection_bookmarks', $array);
-    
-    $table->attach($scrolled, 0, 3, 0, 1);
-    
-    $window->add($table);
-    $window->show_all();
-    Gtk::main();
-}
-
-/**
- *
- * Добавление строчек с названиями закладок в список окна "Управление закладками".
- */
-function bookmarks_list($model)
-{
-    global $sqlite;
-    
-    $data = array();
-    $query = sqlite_query($sqlite, "SELECT * FROM bookmarks");
-    while ($row = sqlite_fetch_array($query))
-        $model->append(array($row['title'], $row['id']));
 }
 
 /**
@@ -1071,125 +813,6 @@ function selection_bookmarks($selection, $array)
     $row = sqlite_fetch_array($query);
     $array['name_entry']->set_text($row['title']);
     $array['path_entry']->set_text($row['path']);
-}
-
-/**
- *
- * Функция удаляет выбранную закладку.
- */
-function bookmarks_delete($array, $all = '')
-{
-    global $selection_bookmarks, $action_menu, $sub_menu, $sqlite;
-    
-    list($model, $iter) = $selection_bookmarks->get_selected();
-    
-    if ($all == 'all')
-    {
-        sqlite_query($sqlite, "DELETE FROM bookmarks");
-        $array['button_delete_all']->set_sensitive(FALSE);
-    }
-    else
-    {
-        $id = $model->get_value($iter, 1);
-        sqlite_query($sqlite, "DELETE FROM bookmarks WHERE id = '$id'");
-        if (sqlite_num_rows(sqlite_query($sqlite, "SELECT * FROM bookmarks")) == 0)
-            $array['button_delete_all']->set_sensitive(FALSE);
-    }
-    
-    $model->clear();
-    bookmarks_list($model);
-    
-    $array['name_entry']->set_text('');
-    $array['path_entry']->set_text('');
-    $array['name_label']->set_sensitive(FALSE);
-    $array['name_entry']->set_sensitive(FALSE);
-    $array['path_label']->set_sensitive(FALSE);
-    $array['path_entry']->set_sensitive(FALSE);
-    $array['button_ok']->set_sensitive(FALSE);
-    $array['button_delete']->set_sensitive(FALSE);
-    
-    // Изменяем меню
-    foreach ($sub_menu['bookmarks']->get_children() as $widget)
-        $sub_menu['bookmarks']->remove($widget);
-    bookmarks_menu();
-}
-
-/**
- * Функция сохраняет изменения в закладках.
- */
-function bookmarks_save_change($array)
-{
-    global $selection_bookmarks, $sub_menu, $sqlite;
-    
-    list($model, $iter) = $selection_bookmarks->get_selected();
-    $id = $model->get_value($iter, 1);
-    $title = sqlite_escape_string($array['name_entry']->get_text());
-    $path = sqlite_escape_string($array['path_entry']->get_text());
-    
-    sqlite_query($sqlite, "UPDATE bookmarks SET title = '$title', path = '$path' WHERE id = '$id'");
-    
-    $model->clear();
-    bookmarks_list($model);
-    
-    $array['name_entry']->set_text('');
-    $array['path_entry']->set_text('');
-    $array['name_label']->set_sensitive(FALSE);
-    $array['name_entry']->set_sensitive(FALSE);
-    $array['path_label']->set_sensitive(FALSE);
-    $array['path_entry']->set_sensitive(FALSE);
-    $array['button_ok']->set_sensitive(FALSE);
-    $array['button_delete']->set_sensitive(FALSE);
-    
-    // Изменяем меню
-    foreach ($sub_menu['bookmarks']->get_children() as $widget)
-        $sub_menu['bookmarks']->remove($widget);
-    bookmarks_menu();
-}
-
-/**
- * Функция добавляет новую заклкдку.
- */
-function bookmark_add($bool = FALSE, $array = '')
-{
-    global $selection_bookmarks, $start, $panel, $sub_menu, $lang, $sqlite;
-    
-    // Добавление в закладки текущей директории из меню
-    if ($bool === TRUE)
-    {
-        if ($start[$panel] == '/')
-            $basename = $lang['bookmarks']['root'];
-        else
-            $basename = basename($start[$panel]);
-        $title = sqlite_escape_string($basename);
-        $path = sqlite_escape_string($start[$panel]);
-        sqlite_query($sqlite, "INSERT INTO bookmarks(path, title) VALUES('$path', '$title')");
-    }
-    // Добавление корневой директории из окна управления закладками
-    else
-    {
-        $title = sqlite_escape_string($lang['bookmarks']['new']);
-        sqlite_query($sqlite, "INSERT INTO bookmarks(path, title) VALUES('/', '$title')");
-        
-        list($model, $iter) = $selection_bookmarks->get_selected();
-        
-        $model->clear();
-        bookmarks_list($model);
-        
-        $array['name_entry']->set_text('');
-        $array['path_entry']->set_text('');
-        $array['name_label']->set_sensitive(FALSE);
-        $array['name_entry']->set_sensitive(FALSE);
-        $array['path_label']->set_sensitive(FALSE);
-        $array['path_entry']->set_sensitive(FALSE);
-        $array['button_ok']->set_sensitive(FALSE);
-        $array['button_delete']->set_sensitive(FALSE);
-        $array['button_delete_all']->set_sensitive(TRUE);
-    }
-    
-    // Изменяем меню
-    foreach ($sub_menu['bookmarks']->get_children() as $widget)
-        $sub_menu['bookmarks']->remove($widget);
-    bookmarks_menu();
 }
 
 function text_view($file)
@@ -1235,46 +858,6 @@ function text_view($file)
     $window->add($vbox);
     $window->show_all();
     Gtk::main();
-}
-
-function bookmarks_menu()
-{
-    global $menu_item, $menu, $accel_group, $action_group, $sub_menu, $action_menu, $lang, $sqlite;
-    
-    unset($menu_item);
-
-    $query = sqlite_query($sqlite, "SELECT * FROM bookmarks");
-    if (sqlite_num_rows($query) == 0)
-    {
-        $sub_menu['bookmarks']->append($item = new GtkMenuItem($lang['menu']['not_bookmarks']));
-        $item->set_sensitive(FALSE);
-        $sub_menu['bookmarks']->append(new GtkSeparatorMenuItem);
-    }
-    else
-    {
-        $i = 0;
-        while ($row = sqlite_fetch_array($query))
-        {
-            $action_menu['bookmarks'.$i] = new GtkAction('f', $row['title'], '', Gtk::STOCK_DIRECTORY);
-            $menu_item = $action_menu['bookmarks'.$i]->create_menu_item();
-            $action_menu['bookmarks'.$i]->connect_simple('activate', 'change_dir', 'bookmarks', $row['path']);
-            $sub_menu['bookmarks']->append($menu_item);
-            unset($menu_item);
-            $i++;
-        }
-        $sub_menu['bookmarks']->append(new GtkSeparatorMenuItem);
-    }
-
-    $action_menu['bookmarks_add'] = new GtkAction('BOOKMARKS_ADD', $lang['menu']['bookmarks_add'], '', Gtk::STOCK_ADD);
-    $menu_item['bookmarks_add'] = $action_menu['bookmarks_add']->create_menu_item();
-    $action_menu['bookmarks_add']->connect_simple('activate', 'bookmark_add', TRUE);
-
-    $action_menu['bookmarks_edit'] = new GtkAction('BOOKMARKS_EDIT', $lang['menu']['bookmarks_edit'], '', Gtk::STOCK_EDIT);
-    $menu_item['bookmarks_edit'] = $action_menu['bookmarks_edit']->create_menu_item();
-    $action_menu['bookmarks_edit']->connect_simple('activate', 'bookmarks_edit');
-
-    foreach ($menu_item as $value)
-        $sub_menu['bookmarks']->append($value);
 }
 
 function shortcuts()
@@ -1367,5 +950,3 @@ function columns($tree_view, $cell_renderer)
     $tree_view->append_column($column_size);
     $tree_view->append_column($column_mtime);
 }
-
-?>
