@@ -29,11 +29,14 @@ function preference()
     $table = new GtkTable();
     
     $label_hidden_files = new GtkCheckButton($lang['preference']['hidden_files']);
+    $label_hidden_files->set_tooltip_text($lang['preference']['hidden_files_hint']);
     $ask_delete = new GtkCheckButton($lang['preference']['ask_delete']);
+    $ask_delete->set_tooltip_text($lang['preference']['ask_delete_hint']);
     $label_home_dir = new GtkLabel($lang['preference']['home_dir']);
     $radio_home = new GtkRadioButton(NULL, $_ENV['HOME']);
     $radio_root = new GtkRadioButton($radio_home, '/');
     $ask_close = new GtkCheckButton($lang['preference']['ask_close']);
+    $ask_close->set_tooltip_text($lang['preference']['ask_close_hint']);
     $label_lang = new GtkLabel($lang['preference']['lang']);
     $combo = GtkComboBox::new_text();
     $opendir = opendir(LANG_DIR);
@@ -55,6 +58,8 @@ function preference()
         }
     }
     closedir($opendir);
+    $maximize = new GtkCheckButton($lang['preference']['maximize']);
+    $maximize->set_tooltip_text($lang['preference']['maximize_hint']);
     
     if ($_config['hidden_files'] == 'on')
         $label_hidden_files->set_active(TRUE);
@@ -66,6 +71,8 @@ function preference()
         $radio_root->set_active(TRUE);
     else
         $radio_home->set_active(FALSE);
+    if ($_config['maximize'] == 'on')
+        $maximize->set_active(TRUE);
     
     $label_hidden_files->set_alignment(0,0);
     $ask_delete->set_alignment(0,0);
@@ -79,6 +86,7 @@ function preference()
     $radio_home->connect_simple('toggled', 'radio_button_write', 'HOME_DIR', $_ENV['HOME']);
     $radio_root->connect_simple('toggled', 'radio_button_write', 'HOME_DIR', '/');
     $combo->connect('changed', 'combo_write', 'language');
+    $maximize->connect('toggled', 'check_button_write', 'maximize');
     
     $table->attach($label_hidden_files, 0, 3, 0, 1, Gtk::FILL, Gtk::FILL);
     $table->attach($ask_delete, 0, 3, 1, 2, Gtk::FILL, Gtk::FILL);
@@ -88,6 +96,7 @@ function preference()
     $table->attach($ask_close, 0, 3, 3, 4, Gtk::FILL, Gtk::FILL);
     $table->attach($label_lang, 0, 1, 4, 5, Gtk::FILL, Gtk::FILL);
     $table->attach($combo, 1, 3, 4, 5, Gtk::FILL, Gtk::FILL);
+    $table->attach($maximize, 0, 3, 5, 6, Gtk::FILL, Gtk::FILL);
     
     $notebook->append_page($table, new GtkLabel($lang['preference']['general']));
     
