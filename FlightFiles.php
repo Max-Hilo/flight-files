@@ -38,6 +38,7 @@ include SHARE_DIR.'/checksum.php';
 include SHARE_DIR.'/properties.php';
 include SHARE_DIR.'/preference.php';
 include SHARE_DIR.'/bookmarks.php';
+include SHARE_DIR.'/shortcuts.php';
 
 // Удаляем файл буфера обмена, если он по каким-либо причинам ещё не удалён
 @unlink(BUFER_FILE);
@@ -62,7 +63,8 @@ if (!file_exists(DATABASE))
                           "INSERT INTO config(key, value) VALUES('ADDRESSBAR_VIEW', 'on');".
                           "INSERT INTO config(key, value) VALUES('STATUSBAR_VIEW', 'on');".
                           "INSERT INTO config(key, value) VALUES('FONT_LIST', '');".
-                          "INSERT INTO config(key, value) VALUES('LANGUAGE', '');");
+                          "INSERT INTO config(key, value) VALUES('LANGUAGE', '');".
+                          "INSERT INTO config(key, value) VALUES('MAXIMIZE', 'on');");
 }
 else
 {
@@ -103,7 +105,8 @@ $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
 $window->set_default_size(1100, 700);
 $window->set_position(Gtk::WIN_POS_CENTER);
 $window->set_title($lang['title_program']);
-//$window->maximize();
+if ($_config['maximize'] == 'on')
+    $window->maximize();
 $window->connect_simple('delete-event', 'close_window');
 $accel_group = new GtkAccelGroup();
 $window->add_accel_group($accel_group);
@@ -201,6 +204,15 @@ $menu_item['copy'] = $action_menu['copy']->create_menu_item();
 $action_menu['copy']->connect_simple('activate', 'bufer_file', '', 'copy');
 $action_menu['copy']->set_sensitive(FALSE);
 
+$action_menu['cut'] = new GtkAction('CUT', $lang['menu']['cut'], '', Gtk::STOCK_COPY);
+$accel['cut'] = '<control>X';
+$action_group->add_action_with_accel($action_menu['cut'], $accel['cut']);
+$action_menu['cut']->set_accel_group($accel_group);
+$action_menu['cut']->connect_accelerator();
+$menu_item['cut'] = $action_menu['cut']->create_menu_item();
+$action_menu['cut']->connect_simple('activate', 'bufer_file', '', 'cut');
+$action_menu['cut']->set_sensitive(FALSE);
+
 $action_menu['paste'] = new GtkAction('PASTE', $lang['menu']['paste'], '', Gtk::STOCK_PASTE);
 $accel['paste'] = '<control>V';
 $action_group->add_action_with_accel($action_menu['paste'], $accel['paste']);
@@ -227,22 +239,46 @@ $sub_menu['view'] = new GtkMenu;
 $menu['view']->set_submenu($sub_menu['view']);
 
 $action_menu['toolbar_view'] = new GtkToggleAction('TOOLBAR_VIEW', $lang['menu']['toolbar_view'], '', '');
+$accel['toolbar_view'] = 'F5';
+$action_group->add_action_with_accel($action_menu['toolbar_view'], $accel['toolbar_view']);
+$action_menu['toolbar_view']->set_accel_group($accel_group);
+$action_menu['toolbar_view']->connect_accelerator();
 $menu_item['toolbar_view'] = $action_menu['toolbar_view']->create_menu_item();
 if ($_config['toolbar_view'] == 'on')
     $action_menu['toolbar_view']->set_active(TRUE);
 $action_menu['toolbar_view']->connect('activate', 'panel_view', 'TOOLBAR_VIEW');
 
 $action_menu['addressbar_view'] = new GtkToggleAction('ADDRESSBAR_VIEW', $lang['menu']['addresbar_view'], '', '');
+$accel['addressbar_view'] = 'F6';
+$action_group->add_action_with_accel($action_menu['addressbar_view'], $accel['addressbar_view']);
+$action_menu['addressbar_view']->set_accel_group($accel_group);
+$action_menu['addressbar_view']->connect_accelerator();
 $menu_item['addressbar_view'] = $action_menu['addressbar_view']->create_menu_item();
 if ($_config['addressbar_view'] == 'on')
     $action_menu['addressbar_view']->set_active(TRUE);
 $action_menu['addressbar_view']->connect('activate', 'panel_view', 'ADDRESSBAR_VIEW');
 
 $action_menu['statusbar_view'] = new GtkToggleAction('STATUSBAR_VIEW', $lang['menu']['statusbar_view'], '', '');
+$accel['statusbar_view'] = 'F7';
+$action_group->add_action_with_accel($action_menu['statusbar_view'], $accel['statusbar_view']);
+$action_menu['statusbar_view']->set_accel_group($accel_group);
+$action_menu['statusbar_view']->connect_accelerator();
 $menu_item['statusbar_view'] = $action_menu['statusbar_view']->create_menu_item();
 if ($_config['statusbar_view'] == 'on')
     $action_menu['statusbar_view']->set_active(TRUE);
 $action_menu['statusbar_view']->connect('activate', 'panel_view', 'STATUSBAR_VIEW');
+
+$menu_item['separator_one'] = new GtkSeparatorMenuItem;
+
+$action_menu['hidden_files'] = new GtkToggleAction('HIDDEN_FILES', $lang['menu']['hidden_files'], '', '');
+$accel['hidden_files'] = '<control>H';
+$action_group->add_action_with_accel($action_menu['hidden_files'], $accel['hidden_files']);
+$action_menu['hidden_files']->set_accel_group($accel_group);
+$action_menu['hidden_files']->connect_accelerator();
+$menu_item['hidden_files'] = $action_menu['hidden_files']->create_menu_item();
+if ($_config['hidden_files'] == 'on')
+    $action_menu['hidden_files']->set_active(TRUE);
+$action_menu['hidden_files']->connect('activate', 'check_button_write', 'hidden_files');
 
 foreach ($menu_item as $value)
     $sub_menu['view']->append($value);
@@ -282,7 +318,7 @@ $vbox->pack_start($menubar, FALSE, FALSE, 0);
 ///////////////////////////////
 
 $toolbar = new GtkToolBar();
-
+$toolbar->insert(new GtkSeparatorToolItem(), -1);
 /**
  * Кнопка "Вверх".
  * При нажатии вызывается функция change_dir().
@@ -359,7 +395,7 @@ if (!is_writable($start['right']))
 /**
  * Разделитель.
  */
-$toolitem['separator_three'] = new GtkSeparatorToolItem();
+$toolitem['separator_four'] = new GtkSeparatorToolItem();
 
 /**
  * Кнопка "Вставить".
@@ -426,18 +462,18 @@ $store['left'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GO
 
 current_dir('left');
 
-$tree_view_left = new GtkTreeView($store['left']);
-$selection['left'] = $tree_view_left->get_selection();
-$tree_view_left->connect('button-press-event', 'on_button', 'left');
+$tree_view['left'] = new GtkTreeView($store['left']);
+$selection['left'] = $tree_view['left']->get_selection();
+$tree_view['left']->connect('button-press-event', 'on_button', 'left');
 $cell_renderer = new GtkCellRendererText();
 if (!empty($_config['font_list']))
     $cell_renderer->set_property('font',  $_config['font_list']);
 
-columns($tree_view_left, $cell_renderer);
+columns($tree_view['left'], $cell_renderer);
 
 $scroll_left = new GtkScrolledWindow();
 $scroll_left->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_ALWAYS);
-$scroll_left->add($tree_view_left);
+$scroll_left->add($tree_view['left']);
 $scroll_left->show_all();
 
 $left->add($scroll_left);
@@ -452,18 +488,18 @@ $store['right'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, G
 
 current_dir('right');
 
-$tree_view_right = new GtkTreeView($store['right']);
-$selection['right'] = $tree_view_right->get_selection();
-$tree_view_right->connect('button-press-event', 'on_button', 'right');
+$tree_view['right'] = new GtkTreeView($store['right']);
+$selection['right'] = $tree_view['right']->get_selection();
+$tree_view['right']->connect('button-press-event', 'on_button', 'right');
 $cell_renderer = new GtkCellRendererText();
 if (!empty($_config['font_list']))
     $cell_renderer->set_property('font',  $_config['font_list']);
 
-columns($tree_view_right, $cell_renderer);
+columns($tree_view['right'], $cell_renderer);
 
 $scroll_right = new GtkScrolledWindow();
 $scroll_right->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_ALWAYS);
-$scroll_right->add($tree_view_right);
+$scroll_right->add($tree_view['right']);
 $scroll_right->show_all();
 
 $right->add($scroll_right);

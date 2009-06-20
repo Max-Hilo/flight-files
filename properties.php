@@ -38,7 +38,7 @@ function properties($filename)
     $label_mtime = new GtkLabel($lang['properties']['mtime']);
     $label_atime = new GtkLabel($lang['properties']['atime']);
     $name = new GtkEntry($filename);
-    $size = new GtkLabel(convert_size(basename($filename)));
+    $size = new GtkLabel(convert_size($filename));
     $path = new GtkLabel(dirname($filename));
     $mtime = new GtkLabel(date('d.m.Y G:i:s', filemtime($filename)));
     $atime = new GtkLabel(date('d.m.Y G:i:s', fileatime($filename)));

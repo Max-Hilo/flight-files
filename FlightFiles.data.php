@@ -18,7 +18,8 @@ function config_parser()
     
     $array = array('HIDDEN_FILES', 'HOME_DIR', 'ASK_DELETE',
                    'TOOLBAR_VIEW', 'ADDRESSBAR_VIEW', 'STATUSBAR_VIEW',
-                   'FONT_LIST', 'ASK_CLOSE', 'LANGUAGE');
+                   'FONT_LIST', 'ASK_CLOSE', 'LANGUAGE',
+                   'MAXIMIZE');
     foreach ($array as $value)
     {
         $query = sqlite_query($sqlite, "SELECT * FROM config WHERE key = '$value'");
@@ -39,6 +40,7 @@ function on_button($view, $event, $type)
     $action['up']->set_sensitive(TRUE);
     $action['root']->set_sensitive(TRUE);
     $action['home']->set_sensitive(TRUE);
+    $action_menu['cut']->set_sensitive(RUE);
     
     if ($start[$panel] == '/')
     {
@@ -60,14 +62,16 @@ function on_button($view, $event, $type)
     @$dir_file = $store[$panel]->get_value($iter, 1);
     @$size = $store[$panel]->get_value($iter, 2);
     
+    if (!empty($file))
+    {
+        $action_menu['copy']->set_sensitive(TRUE);
+        if (!is_writable($start[$panel]))
+            $action_menu['cut']->set_sensitive(FALSE);
+    }
+    
     // Если нажата левая кнопка, то...
     if ($event->button == 1)
-    {
-        if (!empty($file))
-            $action_menu['copy']->set_sensitive(TRUE);
-        else
-            return FALSE;
-        
+    {        
         // При двойном клике по папке открываем её
         if ($event->type == Gdk::_2BUTTON_PRESS)
         {
@@ -283,7 +287,7 @@ function bufer_file($filename = '', $act)
     if (empty($filename))
     {
         list($model, $iter) = $selection[$panel]->get_selected();
-        $file = $model->get_value($iter, 0);
+        $filename = $start[$panel].'/'.$model->get_value($iter, 0);
     }
     
     $fopen = fopen(BUFER_FILE, 'w+');
@@ -566,6 +570,7 @@ function change_dir($act = '', $dir = '')
     $action['new_dir']->set_sensitive(TRUE);
     $action_menu['paste']->set_sensitive(FALSE);
     $action_menu['copy']->set_sensitive(FALSE);
+    $action_menu['cut']->set_sensitive(FALSE);
     $action_menu['new_file']->set_sensitive(TRUE);
     $action_menu['new_dir']->set_sensitive(TRUE);
     if (file_exists(BUFER_FILE))
@@ -856,42 +861,6 @@ function text_view($file)
     $vbox->pack_start($status_bar, FALSE, FALSE);
     
     $window->add($vbox);
-    $window->show_all();
-    Gtk::main();
-}
-
-function shortcuts()
-{
-    global $lang;
-    
-    $window = new GtkWindow;
-    $window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
-    $window->set_size_request(400, -1);
-    $window->set_title($lang['shortcuts']['title']);
-    $window->set_resizable(FALSE);
-    $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
-    $window->set_skip_taskbar_hint(TRUE);
-    $window->connect_simple('destroy', array('Gtk', 'main_quit'));
-    
-    $vbox = new GtkVBox;
-    $array = array(
-                    array($lang['shortcuts']['new_file'], 'Ctrl+N'),
-                    array($lang['shortcuts']['new_dir'], 'Ctrl+Shift+N'),
-                    array($lang['shortcuts']['close'], 'Ctrl+Q'),
-                    array($lang['shortcuts']['copy'], 'Ctrl+C'),
-                    array($lang['shortcuts']['paste'], 'Ctrl+V'));
-    $model = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING);
-    $view = new GtkTreeView($model);
-    $render = new GtkCellRendererText;
-    $view->append_column($column = new GtkTreeViewColumn($lang['shortcuts']['comand'], $render, 'text', 0));
-    $column->set_expand(TRUE);
-    $view->append_column(new GtkTreeViewColumn($lang['shortcuts']['shortcuts'], $render, 'text', 1));
-    foreach ($array as $value)
-    {
-        $model->append(array($value[0], $value[1]));
-    }
-    
-    $window->add($view);
     $window->show_all();
     Gtk::main();
 }
