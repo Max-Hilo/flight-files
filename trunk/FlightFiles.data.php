@@ -33,14 +33,18 @@ function config_parser()
  */
 function on_button($view, $event, $type)
 {
-    global $panel, $lang, $store, $action_menu, $action, $start, $entry_current_dir;
+    global $panel, $lang, $store, $action_menu, $action, $start, $entry_current_dir, $number;
     
     $panel = $type;
     
     $action['up']->set_sensitive(TRUE);
     $action['root']->set_sensitive(TRUE);
     $action['home']->set_sensitive(TRUE);
-    $action_menu['cut']->set_sensitive(RUE);
+    $action_menu['cut']->set_sensitive(TRUE);
+    $action['back']->set_sensitive(TRUE);
+    
+    if ($number[$panel] == 0)
+        $action['back']->set_sensitive(FALSE);
     
     if ($start[$panel] == '/')
     {
@@ -81,7 +85,10 @@ function on_button($view, $event, $type)
                 if (!is_readable($start[$panel].'/'.$file))
                     alert($lang['alert']['chmod_read_dir']);
                 else
-                    change_dir('open', $file);
+                {
+                    if (!empty($file))
+                        change_dir('open', $file);
+                }
             }
             elseif (is_file($start[$panel].'/'.$file))
             {
@@ -530,13 +537,30 @@ function convert_size($filename)
         return round($size_byte / 1073741824, 2).' '.$lang['size']['gib'];
 }
 
+function history($direct)
+{
+    global $sqlite, $number, $panel, $action;
+    
+    if ($direct == 'back')
+    {
+        $number[$panel]--;
+        $query = sqlite_query($sqlite, "SELECT id, path FROM history_$panel");
+        while ($row = sqlite_fetch_array($query, SQLITE_ASSOC))
+            $last[] = $row;
+        if ($number[$panel] == 0)
+            $action['back']->set_sensitive(FALSE);
+        $last = $last[$number[$panel]];
+        change_dir('history', $last['path']);
+    }
+}
+
 /**
  * Функция для смены текущей директории.
  * @param string $act
  */
-function change_dir($act = '', $dir = '')
+function change_dir($act = '', $dir = '', $all = FALSE)
 {
-    global $vbox, $entry_current_dir, $action, $action_menu, $lang, $panel, $store, $start;
+    global $vbox, $entry_current_dir, $action, $action_menu, $lang, $panel, $store, $start, $number, $sqlite;
     
     // Устанавливаем новое значение текущей директории
     if ($act == 'user')
@@ -549,8 +573,18 @@ function change_dir($act = '', $dir = '')
         $new_dir = $start[$panel].'/'.$dir;
     elseif ($act == 'bookmarks')
         $new_dir = $dir;
+    elseif ($act == 'history')
+        $new_dir = $dir;
     else
         $new_dir = dirname($start[$panel]);
+    
+    if ($act != 'none' AND $act != 'history')
+    {
+        sqlite_query($sqlite, "DELETE FROM history_$panel WHERE id > '$number[$panel]'");
+        sqlite_query($sqlite, "INSERT INTO history_$panel(path) VALUES('$start[$panel]')");
+        $number[$panel] = sqlite_last_insert_rowid($sqlite);
+        $action['back']->set_sensitive(TRUE);
+    }
     
     // Если указанной директории не существует, то информируем пользователя об этом
     if (!file_exists($new_dir))
@@ -573,6 +607,7 @@ function change_dir($act = '', $dir = '')
     $action_menu['cut']->set_sensitive(FALSE);
     $action_menu['new_file']->set_sensitive(TRUE);
     $action_menu['new_dir']->set_sensitive(TRUE);
+    $action_menu['up']->set_sensitive(TRUE);
     if (file_exists(BUFER_FILE))
     {
         $action['paste']->set_sensitive(TRUE);
@@ -581,6 +616,7 @@ function change_dir($act = '', $dir = '')
     }
     if ($start[$panel] == '/')
     {
+        $action_menu['up']->set_sensitive(FALSE);
         $action['up']->set_sensitive(FALSE);
         $action['root']->set_sensitive(FALSE);
     }
@@ -597,10 +633,18 @@ function change_dir($act = '', $dir = '')
     }
     
     // Очищаем список
-    $store[$panel]->clear();
-    
-    // Выводим имеющиеся в директории файлы и папки
-    current_dir($panel);
+    if ($all)
+    {
+        $store['left']->clear();
+        $store['right']->clear();
+        current_dir('left');
+        current_dir('right');
+    }
+    else
+    {
+        $store[$panel]->clear();
+        current_dir($panel);
+    }    
     
     status_bar();
     
@@ -736,10 +780,11 @@ function delete_all($type)
  */
 function close_window()
 {
-    global $window, $_config, $lang;
+    global $window, $_config, $lang, $sqlite;
     
     @unlink(BUFER_FILE);
-    //print_r($window->get_size());
+    sqlite_query($sqlite, "DELETE FROM history_left");
+    sqlite_query($sqlite, "DELETE FROM history_right");
     
     if ($_config['ask_close'] == 'on')
     {

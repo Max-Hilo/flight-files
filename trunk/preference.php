@@ -210,8 +210,9 @@ function font_select($entry)
     
     sqlite_query($sqlite, "UPDATE config SET value = '$font_name' WHERE key = 'FONT_LIST'");
     
-    $cell_renderer->set_property('font',  $font_name);
-    change_dir('none');
+    $cell_renderer['left']->set_property('font',  $font_name);
+    $cell_renderer['right']->set_property('font',  $font_name);
+    change_dir('none', '', TRUE);
     
     $dialog->destroy();
 }
@@ -234,7 +235,8 @@ function check_font($check, $entry, $button)
         $entry->set_sensitive(FALSE);
         $button->set_sensitive(FALSE);
         $entry->set_text('');
-        $cell_renderer->set_property('font',  '');
-        change_dir('none');
+        $cell_renderer['left']->set_property('font',  '');
+        $cell_renderer['right']->set_property('font',  '');
+        change_dir('none', '', TRUE);
     }
 }

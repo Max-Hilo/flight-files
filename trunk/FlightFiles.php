@@ -55,6 +55,8 @@ if (!file_exists(DATABASE))
     $sqlite = sqlite_open(DATABASE);
     sqlite_query($sqlite, "CREATE TABLE bookmarks(id INTEGER PRIMARY KEY, path, title)");
     sqlite_query($sqlite, "CREATE TABLE config(key, value)");
+    sqlite_query($sqlite, "CREATE TABLE history_left(id INTEGER PRIMARY KEY, path)");
+    sqlite_query($sqlite, "CREATE TABLE history_right(id INTEGER PRIMARY KEY, path)");
     sqlite_query($sqlite, "INSERT INTO config(key, value) VALUES('HIDDEN_FILES', 'off');".
                           "INSERT INTO config(key, value) VALUES('HOME_DIR', '/');".
                           "INSERT INTO config(key, value) VALUES('ASK_DELETE', 'on');".
@@ -69,6 +71,8 @@ if (!file_exists(DATABASE))
 else
 {
     $sqlite = sqlite_open(DATABASE);
+    sqlite_query($sqlite, "DELETE FROM history_left");
+    sqlite_query($sqlite, "DELETE FROM history_right");
 }
 
 config_parser();
@@ -99,6 +103,9 @@ else
 
 // Активная панель по умолчанию
 $panel = 'left';
+
+$number['left'] = 0;
+$number['right'] = 0;
 
 $window = new GtkWindow();
 $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
@@ -136,6 +143,7 @@ $menubar = new GtkMenuBar();
 $menu['file'] = new GtkMenuItem($lang['menu']['file']);
 $menu['edit'] = new GtkMenuItem($lang['menu']['edit']);
 $menu['view'] = new GtkMenuItem($lang['menu']['view']);
+$menu['go'] = new GtkMenuItem($lang['menu']['go']);
 $menu['bookmarks'] = new GtkMenuItem($lang['menu']['bookmarks']);
 $menu['help'] = new GtkMenuItem($lang['menu']['help']);
 
@@ -284,6 +292,34 @@ foreach ($menu_item as $value)
     $sub_menu['view']->append($value);
 
 /**
+ * Меню "Переход"
+ */
+unset($menu_item);
+$sub_menu['go'] = new GtkMenu;
+$menu['go']->set_submenu($sub_menu['go']);
+
+$action_menu['up'] = new GtkAction('UP', $lang['menu']['up'], '', Gtk::STOCK_GO_UP);
+$accel['up'] = '<control>Up';
+$action_group->add_action_with_accel($action_menu['up'], $accel['up']);
+$action_menu['up']->set_accel_group($accel_group);
+$action_menu['up']->connect_accelerator();
+$menu_item['up'] = $action_menu['up']->create_menu_item();
+if ($start[$panel] == '/')
+    $action_menu['up']->set_sensitive(FALSE);
+$action_menu['up']->connect_simple('activate', 'change_dir');
+
+$action_menu['refresh'] = new GtkAction('REFRESH', $lang['menu']['refresh'], '', Gtk::STOCK_REFRESH);
+$accel['refresh'] = '<control>R';
+$action_group->add_action_with_accel($action_menu['refresh'], $accel['refresh']);
+$action_menu['refresh']->set_accel_group($accel_group);
+$action_menu['refresh']->connect_accelerator();
+$menu_item['refresh'] = $action_menu['refresh']->create_menu_item();
+$action_menu['refresh']->connect_simple('activate', 'change_dir', 'none');
+
+foreach ($menu_item as $value)
+    $sub_menu['go']->append($value);
+
+/**
  * Меню "Закладки"
  */
 $sub_menu['bookmarks'] = new GtkMenu();
@@ -318,7 +354,22 @@ $vbox->pack_start($menubar, FALSE, FALSE, 0);
 ///////////////////////////////
 
 $toolbar = new GtkToolBar();
-$toolbar->insert(new GtkSeparatorToolItem(), -1);
+
+/**
+ * Кнопка "Назад".
+ * При нажатии вызывается функция history('back').
+ */
+$action['back'] = new GtkAction('BACK', 'Назад', '', Gtk::STOCK_GO_BACK);
+$toolitem['back'] = $action['back']->create_tool_item();
+$action['back']->connect_simple('activate', 'history', 'back');
+$action['back']->set_sensitive(FALSE);
+
+/**
+ * Кнопка "Вперёд".
+ */
+//$action['forward'] = new GtkAction('FORWARD', 'Вперёд', '', Gtk::STOCK_GO_FORWARD);
+//$toolitem['forward'] = $action['forward']->create_tool_item();
+
 /**
  * Кнопка "Вверх".
  * При нажатии вызывается функция change_dir().
@@ -410,7 +461,7 @@ foreach ($toolitem as $value)
     $toolbar->insert($value, -1);
 
 if ($_config['toolbar_view'] == 'on')
-    $toolbar->show();
+    $toolbar->show_all();
 else
     $toolbar->hide();
 $vbox->pack_start($toolbar, FALSE, FALSE);
@@ -465,11 +516,11 @@ current_dir('left');
 $tree_view['left'] = new GtkTreeView($store['left']);
 $selection['left'] = $tree_view['left']->get_selection();
 $tree_view['left']->connect('button-press-event', 'on_button', 'left');
-$cell_renderer = new GtkCellRendererText();
+$cell_renderer['left'] = new GtkCellRendererText();
 if (!empty($_config['font_list']))
-    $cell_renderer->set_property('font',  $_config['font_list']);
+    $cell_renderer['left']->set_property('font',  $_config['font_list']);
 
-columns($tree_view['left'], $cell_renderer);
+columns($tree_view['left'], $cell_renderer['left']);
 
 $scroll_left = new GtkScrolledWindow();
 $scroll_left->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_ALWAYS);
@@ -491,11 +542,11 @@ current_dir('right');
 $tree_view['right'] = new GtkTreeView($store['right']);
 $selection['right'] = $tree_view['right']->get_selection();
 $tree_view['right']->connect('button-press-event', 'on_button', 'right');
-$cell_renderer = new GtkCellRendererText();
+$cell_renderer['right'] = new GtkCellRendererText();
 if (!empty($_config['font_list']))
-    $cell_renderer->set_property('font',  $_config['font_list']);
+    $cell_renderer['right']->set_property('font',  $_config['font_list']);
 
-columns($tree_view['right'], $cell_renderer);
+columns($tree_view['right'], $cell_renderer['right']);
 
 $scroll_right = new GtkScrolledWindow();
 $scroll_right->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_ALWAYS);

@@ -7,6 +7,7 @@ $lang['title_program']              = 'Фаловый менеджер FlightFil
 $lang['menu']['file']               = '_Файл';
 $lang['menu']['edit']               = '_Правка';
 $lang['menu']['view']               = '_Вид';
+$lang['menu']['go']                 = 'Пере_ход';
 $lang['menu']['bookmarks']          = '_Закладки';
 $lang['menu']['help']               = '_Справка';
 $lang['menu']['new_file']           = 'Создать файл';
@@ -21,6 +22,8 @@ $lang['menu']['toolbar_view']       = 'Панель инструментов';
 $lang['menu']['addresbar_view']     = 'Адресная строка';
 $lang['menu']['statusbar_view']     = 'Строка состояния';
 $lang['menu']['hidden_files']       = 'Показывать скрытые файлы';
+$lang['menu']['up']                 = 'Вверх';
+$lang['menu']['refresh']            = 'Обновить';
 $lang['menu']['not_bookmarks']      = 'Закладок нет';
 $lang['menu']['bookmarks_add']      = 'Добавить в закладки';
 $lang['menu']['bookmarks_edit']     = 'Изменить закладки';
@@ -79,6 +82,8 @@ $lang['about']['license']           = "Программа FlightFiles являе
 "лицензии MIT, распологающийся в файле LICENSE.";
 
 $lang['shortcuts']['title']         = 'Сочетания клавиш';
+$lang['shortcuts']['up']            = 'Вверх';
+$lang['shortcuts']['refresh']       = 'Обновить';
 $lang['shortcuts']['new_file']      = 'Создать файл';
 $lang['shortcuts']['new_dir']       = 'Создать папку';
 $lang['shortcuts']['close']         = 'Закрыть программу';
