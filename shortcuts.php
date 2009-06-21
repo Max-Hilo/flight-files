@@ -25,6 +25,8 @@ function shortcuts()
     
     $vbox = new GtkVBox;
     $array = array(
+                    array($lang['shortcuts']['up'], 'Ctrl+Up'),
+                    array($lang['shortcuts']['refresh'], 'Ctrl+R'),
                     array($lang['shortcuts']['new_file'], 'Ctrl+N'),
                     array($lang['shortcuts']['new_dir'], 'Ctrl+Shift+N'),
                     array($lang['shortcuts']['hidden_files'], 'Ctrl+H'),
