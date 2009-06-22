@@ -1,7 +1,5 @@
 <?php
 
-$lang['title'] = 'English';
-
 $lang['title_program'] = 'File Manager FlightFiles';
 
 $lang['menu']['file'] = '_File';

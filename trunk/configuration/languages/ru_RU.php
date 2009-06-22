@@ -1,12 +1,11 @@
 <?php
 
-$lang['title']                      = 'Русский';
-
 $lang['title_program']              = 'Фаловый менеджер FlightFiles';
 
 $lang['menu']['file']               = '_Файл';
 $lang['menu']['edit']               = '_Правка';
 $lang['menu']['view']               = '_Вид';
+$lang['menu']['go']                 = 'Пере_ход';
 $lang['menu']['bookmarks']          = '_Закладки';
 $lang['menu']['help']               = '_Справка';
 $lang['menu']['new_file']           = 'Создать файл';
@@ -21,12 +20,18 @@ $lang['menu']['toolbar_view']       = 'Панель инструментов';
 $lang['menu']['addresbar_view']     = 'Адресная строка';
 $lang['menu']['statusbar_view']     = 'Строка состояния';
 $lang['menu']['hidden_files']       = 'Показывать скрытые файлы';
+$lang['menu']['up']                 = 'Вверх';
+$lang['menu']['refresh']            = 'Обновить';
 $lang['menu']['not_bookmarks']      = 'Закладок нет';
 $lang['menu']['bookmarks_add']      = 'Добавить в закладки';
 $lang['menu']['bookmarks_edit']     = 'Изменить закладки';
 $lang['menu']['shortcuts']          = 'Сочетания клавиш';
 $lang['menu']['about']              = 'О программе';
 
+$lang['toolbar']['back']            = 'Назад';
+$lang['toolbar']['back_hint']       = 'Перейти в предыдущую посещённую папку';
+$lang['toolbar']['forward']         = 'Вперёд';
+$lang['toolbar']['forward_hint']    = 'Перейти в следующую посещённую папку';
 $lang['toolbar']['up']              = 'Вверх';
 $lang['toolbar']['up_hint']         = 'Перейти на уровень выше';
 $lang['toolbar']['root']            = 'Корень';
@@ -79,6 +84,8 @@ $lang['about']['license']           = "Программа FlightFiles являе
 "лицензии MIT, распологающийся в файле LICENSE.";
 
 $lang['shortcuts']['title']         = 'Сочетания клавиш';
+$lang['shortcuts']['up']            = 'Вверх';
+$lang['shortcuts']['refresh']       = 'Обновить';
 $lang['shortcuts']['new_file']      = 'Создать файл';
 $lang['shortcuts']['new_dir']       = 'Создать папку';
 $lang['shortcuts']['close']         = 'Закрыть программу';
