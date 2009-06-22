@@ -33,7 +33,7 @@ function config_parser()
  */
 function on_button($view, $event, $type)
 {
-    global $panel, $lang, $store, $action_menu, $action, $start, $entry_current_dir, $number;
+    global $panel, $lang, $store, $action_menu, $action, $start, $entry_current_dir, $number, $sqlite;
     
     $panel = $type;
     
@@ -42,9 +42,13 @@ function on_button($view, $event, $type)
     $action['home']->set_sensitive(TRUE);
     $action_menu['cut']->set_sensitive(TRUE);
     $action['back']->set_sensitive(TRUE);
+    $action['forward']->set_sensitive(TRUE);
     
-    if ($number[$panel] == 0)
+    if ($number[$panel] == 1)
         $action['back']->set_sensitive(FALSE);
+    $query = sqlite_query($sqlite, "SELECT id, path FROM history_$panel");
+    if (sqlite_num_rows($query) == $number[$panel])
+        $action['forward']->set_sensitive(FALSE);
     
     if ($start[$panel] == '/')
     {
@@ -537,6 +541,10 @@ function convert_size($filename)
         return round($size_byte / 1073741824, 2).' '.$lang['size']['gib'];
 }
 
+/**
+ * Навигация по истории.
+ * @param string $direct Напрваление навигации
+ */
 function history($direct)
 {
     global $sqlite, $number, $panel, $action;
@@ -545,13 +553,20 @@ function history($direct)
     {
         $number[$panel]--;
         $query = sqlite_query($sqlite, "SELECT id, path FROM history_$panel");
-        while ($row = sqlite_fetch_array($query, SQLITE_ASSOC))
-            $last[] = $row;
-        if ($number[$panel] == 0)
+        if ($number[$panel] == 1)
             $action['back']->set_sensitive(FALSE);
-        $last = $last[$number[$panel]];
-        change_dir('history', $last['path']);
     }
+    elseif ($direct == 'forward')
+    {
+        $number[$panel]++;
+        $query = sqlite_query($sqlite, "SELECT id, path FROM history_$panel");
+        if (sqlite_num_rows($query) == $number[$panel])
+            $action['forward']->set_sensitive(FALSE);
+    }
+    while ($row = sqlite_fetch_array($query, SQLITE_ASSOC))
+        $last[] = $row;
+    $last = $last[$number[$panel] - 1];
+    change_dir('history', $last['path']);
 }
 
 /**
@@ -581,9 +596,8 @@ function change_dir($act = '', $dir = '', $all = FALSE)
     if ($act != 'none' AND $act != 'history')
     {
         sqlite_query($sqlite, "DELETE FROM history_$panel WHERE id > '$number[$panel]'");
-        sqlite_query($sqlite, "INSERT INTO history_$panel(path) VALUES('$start[$panel]')");
+        sqlite_query($sqlite, "INSERT INTO history_$panel(path) VALUES('$new_dir')");
         $number[$panel] = sqlite_last_insert_rowid($sqlite);
-        $action['back']->set_sensitive(TRUE);
     }
     
     // Если указанной директории не существует, то информируем пользователя об этом
@@ -597,6 +611,8 @@ function change_dir($act = '', $dir = '', $all = FALSE)
     $start[$panel] = preg_replace ('#/+#', '/', $start[$panel]);
     
     // Делаем неактивными некоторые кнопки на панели инструментов и пункты меню
+    $action['back']->set_sensitive(TRUE);
+    $action['forward']->set_sensitive(TRUE);
     $action['up']->set_sensitive(TRUE);
     $action['root']->set_sensitive(TRUE);
     $action['home']->set_sensitive(TRUE);
@@ -608,6 +624,12 @@ function change_dir($act = '', $dir = '', $all = FALSE)
     $action_menu['new_file']->set_sensitive(TRUE);
     $action_menu['new_dir']->set_sensitive(TRUE);
     $action_menu['up']->set_sensitive(TRUE);
+    
+    if ($number[$panel] == 1)
+        $action['back']->set_sensitive(FALSE);
+    $query = sqlite_query($sqlite, "SELECT id, path FROM history_$panel");
+    if (sqlite_num_rows($query) == $number[$panel])
+        $action['forward']->set_sensitive(FALSE);
     if (file_exists(BUFER_FILE))
     {
         $action['paste']->set_sensitive(TRUE);

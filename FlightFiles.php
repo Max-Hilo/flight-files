@@ -104,8 +104,8 @@ else
 // Активная панель по умолчанию
 $panel = 'left';
 
-$number['left'] = 0;
-$number['right'] = 0;
+$number['left'] = 1;
+$number['right'] = 1;
 
 $window = new GtkWindow();
 $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
@@ -355,110 +355,57 @@ $vbox->pack_start($menubar, FALSE, FALSE, 0);
 
 $toolbar = new GtkToolBar();
 
-/**
- * Кнопка "Назад".
- * При нажатии вызывается функция history('back').
- */
-$action['back'] = new GtkAction('BACK', 'Назад', '', Gtk::STOCK_GO_BACK);
-$toolitem['back'] = $action['back']->create_tool_item();
-$action['back']->connect_simple('activate', 'history', 'back');
-$action['back']->set_sensitive(FALSE);
-
-/**
- * Кнопка "Вперёд".
- */
-//$action['forward'] = new GtkAction('FORWARD', 'Вперёд', '', Gtk::STOCK_GO_FORWARD);
-//$toolitem['forward'] = $action['forward']->create_tool_item();
-
-/**
- * Кнопка "Вверх".
- * При нажатии вызывается функция change_dir().
- */
-$action['up'] = new GtkAction('UP', $lang['toolbar']['up'], $lang['toolbar']['up_hint'], Gtk::STOCK_GO_UP);
-$toolitem['up'] = $action['up']->create_tool_item();
-$action['up']->connect_simple('activate', 'change_dir');
-if ($start['right'] == '/')
-    $action['up']->set_sensitive(FALSE);
-
-/**
- * Разделитель
- */
-$toolitem['separator_one'] = new GtkSeparatorToolItem();
-
-/**
- * Кнопка "Корень".
- * При нажатии вызывается функция change_dir('bookmarks', '/').
- */
-$action['root'] = new GtkAction('ROOT', $lang['toolbar']['root'], $lang['toolbar']['root_hint'], Gtk::STOCK_HARDDISK);
-$toolitem['root'] = $action['root']->create_tool_item();
-$action['root']->connect_simple('activate', 'change_dir', 'bookmarks', '/');
-if ($start['right'] == '/')
-    $action['root']->set_sensitive(FALSE);
-
-/**
- * Кнопка "Домой".
- * При нажатии вызывается функция change_dir('home').
- */
-$action['home'] = new GtkAction('HOME', $lang['toolbar']['home'], $lang['toolbar']['home_hint'].' - "'.$_ENV['HOME'].'"', Gtk::STOCK_HOME);
-$toolitem['home'] = $action['home']->create_tool_item();
-$action['home']->connect_simple('activate', 'change_dir', 'home');
-if ($start['right'] == $_ENV['HOME'])
-    $action['home']->set_sensitive(FALSE);
-
-/**
- * Разделитель.
- */
-$toolitem['separator_two'] = new GtkSeparatorToolItem();
-
-/**
- * Кнопка "Обновить".
- * При нажатии вызывается функция change_dir('none').
- */
-$action['refresh'] = new GtkAction('REFRESH', $lang['toolbar']['refresh'], $lang['toolbar']['refresh_hint'], Gtk::STOCK_REFRESH);
-$toolitem['refresh'] = $action['refresh']->create_tool_item();
-$action['refresh']->connect_simple('activate', 'change_dir', 'none');
-
-/**
- * Разделитель.
- */
-$toolitem['separator_three'] = new GtkSeparatorToolItem();
-
-/**
- * Кнопка "Создать файл".
- * При нажатии на кнопку вызывается функция new_element('file').
- */
-$action['new_file'] = new GtkAction('NEW_FILE', $lang['toolbar']['new_file'], $lang['toolbar']['new_file_hint'], Gtk::STOCK_NEW);
-$toolitem['new_file'] = $action['new_file']->create_tool_item();
-$action['new_file']->connect_simple('activate', 'new_element', 'file');
-if (!is_writable($start['right']))
-    $action['new_file']->set_sensitive(FALSE);
-
-/**
- * Кнопка "Создать папку".
- * При нажатии на кнопку вызывается функция new_element('dir').
- */
-$action['new_dir'] = new GtkAction('NEW_DIR', $lang['toolbar']['new_dir'], $lang['toolbar']['new_dir_hint'], Gtk::STOCK_DIRECTORY);
-$toolitem['new_dir'] = $action['new_dir']->create_tool_item();
-$action['new_dir']->connect_simple('activate', 'new_element', 'dir');
-if (!is_writable($start['right']))
-    $action['new_dir']->set_sensitive(FALSE);
-
-/**
- * Разделитель.
- */
-$toolitem['separator_four'] = new GtkSeparatorToolItem();
-
-/**
- * Кнопка "Вставить".
- * При нажатии на кнопку вызывается функция paste_file().
- */
-$action['paste'] = new GtkAction('PASTE', $lang['toolbar']['paste'], $lang['toolbar']['paste_hint'], Gtk::STOCK_PASTE);
-$toolitem['paste'] = $action['paste']->create_tool_item();
-$action['paste']->connect_simple('activate', 'paste_file');
-$action['paste']->set_sensitive(FALSE);
-
-foreach ($toolitem as $value)
-    $toolbar->insert($value, -1);
+$array_tool = array(
+    // [0] => Имя, [1] => Ярлык, [2] => Подсказка,
+    // [3] => Иконка, [4] => Функция, [5],[6] => Параметры
+    // [7] => Условие неактивности кнопки
+    array('back', $lang['toolbar']['back'], $lang['toolbar']['back_hint'],
+          Gtk::STOCK_GO_BACK, 'history', 'back', '', 'false'),
+    array('forward', $lang['toolbar']['forward'], $lang['toolbar']['forward_hint'],
+          Gtk::STOCK_GO_FORWARD, 'history', 'forward', '', 'false'),
+    array('up', $lang['toolbar']['up'], $lang['toolbar']['up_hint'],
+          Gtk::STOCK_GO_UP, 'change_dir', '', '', array($start[$panel], '/')),
+    array('<hr>', 'separator_one'),
+    array('root', $lang['toolbar']['root'], $lang['toolbar']['root_hint'],
+          Gtk::STOCK_HARDDISK, 'change_dir', 'bookmarks', '/', array($start[$panel], '/')),
+    array('home', $lang['toolbar']['home'], $lang['toolbar']['home_hint'],
+          Gtk::STOCK_HOME, 'change_dir', 'home', '', array($start[$panel], $_ENV['HOME'])),
+    array('<hr>', 'separator_two'),
+    array('refresh', $lang['toolbar']['refresh'], $lang['toolbar']['refresh_hint'],
+          Gtk::STOCK_REFRESH, 'change_dir', 'none'),
+    array('<hr>', 'separator_three'),
+    array('new_file', $lang['toolbar']['new_file'], $lang['toolbar']['new_file_hint'],
+          Gtk::STOCK_NEW, 'new_element', 'file', '', 'write'),
+    array('new_dir', $lang['toolbar']['new_dir'], $lang['toolbar']['new_dir_hint'],
+          Gtk::STOCK_DIRECTORY, 'new_element', 'dir', '', 'write'),
+    array('<hr>', 'separator_for'),
+    array('paste', $lang['toolbar']['paste'], $lang['toolbar']['paste_hint'],
+          Gtk::STOCK_PASTE, 'paste_file', '', '', 'false')
+);
+foreach ($array_tool as $value)
+{
+    if ($value[0] == '<hr>')
+    {
+        $toolbar->insert(new GtkSeparatorToolItem, -1);
+        continue;
+    }
+    $action[$value[0]] = new GtkAction($value[0], $value[1], $value[2], $value[3]);
+    $toolitem = $action[$value[0]]->create_tool_item();
+    $action[$value[0]]->connect_simple('activate', $value[4], $value[5], $value[6]);
+    if (is_array($value[7]))
+    {
+        if ($value[7][0] == $value[7][1])
+            $action[$value[0]]->set_sensitive(FALSE);
+    }
+    elseif ($value[7] == 'false')
+        $action[$value[0]]->set_sensitive(FALSE);
+    elseif ($value[7] == 'write')
+    {
+        if (!is_writable($start[$panel]))
+            $action[$value[0]]->set_sensitive(FALSE);
+    }
+    $toolbar->insert($toolitem, -1);
+}
 
 if ($_config['toolbar_view'] == 'on')
     $toolbar->show_all();
@@ -510,7 +457,7 @@ $left = new GtkFrame;
 $left->set_shadow_type(Gtk::SHADOW_IN);
 
 $store['left'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING);
-
+sqlite_query($sqlite, "INSERT INTO history_left(path) VALUES('$start[left]')");
 current_dir('left');
 
 $tree_view['left'] = new GtkTreeView($store['left']);
@@ -536,7 +483,7 @@ $right = new GtkFrame;
 $right->set_shadow_type(Gtk::SHADOW_IN);
 
 $store['right'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING);
-
+sqlite_query($sqlite, "INSERT INTO history_right(path) VALUES('$start[right]')");
 current_dir('right');
 
 $tree_view['right'] = new GtkTreeView($store['right']);

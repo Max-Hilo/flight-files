@@ -163,6 +163,7 @@ function bookmarks_menu()
 
     foreach ($menu_item as $value)
         $sub_menu['bookmarks']->append($value);
+    $sub_menu['bookmarks']->show_all();
 }
 
 /**

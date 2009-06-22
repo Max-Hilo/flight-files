@@ -1,7 +1,5 @@
 <?php
 
-$lang['title']                      = 'Русский';
-
 $lang['title_program']              = 'Фаловый менеджер FlightFiles';
 
 $lang['menu']['file']               = '_Файл';
@@ -30,6 +28,10 @@ $lang['menu']['bookmarks_edit']     = 'Изменить закладки';
 $lang['menu']['shortcuts']          = 'Сочетания клавиш';
 $lang['menu']['about']              = 'О программе';
 
+$lang['toolbar']['back']            = 'Назад';
+$lang['toolbar']['back_hint']       = 'Перейти в предыдущую посещённую папку';
+$lang['toolbar']['forward']         = 'Вперёд';
+$lang['toolbar']['forward_hint']    = 'Перейти в следующую посещённую папку';
 $lang['toolbar']['up']              = 'Вверх';
 $lang['toolbar']['up_hint']         = 'Перейти на уровень выше';
 $lang['toolbar']['root']            = 'Корень';
