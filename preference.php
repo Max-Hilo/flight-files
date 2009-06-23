@@ -26,15 +26,17 @@ function preference()
     /**
      * Вкладка "Основные".
      */
-    $table = new GtkTable();
     
     $label_hidden_files = new GtkCheckButton($lang['preference']['hidden_files']);
     $label_hidden_files->set_tooltip_text($lang['preference']['hidden_files_hint']);
     $ask_delete = new GtkCheckButton($lang['preference']['ask_delete']);
     $ask_delete->set_tooltip_text($lang['preference']['ask_delete_hint']);
-    $label_home_dir = new GtkLabel($lang['preference']['home_dir']);
-    $radio_home = new GtkRadioButton(NULL, $_ENV['HOME']);
-    $radio_root = new GtkRadioButton($radio_home, '/');
+    $label_home_dir_left = new GtkLabel($lang['preference']['home_dir_left']);
+    $radio_home_left = new GtkRadioButton(NULL, $_ENV['HOME']);
+    $radio_root_left = new GtkRadioButton($radio_home_left, '/');
+    $label_home_dir_right = new GtkLabel($lang['preference']['home_dir_right']);
+    $radio_home_right = new GtkRadioButton(NULL, $_ENV['HOME']);
+    $radio_root_right = new GtkRadioButton($radio_home_right, '/');
     $ask_close = new GtkCheckButton($lang['preference']['ask_close']);
     $ask_close->set_tooltip_text($lang['preference']['ask_close_hint']);
     $label_lang = new GtkLabel($lang['preference']['lang']);
@@ -67,44 +69,58 @@ function preference()
         $ask_delete->set_active(TRUE);
     if ($_config['ask_close'] == 'on')
         $ask_close->set_active(TRUE);
-    if ($_config['home_dir'] == '/')
-        $radio_root->set_active(TRUE);
+    if ($_config['home_dir_left'] == '/')
+        $radio_root_left->set_active(TRUE);
     else
-        $radio_home->set_active(FALSE);
+        $radio_home_left->set_active(TRUE);
+    if ($_config['home_dir_right'] == '/')
+        $radio_root_right->set_active(TRUE);
+    else
+        $radio_home_right->set_active(TRUE);
     if ($_config['maximize'] == 'on')
         $maximize->set_active(TRUE);
     
     $label_hidden_files->set_alignment(0,0);
+    $label_home_dir_right->set_alignment(0,0);
     $ask_delete->set_alignment(0,0);
-    $label_home_dir->set_alignment(0,0);
+    $label_home_dir_left->set_alignment(0,0);
     $ask_close->set_alignment(0,0);
     $label_lang->set_alignment(0,0);
     
     $label_hidden_files->connect('toggled', 'check_button_write', 'hidden_files');
     $ask_delete->connect('toggled', 'check_button_write', 'ask_delete');
     $ask_close->connect('toggled', 'check_button_write', 'ask_close');
-    $radio_home->connect_simple('toggled', 'radio_button_write', 'HOME_DIR', $_ENV['HOME']);
-    $radio_root->connect_simple('toggled', 'radio_button_write', 'HOME_DIR', '/');
+    $radio_home_left->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_LEFT', $_ENV['HOME']);
+    $radio_root_left->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_LEFT', '/');
+    $radio_home_right->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_RIGHT', $_ENV['HOME']);
+    $radio_root_right->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_RIGHT', '/');
     $combo->connect('changed', 'combo_write', 'language');
     $maximize->connect('toggled', 'check_button_write', 'maximize');
     
-    $table->attach($label_hidden_files, 0, 3, 0, 1, Gtk::FILL, Gtk::FILL);
-    $table->attach($ask_delete, 0, 3, 1, 2, Gtk::FILL, Gtk::FILL);
-    $table->attach($label_home_dir, 0, 1, 2, 3, Gtk::FILL, Gtk::FILL);
-    $table->attach($radio_home, 1, 2, 2, 3, Gtk::FILL, Gtk::FILL);
-    $table->attach($radio_root, 2, 3, 2, 3, Gtk::FILL, Gtk::FILL);
-    $table->attach($ask_close, 0, 3, 3, 4, Gtk::FILL, Gtk::FILL);
-    $table->attach($label_lang, 0, 1, 4, 5, Gtk::FILL, Gtk::FILL);
-    $table->attach($combo, 1, 3, 4, 5, Gtk::FILL, Gtk::FILL);
-    $table->attach($maximize, 0, 3, 5, 6, Gtk::FILL, Gtk::FILL);
+    $vbox = new GtkVBox;
+    $vbox->pack_start($label_hidden_files, FALSE, FALSE);
+    $vbox->pack_start($ask_delete, FALSE, FALSE);
+    $vbox->pack_start($ask_close, FALSE, FALSE);
+    $vbox->pack_start($maximize, FALSE, FALSE);
+    $vbox->pack_start(new GtkHSeparator, FALSE, FALSE);
+    $vbox->pack_start($label_home_dir_left, FALSE, FALSE);
+    $vbox->pack_start($hbox = new GtkHBox, FALSE, FALSE);
+    $hbox->pack_start($radio_root_left, TRUE, TRUE);
+    $hbox->pack_start($radio_home_left, TRUE, TRUE);
+    $vbox->pack_start($label_home_dir_right, FALSE, FALSE);
+    $vbox->pack_start($hbox = new GtkHBox, FALSE, FALSE);
+    $hbox->pack_start($radio_root_right, TRUE, TRUE);
+    $hbox->pack_start($radio_home_right, TRUE, TRUE);
+    $vbox->pack_start(new GtkHSeparator, FALSE, FALSE);
+    $vbox->pack_start($hbox = new GtkHBox, FALSE, FALSE);
+    $hbox->pack_start($label_lang, TRUE, TRUE);
+    $hbox->pack_start($combo, TRUE, TRUE);
     
-    $notebook->append_page($table, new GtkLabel($lang['preference']['general']));
+    $notebook->append_page($vbox, new GtkLabel($lang['preference']['general']));
     
     /**
      * Вкладка "Шрифты".
      */
-    $table = new GtkTable();
-    
     $label_text_list = new GtkLabel($lang['preference']['font_list']);
     
     $label_text_list->modify_font(new PangoFontDescription('Bold'));
@@ -129,23 +145,30 @@ function preference()
         $button_font_select->set_sensitive(TRUE);
         $entry_font_select->set_text($_config['font_list']);
     }
+
+    $vbox = new GtkVBox;
+    $vbox->pack_start($label_text_list, FALSE, FALSE);
+    $vbox->pack_start($check_text_list, FALSE, FALSE);
+    $vbox->pack_start($hbox = new GtkHBox, FALSE, FALSE);
+    $hbox->pack_start($entry_font_select, TRUE, TRUE);
+    $hbox->pack_start($button_font_select, FALSE, FALSE);
     
-    $table->attach($label_text_list, 0, 1, 0, 1, Gtk::FILL, Gtk::FILL);
-    $table->attach($check_text_list, 0, 1, 1, 2, Gtk::FILL, Gtk::FILL);
-    $table->attach($entry_font_select, 0, 1, 2, 3, Gtk::FILL, Gtk::FILL);
-    $table->attach($button_font_select, 1, 2, 2, 3, Gtk::FILL, Gtk::FILL);
-    
-    $notebook->append_page($table, new GtkLabel($lang['preference']['fonts']));
+    $notebook->append_page($vbox, new GtkLabel($lang['preference']['fonts']));
     
     $window->add($notebook);
     $window->show_all();
     Gtk::main();
 }
 
+/**
+ * Производит запись в базу данных при изменении активного элемента в списке GtkComboBox.
+ * @param object $combo Список GtkComboBox
+ * @param string $param Изменяемый параметр
+ */
 function combo_write($combo, $param)
 {
     global $sqlite, $lang;
-    
+
     $active = $combo->get_active_text();
     if ($active == $lang['preference']['lang_default'])
         $active = '';
@@ -154,9 +177,8 @@ function combo_write($combo, $param)
 }
 
 /**
- * Функция производит запись в базу данных
- * при изменении значения флажка в окне настроек.
- * @param string $check Виджет-переключатель
+ * Производит запись в базу данных при изменении значения переключателя GtkCheckButton.
+ * @param string $check Переключатель GtkCheckButton
  * @param string $param Изменяемый параметр
  */
 function check_button_write($check, $param)
@@ -168,13 +190,11 @@ function check_button_write($check, $param)
     $param = strtoupper($param);
     sqlite_query($sqlite, "UPDATE config SET value = '$value' WHERE key = '$param'");
     
-    // Обновляем главное окно
-    change_dir('none');
+    change_dir('none', '', TRUE);
 }
 
 /**
- * Функция производит запись в базу данных
- * при изменении значения радио-кнопки в окне настроек.
+ * Производит запись в базу данных при изменении значения радиокнопки GtkRadioButton.
  * @param string $param Изменяемый параметр
  * @param string $value Новое значение параметра
  */
@@ -185,13 +205,12 @@ function radio_button_write($param, $value)
     $param = strtoupper($param);
     sqlite_query($sqlite, "UPDATE config SET value = '$value' WHERE key = '$param'");
     
-    // Обновляем главное окно
     change_dir('none');
 }
 
 /**
- * Создаёт диалог GtkFontSelectionDialog
- * и производит запись выбранного шрифта в базу данных.
+ * Создаёт диалог GtkFontSelectionDialog и производит запись выбранного шрифта в базу данных.
+ * @param object $entry Поле ввода GtkEntry для названия текста
  */
 function font_select($entry)
 {
@@ -219,6 +238,9 @@ function font_select($entry)
 
 /**
  * Сбрасывает значение шрифта.
+ * @param object $check Переключатель GtkCheckButton
+ * @param object $entry Поле ввода GtkEntry для названия шрифта
+ * @param object $button Кнопка GtkButton
  */
 function check_font($check, $entry, $button)
 {

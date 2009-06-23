@@ -2,7 +2,7 @@
 
 /**
  * Файл, содержащий все функции программы.
- * 
+ *
  * @copyright Copyright (C) 2009, Вавилов Егор (Shecspi)
  * @license http://www.opensource.org/licenses/mit-license.php MIT License
  * @link http://code.google.com/p/flight-files/ Домашняя страница проекта
@@ -15,11 +15,11 @@
 function config_parser()
 {
     global $_config, $sqlite;
-    
-    $array = array('HIDDEN_FILES', 'HOME_DIR', 'ASK_DELETE',
-                   'TOOLBAR_VIEW', 'ADDRESSBAR_VIEW', 'STATUSBAR_VIEW',
-                   'FONT_LIST', 'ASK_CLOSE', 'LANGUAGE',
-                   'MAXIMIZE');
+
+    $array = array('HIDDEN_FILES', 'HOME_DIR_LEFT', 'HOME_DIR_RIGHT',
+                   'ASK_DELETE', 'TOOLBAR_VIEW', 'ADDRESSBAR_VIEW',
+                   'STATUSBAR_VIEW', 'FONT_LIST', 'ASK_CLOSE',
+                   'LANGUAGE', 'MAXIMIZE');
     foreach ($array as $value)
     {
         $query = sqlite_query($sqlite, "SELECT * FROM config WHERE key = '$value'");
@@ -34,22 +34,22 @@ function config_parser()
 function on_button($view, $event, $type)
 {
     global $panel, $lang, $store, $action_menu, $action, $start, $entry_current_dir, $number, $sqlite;
-    
+
     $panel = $type;
-    
+
     $action['up']->set_sensitive(TRUE);
     $action['root']->set_sensitive(TRUE);
     $action['home']->set_sensitive(TRUE);
     $action_menu['cut']->set_sensitive(TRUE);
     $action['back']->set_sensitive(TRUE);
     $action['forward']->set_sensitive(TRUE);
-    
+
     if ($number[$panel] == 1)
         $action['back']->set_sensitive(FALSE);
     $query = sqlite_query($sqlite, "SELECT id, path FROM history_$panel");
     if (sqlite_num_rows($query) == $number[$panel])
         $action['forward']->set_sensitive(FALSE);
-    
+
     if ($start[$panel] == '/')
     {
         $action['up']->set_sensitive(FALSE);
@@ -59,27 +59,27 @@ function on_button($view, $event, $type)
     {
         $action['home']->set_sensitive(FALSE);
     }
-    
+
     $entry_current_dir->set_text($start[$panel]);
-    
+
     $path_array = $view->get_path_at_pos($event->x, $event->y);
     $path = $path_array[0][0];
-    
+
     @$iter = $store[$panel]->get_iter($path);
     @$file = $store[$panel]->get_value($iter, 0);
     @$dir_file = $store[$panel]->get_value($iter, 1);
     @$size = $store[$panel]->get_value($iter, 2);
-    
+
     if (!empty($file))
     {
         $action_menu['copy']->set_sensitive(TRUE);
         if (!is_writable($start[$panel]))
             $action_menu['cut']->set_sensitive(FALSE);
     }
-    
+
     // Если нажата левая кнопка, то...
     if ($event->button == 1)
-    {        
+    {
         // При двойном клике по папке открываем её
         if ($event->type == Gdk::_2BUTTON_PRESS)
         {
@@ -115,7 +115,7 @@ function on_button($view, $event, $type)
     {
         // Создаём меню
         $menu = new GtkMenu();
-        
+
         if ($dir_file == '<FILE>')
         {
             $copy = new GtkImageMenuItem(Gtk::STOCK_COPY);
@@ -124,14 +124,14 @@ function on_button($view, $event, $type)
             $delete = new GtkMenuItem($lang['popup']['delete_file']);
             $checksum = new GtkMenuItem($lang['popup']['checksum']);
             $properties = new GtkImageMenuItem(Gtk::STOCK_PROPERTIES);
-            
+
             $sub_checksum = new GtkMenu();
             $checksum->set_submenu($sub_checksum);
             $md5 = new GtkMenuItem($lang['popup']['md5']);
             $sha1 = new GtkMenuItem($lang['popup']['sha1']);
             $sub_checksum->append($md5);
             $sub_checksum->append($sha1);
-            
+
             // Расчитывать контрольную сумму для пустых файлов бессмысленно
             if ($size == '0 '.$lang['size']['b'])
             {
@@ -143,7 +143,7 @@ function on_button($view, $event, $type)
                 $rename->set_sensitive(FALSE);
                 $delete->set_sensitive(FALSE);
             }
-            
+
             if (@mime_content_type($start[$panel].'/'.$file) == 'text/plain' OR
                 @mime_content_type($start[$panel].'/'.$file) == 'text/html')
             {
@@ -161,7 +161,7 @@ function on_button($view, $event, $type)
             $menu->append($checksum);
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($properties);
-            
+
             $copy->connect_simple('activate', 'bufer_file', $start[$panel].'/'.$file, 'copy');
             $cut->connect_simple('activate', 'bufer_file', $start[$panel].'/'.$file, 'cut');
             $rename->connect_simple('activate', '_rename', $start[$panel].'/'.$file);
@@ -177,14 +177,14 @@ function on_button($view, $event, $type)
             $cut = new GtkImageMenuItem(Gtk::STOCK_CUT);
             $rename = new GtkMenuItem($lang['popup']['rename_dir']);
             $delete = new GtkMenuItem($lang['popup']['delete_dir']);
-            
+
             if (!is_writable($start[$panel]))
             {
                 $cut->set_sensitive(FALSE);
                 $rename->set_sensitive(FALSE);
                 $delete->set_sensitive(FALSE);
             }
-            
+
             $menu->append($open);
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($copy);
@@ -193,7 +193,7 @@ function on_button($view, $event, $type)
             $menu->append($rename);
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($delete);
-            
+
             $open->connect_simple('activate', 'change_dir', 'open', $file);
             $copy->connect_simple('activate', 'bufer_file', $start[$panel].'/'.$file, 'copy');
             $cut->connect_simple('activate', 'bufer_file', $start[$panel].'/'.$file, 'cut');
@@ -205,7 +205,7 @@ function on_button($view, $event, $type)
             $new_file = new GtkMenuItem($lang['popup']['new_file']);
             $new_dir = new GtkMenuItem($lang['popup']['new_dir']);
             $paste = new GtkImageMenuItem(Gtk::STOCK_PASTE);
-            
+
             if (!is_writable($start[$panel]))
             {
                 $new_file->set_sensitive(FALSE);
@@ -213,21 +213,21 @@ function on_button($view, $event, $type)
             }
             if (!file_exists(BUFER_FILE) OR !is_writable($start[$panel]))
                 $paste->set_sensitive(FALSE);
-            
+
             $menu->append($new_file);
             $menu->append($new_dir);
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($paste);
-            
+
             $paste->connect_simple('activate', 'paste_file');
             $new_file->connect_simple('activate', 'new_element', 'file');
             $new_dir->connect_simple('activate', 'new_element', 'dir');
         }
-        
+
         // Показываем контекстное меню
         $menu->show_all();
         $menu->popup();
-        
+
         return FALSE;
     }
 }
@@ -239,7 +239,7 @@ function on_button($view, $event, $type)
 function _rename($filename)
 {
     global $lang;
-    
+
     $dialog = new GtkDialog(
         $lang['rename']['title'],
         NULL,
@@ -294,13 +294,13 @@ function _rename($filename)
 function bufer_file($filename = '', $act)
 {
     global $start, $panel, $action, $action_menu, $selection;
-    
+
     if (empty($filename))
     {
         list($model, $iter) = $selection[$panel]->get_selected();
         $filename = $start[$panel].'/'.$model->get_value($iter, 0);
     }
-    
+
     $fopen = fopen(BUFER_FILE, 'w+');
     fwrite($fopen, $filename."\n".$act);
     fclose($fopen);
@@ -318,7 +318,7 @@ function bufer_file($filename = '', $act)
 function paste_file()
 {
     global $start, $panel, $lang;
-    
+
     $file_array = file(BUFER_FILE);
     $file = trim($file_array[0]);
     $action = trim($file_array[1]);
@@ -381,7 +381,7 @@ function _copy($source_dir, $dest_dir)
 function delete($filename)
 {
     global $_config, $lang;
-    
+
     if (is_dir($filename))
     {
         if ($_config['ask_delete'] == 'on')
@@ -479,29 +479,29 @@ function rm($dir)
 function current_dir($panel)
 {
     global $store, $_config, $count_element, $count_dir, $count_file, $start;
-    
+
     // Получаем настройки программы
     config_parser();
-    
+
     $count_element = 0;
     $count_dir = 0;
     $count_file = 0;
-    
+
     $opendir = opendir($start[$panel]);
-    
+
     while (FALSE !== ($file = readdir($opendir)))
     {
         // Пропускаем папки '.' и '..'
         if ($file == '.' OR $file == '..')
             continue;
-        
+
         // Пропускаем скрытые файлы, если это предусмотрено настройками
         if ($_config['hidden_files'] == 'off')
         {
             if (preg_match("#^\.(.+?)#", $file))
                 continue;
         }
-        
+
         // Заполняем колонки для файлов...
         if (is_file($start[$panel].'/'.$file))
         {
@@ -514,10 +514,10 @@ function current_dir($panel)
             $store[$panel]->append(array($file, '<DIR>', '', ''));
             $count_dir++;
         }
-        
+
         $count_element++;
     }
-    
+
     $store[$panel]->set_sort_column_id(0, Gtk::SORT_ASCENDING);
     $store[$panel]->set_sort_column_id(1, Gtk::SORT_ASCENDING);
 }
@@ -529,7 +529,7 @@ function current_dir($panel)
 function convert_size($filename)
 {
     global $panel, $lang;
-    
+
     $size_byte = filesize($filename);
     if ($size_byte >= 0 AND $size_byte < 1024)
         return $size_byte.' '.$lang['size']['b'];
@@ -548,7 +548,7 @@ function convert_size($filename)
 function history($direct)
 {
     global $sqlite, $number, $panel, $action;
-    
+
     if ($direct == 'back')
     {
         $number[$panel]--;
@@ -570,13 +570,15 @@ function history($direct)
 }
 
 /**
- * Функция для смены текущей директории.
- * @param string $act
+ * Смена текущей директории
+ * @param string $act Идентификатор действия
+ * @param string $dir Новый адрес
+ * @param bool $all Если имеет значение TRUE, то обновляются обе панели
  */
 function change_dir($act = '', $dir = '', $all = FALSE)
 {
     global $vbox, $entry_current_dir, $action, $action_menu, $lang, $panel, $store, $start, $number, $sqlite;
-    
+
     // Устанавливаем новое значение текущей директории
     if ($act == 'user')
         $new_dir = $entry_current_dir->get_text();
@@ -592,24 +594,34 @@ function change_dir($act = '', $dir = '', $all = FALSE)
         $new_dir = $dir;
     else
         $new_dir = dirname($start[$panel]);
-    
-    if ($act != 'none' AND $act != 'history')
+
+    if ($act != 'none' AND $act != 'history' OR ($act == 'user' AND $new_dir != $entry_current_dir->get_text() AND file_exists($new_dir)))
     {
-        sqlite_query($sqlite, "DELETE FROM history_$panel WHERE id > '$number[$panel]'");
-        sqlite_query($sqlite, "INSERT INTO history_$panel(path) VALUES('$new_dir')");
-        $number[$panel] = sqlite_last_insert_rowid($sqlite);
+        if ($act == 'user')
+        {
+            if ($new_dir != $start[$panel] AND file_exists($new_dir))
+            {
+                sqlite_query($sqlite, "DELETE FROM history_$panel WHERE id > '$number[$panel]'");
+                sqlite_query($sqlite, "INSERT INTO history_$panel(path) VALUES('$new_dir')");
+                $number[$panel] = sqlite_last_insert_rowid($sqlite);
+            }
+        }
+        else
+        {
+            sqlite_query($sqlite, "DELETE FROM history_$panel WHERE id > '$number[$panel]'");
+            sqlite_query($sqlite, "INSERT INTO history_$panel(path) VALUES('$new_dir')");
+            $number[$panel] = sqlite_last_insert_rowid($sqlite);
+        }
     }
     
     // Если указанной директории не существует, то информируем пользователя об этом
     if (!file_exists($new_dir))
-    {
         alert($lang['alert']['dir_not_exists']);
-    }
     else
         $start[$panel] = $new_dir;
-    
+
     $start[$panel] = preg_replace ('#/+#', '/', $start[$panel]);
-    
+
     // Делаем неактивными некоторые кнопки на панели инструментов и пункты меню
     $action['back']->set_sensitive(TRUE);
     $action['forward']->set_sensitive(TRUE);
@@ -624,7 +636,7 @@ function change_dir($act = '', $dir = '', $all = FALSE)
     $action_menu['new_file']->set_sensitive(TRUE);
     $action_menu['new_dir']->set_sensitive(TRUE);
     $action_menu['up']->set_sensitive(TRUE);
-    
+
     if ($number[$panel] == 1)
         $action['back']->set_sensitive(FALSE);
     $query = sqlite_query($sqlite, "SELECT id, path FROM history_$panel");
@@ -653,7 +665,7 @@ function change_dir($act = '', $dir = '', $all = FALSE)
         $action['paste']->set_sensitive(FALSE);
         $action_menu['paste']->set_sensitive(FALSE);
     }
-    
+
     // Очищаем список
     if ($all)
     {
@@ -666,10 +678,10 @@ function change_dir($act = '', $dir = '', $all = FALSE)
     {
         $store[$panel]->clear();
         current_dir($panel);
-    }    
-    
+    }
+
     status_bar();
-    
+
     // Устанавливаем новое значение в адресную строку
     $entry_current_dir->set_text($start[$panel]);
 }
@@ -682,14 +694,14 @@ function change_dir($act = '', $dir = '', $all = FALSE)
 function status_bar()
 {
     global $status, $count_element, $count_dir, $count_file, $lang;
-    
+
     $context_id = $status->get_context_id('count_elements');
     $status->push($context_id, '');
-    
+
     $context_id = $status->get_context_id('count_elements');
     $status->push($context_id, '   '.$lang['statusbar']['count'].' '.$count_element
                   .' ( '.$lang['statusbar']['dirs'].' '.$count_dir.', '.$lang['statusbar']['files'].' '.$count_file.' )');
-    
+
     return $status;
 }
 
@@ -701,7 +713,7 @@ function status_bar()
 function alert($msg)
 {
     global $lang;
-    
+
     $dialog = new GtkDialog($lang['alert']['title'], NULL, Gtk::DIALOG_MODAL, array(Gtk::STOCK_OK, Gtk::RESPONSE_OK));
     $dialog->set_position(Gtk::WIN_POS_CENTER_ALWAYS);
     $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
@@ -730,13 +742,13 @@ function alert($msg)
 function new_element($type)
 {
     global $start, $lang, $panel;
-    
+
     if (!is_writable($start[$panel]))
     {
         alert($lang['alert']['new_not_chmod']);
         return FALSE;
     }
-    
+
     if ($type == 'file')
     {
         if (!file_exists($start[$panel].'/'.$lang['new']['file']))
@@ -803,11 +815,11 @@ function delete_all($type)
 function close_window()
 {
     global $window, $_config, $lang, $sqlite;
-    
+
     @unlink(BUFER_FILE);
     sqlite_query($sqlite, "DELETE FROM history_left");
     sqlite_query($sqlite, "DELETE FROM history_right");
-    
+
     if ($_config['ask_close'] == 'on')
     {
         $dialog = new GtkDialog(
@@ -855,7 +867,7 @@ function close_window()
 function clear_bufer()
 {
     global $action, $action_menu, $lang;
-    
+
     @unlink(BUFER_FILE);
     $action['paste']->set_sensitive(FALSE);
     $action_menu['clear_bufer']->set_sensitive(FALSE);
@@ -870,17 +882,17 @@ function clear_bufer()
 function selection_bookmarks($selection, $array)
 {
     global $sqlite;
-    
+
     list($model, $iter) = $selection->get_selected();
     @$id = $model->get_value($iter, 1);
-    
+
     $array['name_label']->set_sensitive(TRUE);
     $array['name_entry']->set_sensitive(TRUE);
     $array['path_label']->set_sensitive(TRUE);
     $array['path_entry']->set_sensitive(TRUE);
     $array['button_ok']->set_sensitive(TRUE);
     $array['button_delete']->set_sensitive(TRUE);
-    
+
     $query = sqlite_query($sqlite, "SELECT path, title FROM bookmarks WHERE id = '$id'");
     $row = sqlite_fetch_array($query);
     $array['name_entry']->set_text($row['title']);
@@ -890,43 +902,43 @@ function selection_bookmarks($selection, $array)
 function text_view($file)
 {
     global $start, $panel;
-    
+
     $window = new GtkWindow();
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
     $window->set_size_request(700, 400);
     $window->set_position(Gtk::WIN_POS_CENTER);
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $window->set_title($lang['text_view']['title']);
-    
+
     $vbox = new GtkVBox();
-    
+
     /**
      * Содержимое файла.
      */
     $text_buffer = new GtkTextBuffer();
     $text_view = new GtkTextView();
-    
+
     $text_buffer->set_text(file_get_contents($start[$panel].'/'.$file));
-    
+
     $text_view->set_buffer($text_buffer);
     $text_view->set_editable(TRUE);
     $text_view->set_left_margin(10);
-    
+
     $scroll = new GtkScrolledWindow;
     $scroll->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
     $scroll->add($text_view);
-    
+
     /**
      * Статусбар.
      */
     $status_bar = new GtkStatusBar();
-    
+
     $path_id = $status_bar->get_context_id('path');
     $status_bar->push($path_id, $lang['text_view']['statusbar'].' '.(($start[$panel] == '/') ? '' : $start[$panel]).'/'.$file);
-    
+
     $vbox->pack_start($scroll, TRUE, TRUE);
     $vbox->pack_start($status_bar, FALSE, FALSE);
-    
+
     $window->add($vbox);
     $window->show_all();
     Gtk::main();
@@ -937,19 +949,20 @@ function panel_view($widget, $key)
     global $toolbar, $addressbar, $status, $sqlite;
     
     $value = $widget->get_active() ? 'on' : 'off';
+    $key = strtoupper($key);
     sqlite_query($sqlite, "UPDATE config SET value = '$value' WHERE key = '$key'");
-    
+
     if ($key == 'TOOLBAR_VIEW')
     {
         if ($value == 'on')
-            $toolbar->show();
+            $toolbar->show_all();
         else
             $toolbar->hide();
     }
     elseif ($key == 'ADDRESSBAR_VIEW')
     {
         if ($value == 'on')
-            $addressbar->show();
+            $addressbar->show_all();
         else
             $addressbar->hide();
     }
@@ -965,7 +978,7 @@ function panel_view($widget, $key)
 function columns($tree_view, $cell_renderer)
 {
     global $lang;
-    
+
     $column_file = new GtkTreeViewColumn($lang['column']['title'], $cell_renderer, 'text', 0);
     $column_file->set_expand(TRUE);
     $column_file->set_sort_column_id(0);

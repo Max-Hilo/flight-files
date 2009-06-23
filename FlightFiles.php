@@ -58,7 +58,8 @@ if (!file_exists(DATABASE))
     sqlite_query($sqlite, "CREATE TABLE history_left(id INTEGER PRIMARY KEY, path)");
     sqlite_query($sqlite, "CREATE TABLE history_right(id INTEGER PRIMARY KEY, path)");
     sqlite_query($sqlite, "INSERT INTO config(key, value) VALUES('HIDDEN_FILES', 'off');".
-                          "INSERT INTO config(key, value) VALUES('HOME_DIR', '/');".
+                          "INSERT INTO config(key, value) VALUES('HOME_DIR_LEFT', '/');".
+                          "INSERT INTO config(key, value) VALUES('HOME_DIR_RIGHT', '".$_ENV['HOME']."');".
                           "INSERT INTO config(key, value) VALUES('ASK_DELETE', 'on');".
                           "INSERT INTO config(key, value) VALUES('ASK_CLOSE', 'on');".
                           "INSERT INTO config(key, value) VALUES('TOOLBAR_VIEW', 'on');".
@@ -121,15 +122,10 @@ $action_group = new GtkActionGroup('menubar');
 
 // Стартовая директория
 if (empty($argv[1]) OR !file_exists($argv[1]))
-{
-    $start['left'] = $_config['home_dir'];
-    $start['right'] = $_config['home_dir'];
-}
+    $start['left'] = $_config['home_dir_left'];
 else
-{
     $start['left'] = $argv[1];
-    $start['right'] = $argv[1];
-}
+$start['right'] = $_config['home_dir_right'];
 
 $vbox = new GtkVBox();
 $vbox->show();
@@ -140,211 +136,113 @@ $vbox->show();
 
 $menubar = new GtkMenuBar();
 
-$menu['file'] = new GtkMenuItem($lang['menu']['file']);
-$menu['edit'] = new GtkMenuItem($lang['menu']['edit']);
-$menu['view'] = new GtkMenuItem($lang['menu']['view']);
-$menu['go'] = new GtkMenuItem($lang['menu']['go']);
-$menu['bookmarks'] = new GtkMenuItem($lang['menu']['bookmarks']);
-$menu['help'] = new GtkMenuItem($lang['menu']['help']);
-
-foreach ($menu as $value)
-    $menubar->append($value);
+/**
+ * [0] => Имя меню на английском языке
+ * [1] => Ярлык
+ */
+$array_menubar = array(
+    array('file', $lang['menu']['file']),
+    array('edit', $lang['menu']['edit']),
+    array('view', $lang['menu']['view']),
+    array('go', $lang['menu']['go']),
+    array('bookmarks', $lang['menu']['bookmarks']),
+    array('help', $lang['menu']['help'])
+);
+foreach ($array_menubar as $value)
+{
+    $menu[$value[0]] = new GtkMenuItem($value[1]);
+    $sub_menu[$value[0]] = new GtkMenu;
+    $menu[$value[0]]->set_submenu($sub_menu[$value[0]]);
+    $menubar->append($menu[$value[0]]);
+}
 
 /**
- * Меню "Файл"
+ * [0] => Имя меню, к которому прикрепляется пункт (берётся из $array_menubar)
+ * [1] => Тип пункта ('separator' - разделитель, 'toggle' - переключатель, '' - обычный)
+ * [2] => Имя пункта меню на английском языке
+ * [3] => Ярлык
+ * [4] => Иконка
+ * [5] => Функция, вызываемая при нажатии на данный пункт меню
+ * [6], [7] => Параметры, передаваемые функции
+ * [8] => Условие неактивности пункта
+ * [9] => "Горячие клавиши"
  */
-$sub_menu['file'] = new GtkMenu();
-$menu['file']->set_submenu($sub_menu['file']);
-
-$action_menu['new_file'] = new GtkAction('NEW_FILE', $lang['menu']['new_file'], '', Gtk::STOCK_NEW);
-$accel['new_file'] = '<control>N';
-$action_group->add_action_with_accel($action_menu['new_file'], $accel['new_file']);
-$action_menu['new_file']->set_accel_group($accel_group);
-$action_menu['new_file']->connect_accelerator();
-$menu_item['new_file'] = $action_menu['new_file']->create_menu_item();
-$action_menu['new_file']->connect_simple('activate', 'new_element', 'file');
-if (!is_writable($start['right']))
-    $action_menu['new_file']->set_sensitive(FALSE);
-
-$action_menu['new_dir'] = new GtkAction('NEW_DIR', $lang['menu']['new_dir'], '', Gtk::STOCK_DIRECTORY);
-$accel['new_dir'] = '<shift><control>N';
-$action_group->add_action_with_accel($action_menu['new_dir'], $accel['new_dir']);
-$action_menu['new_dir']->set_accel_group($accel_group);
-$action_menu['new_dir']->connect_accelerator();
-$menu_item['new_dir'] = $action_menu['new_dir']->create_menu_item();
-$action_menu['new_dir']->connect_simple('activate', 'new_element', 'dir');
-if (!is_writable($start['right']))
-    $action_menu['new_dir']->set_sensitive(FALSE);
-
-$menu_item['separator_one'] = new GtkSeparatorMenuItem();
-
-$action_menu['clear_bufer'] = new GtkAction('CLEAR_BUFER', $lang['menu']['clear_bufer'], '', Gtk::STOCK_CLEAR);
-$menu_item['clear_bufer'] = $action_menu['clear_bufer']->create_menu_item();
-$action_menu['clear_bufer']->connect_simple('activate', 'clear_bufer');
-$action_menu['clear_bufer']->set_sensitive(FALSE);
-
-$menu_item['separator_two'] = new GtkSeparatorMenuItem();
-
-$action_menu['close'] = new GtkAction('CLOSE', $lang['menu']['close'], '', Gtk::STOCK_CLOSE);
-$accel['close'] = '<control>Q';
-$action_group->add_action_with_accel($action_menu['close'], $accel['close']);
-$action_menu['close']->set_accel_group($accel_group);
-$action_menu['close']->connect_accelerator();
-$menu_item['close'] = $action_menu['close']->create_menu_item();
-$action_menu['close']->connect_simple('activate', 'close_window');
-
-foreach ($menu_item as $value)
-    $sub_menu['file']->append($value);
-
-/**
- * Меню "Правка"
- */
-unset($menu_item);
-$sub_menu['edit'] = new GtkMenu();
-$menu['edit']->set_submenu($sub_menu['edit']);
-
-$action_menu['copy'] = new GtkAction('COPY', $lang['menu']['copy'], '', Gtk::STOCK_COPY);
-$accel['copy'] = '<control>C';
-$action_group->add_action_with_accel($action_menu['copy'], $accel['copy']);
-$action_menu['copy']->set_accel_group($accel_group);
-$action_menu['copy']->connect_accelerator();
-$menu_item['copy'] = $action_menu['copy']->create_menu_item();
-$action_menu['copy']->connect_simple('activate', 'bufer_file', '', 'copy');
-$action_menu['copy']->set_sensitive(FALSE);
-
-$action_menu['cut'] = new GtkAction('CUT', $lang['menu']['cut'], '', Gtk::STOCK_COPY);
-$accel['cut'] = '<control>X';
-$action_group->add_action_with_accel($action_menu['cut'], $accel['cut']);
-$action_menu['cut']->set_accel_group($accel_group);
-$action_menu['cut']->connect_accelerator();
-$menu_item['cut'] = $action_menu['cut']->create_menu_item();
-$action_menu['cut']->connect_simple('activate', 'bufer_file', '', 'cut');
-$action_menu['cut']->set_sensitive(FALSE);
-
-$action_menu['paste'] = new GtkAction('PASTE', $lang['menu']['paste'], '', Gtk::STOCK_PASTE);
-$accel['paste'] = '<control>V';
-$action_group->add_action_with_accel($action_menu['paste'], $accel['paste']);
-$action_menu['paste']->set_accel_group($accel_group);
-$action_menu['paste']->connect_accelerator();
-$menu_item['paste'] = $action_menu['paste']->create_menu_item();
-$action_menu['paste']->connect_simple('activate', 'paste_file');
-$action_menu['paste']->set_sensitive(FALSE);
-
-$menu_item['separator_one'] = new GtkSeparatorMenuItem();
-
-$action_menu['preference'] = new GtkAction('PREFERENCE', $lang['menu']['preference'], '', Gtk::STOCK_PREFERENCES);
-$menu_item['preference'] = $action_menu['preference']->create_menu_item();
-$action_menu['preference']->connect_simple('activate', 'preference');
-
-foreach ($menu_item as $value)
-    $sub_menu['edit']->append($value);
-
-/**
- * Меню "Вид"
- */
-unset($menu_item);
-$sub_menu['view'] = new GtkMenu;
-$menu['view']->set_submenu($sub_menu['view']);
-
-$action_menu['toolbar_view'] = new GtkToggleAction('TOOLBAR_VIEW', $lang['menu']['toolbar_view'], '', '');
-$accel['toolbar_view'] = 'F5';
-$action_group->add_action_with_accel($action_menu['toolbar_view'], $accel['toolbar_view']);
-$action_menu['toolbar_view']->set_accel_group($accel_group);
-$action_menu['toolbar_view']->connect_accelerator();
-$menu_item['toolbar_view'] = $action_menu['toolbar_view']->create_menu_item();
-if ($_config['toolbar_view'] == 'on')
-    $action_menu['toolbar_view']->set_active(TRUE);
-$action_menu['toolbar_view']->connect('activate', 'panel_view', 'TOOLBAR_VIEW');
-
-$action_menu['addressbar_view'] = new GtkToggleAction('ADDRESSBAR_VIEW', $lang['menu']['addresbar_view'], '', '');
-$accel['addressbar_view'] = 'F6';
-$action_group->add_action_with_accel($action_menu['addressbar_view'], $accel['addressbar_view']);
-$action_menu['addressbar_view']->set_accel_group($accel_group);
-$action_menu['addressbar_view']->connect_accelerator();
-$menu_item['addressbar_view'] = $action_menu['addressbar_view']->create_menu_item();
-if ($_config['addressbar_view'] == 'on')
-    $action_menu['addressbar_view']->set_active(TRUE);
-$action_menu['addressbar_view']->connect('activate', 'panel_view', 'ADDRESSBAR_VIEW');
-
-$action_menu['statusbar_view'] = new GtkToggleAction('STATUSBAR_VIEW', $lang['menu']['statusbar_view'], '', '');
-$accel['statusbar_view'] = 'F7';
-$action_group->add_action_with_accel($action_menu['statusbar_view'], $accel['statusbar_view']);
-$action_menu['statusbar_view']->set_accel_group($accel_group);
-$action_menu['statusbar_view']->connect_accelerator();
-$menu_item['statusbar_view'] = $action_menu['statusbar_view']->create_menu_item();
-if ($_config['statusbar_view'] == 'on')
-    $action_menu['statusbar_view']->set_active(TRUE);
-$action_menu['statusbar_view']->connect('activate', 'panel_view', 'STATUSBAR_VIEW');
-
-$menu_item['separator_one'] = new GtkSeparatorMenuItem;
-
-$action_menu['hidden_files'] = new GtkToggleAction('HIDDEN_FILES', $lang['menu']['hidden_files'], '', '');
-$accel['hidden_files'] = '<control>H';
-$action_group->add_action_with_accel($action_menu['hidden_files'], $accel['hidden_files']);
-$action_menu['hidden_files']->set_accel_group($accel_group);
-$action_menu['hidden_files']->connect_accelerator();
-$menu_item['hidden_files'] = $action_menu['hidden_files']->create_menu_item();
-if ($_config['hidden_files'] == 'on')
-    $action_menu['hidden_files']->set_active(TRUE);
-$action_menu['hidden_files']->connect('activate', 'check_button_write', 'hidden_files');
-
-foreach ($menu_item as $value)
-    $sub_menu['view']->append($value);
-
-/**
- * Меню "Переход"
- */
-unset($menu_item);
-$sub_menu['go'] = new GtkMenu;
-$menu['go']->set_submenu($sub_menu['go']);
-
-$action_menu['up'] = new GtkAction('UP', $lang['menu']['up'], '', Gtk::STOCK_GO_UP);
-$accel['up'] = '<control>Up';
-$action_group->add_action_with_accel($action_menu['up'], $accel['up']);
-$action_menu['up']->set_accel_group($accel_group);
-$action_menu['up']->connect_accelerator();
-$menu_item['up'] = $action_menu['up']->create_menu_item();
-if ($start[$panel] == '/')
-    $action_menu['up']->set_sensitive(FALSE);
-$action_menu['up']->connect_simple('activate', 'change_dir');
-
-$action_menu['refresh'] = new GtkAction('REFRESH', $lang['menu']['refresh'], '', Gtk::STOCK_REFRESH);
-$accel['refresh'] = '<control>R';
-$action_group->add_action_with_accel($action_menu['refresh'], $accel['refresh']);
-$action_menu['refresh']->set_accel_group($accel_group);
-$action_menu['refresh']->connect_accelerator();
-$menu_item['refresh'] = $action_menu['refresh']->create_menu_item();
-$action_menu['refresh']->connect_simple('activate', 'change_dir', 'none');
-
-foreach ($menu_item as $value)
-    $sub_menu['go']->append($value);
-
-/**
- * Меню "Закладки"
- */
-$sub_menu['bookmarks'] = new GtkMenu();
-$menu['bookmarks']->set_submenu($sub_menu['bookmarks']);
-bookmarks_menu();
-
-/**
- * Меню "Справка"
- */
-unset($menu_item);
-$sub_menu['help'] = new GtkMenu();
-$menu['help']->set_submenu($sub_menu['help']);
-
-$action_menu['shortcuts'] = new GtkAction('SHORTCUTS', $lang['menu']['shortcuts'], '', Gtk::STOCK_INFO);
-$menu_item['shortcuts'] = $action_menu['shortcuts']->create_menu_item();
-$action_menu['shortcuts']->connect_simple('activate', 'shortcuts');
-
-$menu_item['separator_one'] = new GtkSeparatorMenuItem;
-
-$action_menu['about'] = new GtkAction('ABOUT', $lang['menu']['about'], '', Gtk::STOCK_ABOUT);
-$menu_item['about'] = $action_menu['about']->create_menu_item();
-$action_menu['about']->connect_simple('activate', 'about');
-
-foreach ($menu_item as $value)
-    $sub_menu['help']->append($value);
+$array_menuitem = array(
+    array('file', '', 'new_file', $lang['menu']['new_file'], Gtk::STOCK_NEW, 'new_element', 'file', '', 'write', '<control>N'),
+    array('file', '', 'new_dir', $lang['menu']['new_dir'], Gtk::STOCK_DIRECTORY, 'new_element', 'dir', '', 'write', '<shift><control>N'),
+    array('file', 'separator'),
+    array('file', '', 'clear_bufer', $lang['menu']['clear_bufer'], Gtk::STOCK_CLEAR, 'clear_bufer', '', '', 'false', ''),
+    array('file', 'separator'),
+    array('file', '', 'close', $lang['menu']['close'], Gtk::STOCK_CLOSE, 'close_window', '', '', '', '<control>Q'),
+    array('edit', '', 'copy', $lang['menu']['copy'], Gtk::STOCK_COPY, 'bufer_file', 'copy', '', 'false', '<control>C'),
+    array('edit', '', 'cut', $lang['menu']['cut'], Gtk::STOCK_CUT, 'bufer_file', 'cut', '', 'false', '<control>X'),
+    array('edit', '', 'paste', $lang['menu']['paste'], Gtk::STOCK_PASTE, 'paste_file', '', '', 'false', '<control>V'),
+    array('edit', 'separator'),
+    array('edit', '', 'preference', $lang['menu']['preference'], Gtk::STOCK_PROPERTIES, 'preference'),
+    array('view', 'toggle', 'toolbar_view', $lang['menu']['toolbar_view'], '', 'panel_view',
+        'toolbar_view', '', array($_config['toolbar_view'], 'on'), 'F5'),
+    array('view', 'toggle', 'addressbar_view', $lang['menu']['addressbar_view'], '',
+        'panel_view', 'addressbar_view', '', array($_config['addressbar_view'], 'on'), 'F6'),
+    array('view', 'toggle', 'statusbar_view', $lang['menu']['statusbar_view'], '',
+        'panel_view', 'statusbar_view', '', array($_config['statusbar_view'], 'on'), 'F7'),
+    array('view', 'separator'),
+    array('view', 'toggle', 'hidden_files', $lang['menu']['hidden_files'], '',
+        'check_button_write', 'hidden_files', '', array($_config['hidden_files'], 'on'), '<control>H'),
+    array('go', '', 'up', $lang['menu']['up'], Gtk::STOCK_GO_UP,
+        'change_dir', '', '', array($start[$panel], '/'), '<control>Up'),
+    array('go', '', 'refresh', $lang['menu']['refresh'], Gtk::STOCK_REFRESH, 'change_dir', 'none', '', '', '<control>R'),
+    array('bookmarks', 'bookmarks'),
+    array('help', '', 'shortcuts', $lang['menu']['shortcuts'], Gtk::STOCK_INFO, 'shortcuts'),
+    array('help', 'separator'),
+    array('help', '', 'about', $lang['menu']['about'], Gtk::STOCK_ABOUT, 'about')
+);
+foreach ($array_menuitem as $value)
+{
+    if ($value[1] == 'separator')
+    {
+        $sub_menu[$value[0]]->append(new GtkSeparatorMenuItem);
+        continue;
+    }
+    elseif ($value[1] == 'bookmarks')
+    {
+        bookmarks_menu();
+        continue;
+    }
+    elseif ($value[1] == 'toggle')
+    {
+        $action_menu[$value[2]] = new GtkToggleAction($value[2], $value[3], '', '');
+        if ($value[8][0] == $value[8][1])
+            $action_menu[$value[2]]->set_active(TRUE);
+        $action_menu[$value[2]]->connect('activate', $value[5], $value[6], $value[7]);
+    }
+    else
+    {
+        $action_menu[$value[2]] = new GtkAction($value[2], $value[3], '', $value[4]);
+        $action_menu[$value[2]]->connect_simple('activate', $value[5], $value[6], $value[7]);
+    }
+    if ($value[9])
+    {
+        $action_group->add_action_with_accel($action_menu[$value[2]], $value[9]);
+        $action_menu[$value[2]]->set_accel_group($accel_group);
+        $action_menu[$value[2]]->connect_accelerator();
+    }
+    if (is_array($value[8]) AND $value[1] != 'toggle')
+    {
+        if ($value[8][0] == $value[8][1])
+        {
+            $action_menu[$value[2]]->set_sensitive(FALSE);
+        }
+    }
+    elseif ($value[8] == 'write')
+    {
+        if (!is_writable($start[$panel]))
+            $action_menu[$value[2]]->set_sensitive(FALSE);
+    }
+    elseif ($value[8] == 'false')
+        $action_menu[$value[2]]->set_sensitive(FALSE);
+    $menu_item = $action_menu[$value[2]]->create_menu_item();
+    $sub_menu[$value[0]]->append($menu_item);
+}
 
 $menubar->show_all();
 $vbox->pack_start($menubar, FALSE, FALSE, 0);
@@ -355,10 +253,16 @@ $vbox->pack_start($menubar, FALSE, FALSE, 0);
 
 $toolbar = new GtkToolBar();
 
-$array_tool = array(
-    // [0] => Имя, [1] => Ярлык, [2] => Подсказка,
-    // [3] => Иконка, [4] => Функция, [5],[6] => Параметры
-    // [7] => Условие неактивности кнопки
+/**
+ * [0] => Имя элемента на английском языке
+ * [1] => Ярлык, отображаемый на кнопке
+ * [2] => Всплывающая подсказка
+ * [3] => Иконка, отображаемая на кнопке
+ * [4] => Функция, вызываемая при нажатии
+ * [5], [6] => Параметры, передаваемые функции
+ * [7] => Условие неактивности кнопки
+ */
+$array_toolbar = array(
     array('back', $lang['toolbar']['back'], $lang['toolbar']['back_hint'],
           Gtk::STOCK_GO_BACK, 'history', 'back', '', 'false'),
     array('forward', $lang['toolbar']['forward'], $lang['toolbar']['forward_hint'],
@@ -382,7 +286,7 @@ $array_tool = array(
     array('paste', $lang['toolbar']['paste'], $lang['toolbar']['paste_hint'],
           Gtk::STOCK_PASTE, 'paste_file', '', '', 'false')
 );
-foreach ($array_tool as $value)
+foreach ($array_toolbar as $value)
 {
     if ($value[0] == '<hr>')
     {
@@ -420,7 +324,7 @@ $vbox->pack_start($toolbar, FALSE, FALSE);
 $addressbar = new GtkHBox();
 
 $label_current_dir = new GtkLabel($lang['addressbar']['label']);
-$entry_current_dir = new GtkEntry($start['right']);
+$entry_current_dir = new GtkEntry($start[$panel]);
 $button_change_dir = new GtkButton();
 
 $button_hbox = new GtkHBox();
