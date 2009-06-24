@@ -26,7 +26,6 @@ function preference()
     /**
      * Вкладка "Основные".
      */
-    
     $label_hidden_files = new GtkCheckButton($lang['preference']['hidden_files']);
     $label_hidden_files->set_tooltip_text($lang['preference']['hidden_files_hint']);
     $ask_delete = new GtkCheckButton($lang['preference']['ask_delete']);
@@ -178,7 +177,7 @@ function combo_write($combo, $param)
 
 /**
  * Производит запись в базу данных при изменении значения переключателя GtkCheckButton.
- * @param string $check Переключатель GtkCheckButton
+ * @param object $check Переключатель GtkCheckButton
  * @param string $param Изменяемый параметр
  */
 function check_button_write($check, $param)

@@ -2,7 +2,7 @@
 <?php
 
 /**
- * Файловый менеджер FlightFiles
+ * Файловый менеджер FlightFiles.
  * 
  * @copyright Copyright (C) 2009, Вавилов Егор (Shecspi)
  * @license http://www.opensource.org/licenses/mit-license.php MIT License
@@ -34,10 +34,11 @@ if ($argv[1] == '--version' OR $argv[1] == '-v')
 // Файлы с функциями программы
 include SHARE_DIR.'/FlightFiles.data.php';
 include SHARE_DIR.'/about.php';
-include SHARE_DIR.'/checksum.php';
-include SHARE_DIR.'/properties.php';
-include SHARE_DIR.'/preference.php';
+include SHARE_DIR.'/alert.php';
 include SHARE_DIR.'/bookmarks.php';
+include SHARE_DIR.'/checksum.php';
+include SHARE_DIR.'/preference.php';
+include SHARE_DIR.'/properties.php';
 include SHARE_DIR.'/shortcuts.php';
 
 // Удаляем файл буфера обмена, если он по каким-либо причинам ещё не удалён
@@ -45,9 +46,7 @@ include SHARE_DIR.'/shortcuts.php';
 
 // Создаём папку с конфигами
 if (!file_exists(CONFIG_DIR))
-{
     mkdir(CONFIG_DIR);
-}
 
 // Подключаемся к базе данных
 if (!file_exists(DATABASE))
@@ -174,9 +173,11 @@ $array_menuitem = array(
     array('file', '', 'clear_bufer', $lang['menu']['clear_bufer'], Gtk::STOCK_CLEAR, 'clear_bufer', '', '', 'false', ''),
     array('file', 'separator'),
     array('file', '', 'close', $lang['menu']['close'], Gtk::STOCK_CLOSE, 'close_window', '', '', '', '<control>Q'),
-    array('edit', '', 'copy', $lang['menu']['copy'], Gtk::STOCK_COPY, 'bufer_file', 'copy', '', 'false', '<control>C'),
-    array('edit', '', 'cut', $lang['menu']['cut'], Gtk::STOCK_CUT, 'bufer_file', 'cut', '', 'false', '<control>X'),
+    array('edit', '', 'copy', $lang['menu']['copy'], Gtk::STOCK_COPY, 'bufer_file', '', 'copy', 'false', '<control>C'),
+    array('edit', '', 'cut', $lang['menu']['cut'], Gtk::STOCK_CUT, 'bufer_file', '', 'cut', 'false', '<control>X'),
     array('edit', '', 'paste', $lang['menu']['paste'], Gtk::STOCK_PASTE, 'paste_file', '', '', 'false', '<control>V'),
+    array('edit', 'separator'),
+    array('edit', '', 'rename', $lang['menu']['rename'], '', '_rename', '', '', 'false', 'F2'),
     array('edit', 'separator'),
     array('edit', '', 'preference', $lang['menu']['preference'], Gtk::STOCK_PROPERTIES, 'preference'),
     array('view', 'toggle', 'toolbar_view', $lang['menu']['toolbar_view'], '', 'panel_view',
@@ -190,6 +191,11 @@ $array_menuitem = array(
         'check_button_write', 'hidden_files', '', array($_config['hidden_files'], 'on'), '<control>H'),
     array('go', '', 'up', $lang['menu']['up'], Gtk::STOCK_GO_UP,
         'change_dir', '', '', array($start[$panel], '/'), '<control>Up'),
+    array('go', '', 'back', $lang['menu']['back'], Gtk::STOCK_GO_BACK,
+        'history', 'back', '', 'false', '<control>Left'),
+    array('go', '', 'forward', $lang['menu']['forward'], Gtk::STOCK_GO_FORWARD,
+        'history', 'forward', '', 'false', '<control>Right'),
+    array('go', 'separator'),
     array('go', '', 'refresh', $lang['menu']['refresh'], Gtk::STOCK_REFRESH, 'change_dir', 'none', '', '', '<control>R'),
     array('bookmarks', 'bookmarks'),
     array('help', '', 'shortcuts', $lang['menu']['shortcuts'], Gtk::STOCK_INFO, 'shortcuts'),
@@ -327,6 +333,7 @@ $label_current_dir = new GtkLabel($lang['addressbar']['label']);
 $entry_current_dir = new GtkEntry($start[$panel]);
 $button_change_dir = new GtkButton();
 
+$button_change_dir->set_tooltip_text($lang['addressbar']['button_hint']);
 $button_hbox = new GtkHBox();
 $button_change_dir->add($button_hbox);
 $button_hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_REDO, Gtk::ICON_SIZE_BUTTON));
@@ -361,9 +368,6 @@ $left = new GtkFrame;
 $left->set_shadow_type(Gtk::SHADOW_IN);
 
 $store['left'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING);
-sqlite_query($sqlite, "INSERT INTO history_left(path) VALUES('$start[left]')");
-current_dir('left');
-
 $tree_view['left'] = new GtkTreeView($store['left']);
 $selection['left'] = $tree_view['left']->get_selection();
 $tree_view['left']->connect('button-press-event', 'on_button', 'left');
@@ -372,6 +376,9 @@ if (!empty($_config['font_list']))
     $cell_renderer['left']->set_property('font',  $_config['font_list']);
 
 columns($tree_view['left'], $cell_renderer['left']);
+
+sqlite_query($sqlite, "INSERT INTO history_left(path) VALUES('$start[left]')");
+current_dir('left');
 
 $scroll_left = new GtkScrolledWindow();
 $scroll_left->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_ALWAYS);
