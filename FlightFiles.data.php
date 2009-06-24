@@ -40,15 +40,23 @@ function on_button($view, $event, $type)
     $action['up']->set_sensitive(TRUE);
     $action['root']->set_sensitive(TRUE);
     $action['home']->set_sensitive(TRUE);
-    $action_menu['cut']->set_sensitive(TRUE);
     $action['back']->set_sensitive(TRUE);
     $action['forward']->set_sensitive(TRUE);
+    $action_menu['cut']->set_sensitive(TRUE);
+    $action_menu['back']->set_sensitive(TRUE);
+    $action_menu['forward']->set_sensitive(TRUE);
 
     if ($number[$panel] == 1)
+    {
         $action['back']->set_sensitive(FALSE);
+        $action_menu['back']->set_sensitive(FALSE);
+    }
     $query = sqlite_query($sqlite, "SELECT id, path FROM history_$panel");
     if (sqlite_num_rows($query) == $number[$panel])
+    {
         $action['forward']->set_sensitive(FALSE);
+        $action_menu['forward']->set_sensitive(FALSE);
+    }
 
     if ($start[$panel] == '/')
     {
@@ -74,7 +82,13 @@ function on_button($view, $event, $type)
     {
         $action_menu['copy']->set_sensitive(TRUE);
         if (!is_writable($start[$panel]))
+        {
             $action_menu['cut']->set_sensitive(FALSE);
+        }
+        else
+        {
+            $action_menu['rename']->set_sensitive(TRUE);
+        }
     }
 
     // Если нажата левая кнопка, то...
@@ -236,9 +250,15 @@ function on_button($view, $event, $type)
  * Переименование выбранного файла/каталога.
  * @param string $filename Файл/каталог, для которого необходимо выполнить операцию.
  */
-function _rename($filename)
+function _rename($filename = '')
 {
-    global $lang;
+    global $lang, $start, $panel, $selection;
+    
+    if (empty($filename))
+    {
+        list($model, $iter) = $selection[$panel]->get_selected();
+        $filename = $start[$panel].'/'.$model->get_value($iter, 0);
+    }
 
     $dialog = new GtkDialog(
         $lang['rename']['title'],
@@ -253,43 +273,51 @@ function _rename($filename)
     $vbox = $dialog->vbox;
     $vbox->pack_start($hbox = new GtkHBox());
     $hbox->pack_start($entry = new GtkEntry(basename(basename($filename))));
+    $entry->connect('activate', 'on_rename', $filename, $dialog);
     $dialog->show_all();
     $result = $dialog->run();
     if ($result == Gtk::RESPONSE_OK)
     {
-        $new_name = $entry->get_text();
-        if (empty($new_name))
-        {
-            $dialog->destroy();
-            alert($lang['alert']['empty_name']);
-            _rename($filename);
-        }
-        else
-        {
-            if (file_exists(dirname($filename).'/'.$new_name) AND $new_name != basename($filename))
-            {
-                $dialog->destroy();
-                if (is_dir($filename))
-                    alert($lang['alert']['dir_exists_rename']);
-                else
-                    alert($lang['alert']['file_exists_rename']);
-                _rename($filename);
-            }
-            else
-                rename($filename, dirname($filename).'/'.$entry->get_text());
-            $dialog->destroy();
-        }
+        on_rename($entry, $filename, $dialog);
     }
     else
         $dialog->destroy();
     change_dir('none');
 }
 
+function on_rename ($entry, $filename, $dialog)
+{
+    global $lang;
+
+    $new_name = $entry->get_text();
+    if (empty($new_name))
+    {
+        $dialog->destroy();
+        alert($lang['alert']['empty_name']);
+        _rename($filename);
+    }
+    else
+    {
+        if (file_exists(dirname($filename).'/'.$new_name) AND $new_name != basename($filename))
+        {
+            $dialog->destroy();
+            if (is_dir($filename))
+                alert($lang['alert']['dir_exists_rename']);
+            else
+                alert($lang['alert']['file_exists_rename']);
+            _rename($filename);
+        }
+        else
+            rename($filename, dirname($filename).'/'.$entry->get_text());
+        $dialog->destroy();
+     }
+}
+
 /**
  *
  * Функция помещает адрес вырезанного/скопированного файла/каталога в файл буфера обмена.
  * @param string $filename Файл, для которого необходимо выполнить операцию.
- * @param string $action Иденификатор операции вырезания/копирования.
+ * @param string $act Иденификатор операции вырезания/копирования.
  */
 function bufer_file($filename = '', $act)
 {
@@ -344,9 +372,11 @@ function paste_file()
         if (is_file($file))
             rename($file, $start[$panel].'/'.$dest);
         elseif (is_dir($file))
+            // Применяется mv, т.к. rename() выдаёт ошибку, если начальная
+            // и конечная папки находятся на разных разделах диска
             exec('mv '.$file.' '.$start[$panel].'/'.$dest);
     }
-    change_dir('none');
+    change_dir('none', '', 'all');
     }
 }
 
@@ -505,7 +535,11 @@ function current_dir($panel)
         // Заполняем колонки для файлов...
         if (is_file($start[$panel].'/'.$file))
         {
-            $store[$panel]->append(array($file, '<FILE>', convert_size($start[$panel].'/'.$file), date('d.m.Y G:i:s', filemtime($start[$panel].'/'.$file))));
+            $store[$panel]->append(array(
+                    $file,
+                    '<FILE>',
+                    convert_size($start[$panel].'/'.$file),
+                    date('d.m.Y G:i:s',filemtime($start[$panel].'/'.$file))));
             $count_file++;
         }
         // ... и папок
@@ -578,7 +612,7 @@ function history($direct)
 function change_dir($act = '', $dir = '', $all = FALSE)
 {
     global $vbox, $entry_current_dir, $action, $action_menu, $lang, $panel, $store, $start, $number, $sqlite;
-
+    
     // Устанавливаем новое значение текущей директории
     if ($act == 'user')
         $new_dir = $entry_current_dir->get_text();
@@ -594,7 +628,7 @@ function change_dir($act = '', $dir = '', $all = FALSE)
         $new_dir = $dir;
     else
         $new_dir = dirname($start[$panel]);
-
+    
     if ($act != 'none' AND $act != 'history' OR ($act == 'user' AND $new_dir != $entry_current_dir->get_text() AND file_exists($new_dir)))
     {
         if ($act == 'user')
@@ -630,6 +664,9 @@ function change_dir($act = '', $dir = '', $all = FALSE)
     $action['home']->set_sensitive(TRUE);
     $action['new_file']->set_sensitive(TRUE);
     $action['new_dir']->set_sensitive(TRUE);
+    $action_menu['back']->set_sensitive(TRUE);
+    $action_menu['forward']->set_sensitive(TRUE);
+    $action_menu['rename']->set_sensitive(FALSE);
     $action_menu['paste']->set_sensitive(FALSE);
     $action_menu['copy']->set_sensitive(FALSE);
     $action_menu['cut']->set_sensitive(FALSE);
@@ -638,10 +675,16 @@ function change_dir($act = '', $dir = '', $all = FALSE)
     $action_menu['up']->set_sensitive(TRUE);
 
     if ($number[$panel] == 1)
+    {
         $action['back']->set_sensitive(FALSE);
+        $action_menu['back']->set_sensitive(FALSE);
+    }
     $query = sqlite_query($sqlite, "SELECT id, path FROM history_$panel");
     if (sqlite_num_rows($query) == $number[$panel])
+    {
         $action['forward']->set_sensitive(FALSE);
+        $action_menu['forward']->set_sensitive(FALSE);
+    }
     if (file_exists(BUFER_FILE))
     {
         $action['paste']->set_sensitive(TRUE);
@@ -703,35 +746,6 @@ function status_bar()
                   .' ( '.$lang['statusbar']['dirs'].' '.$count_dir.', '.$lang['statusbar']['files'].' '.$count_file.' )');
 
     return $status;
-}
-
-/**
- *
- * Функция выводит диалоговое окно.
- * @param string $msg Текст, который будет выведен в окне.
- */
-function alert($msg)
-{
-    global $lang;
-
-    $dialog = new GtkDialog($lang['alert']['title'], NULL, Gtk::DIALOG_MODAL, array(Gtk::STOCK_OK, Gtk::RESPONSE_OK));
-    $dialog->set_position(Gtk::WIN_POS_CENTER_ALWAYS);
-    $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
-    $dialog->set_skip_taskbar_hint(TRUE);
-    $dialog->set_resizable(FALSE);
-    $top_area = $dialog->vbox;
-    $top_area->pack_start($hbox = new GtkHBox());
-    $hbox->pack_start(new GtkLabel(' '));
-    $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_WARNING, Gtk::ICON_SIZE_DIALOG));
-    $hbox->pack_start(new GtkLabel(' '));
-    $label = new GtkLabel($msg);
-    $label->set_justify(Gtk::JUSTIFY_CENTER);
-    $hbox->pack_start($label);
-    $hbox->pack_start(new GtkLabel(' '));
-    $dialog->set_has_separator(FALSE);
-    $dialog->show_all();
-    $dialog->run();
-    $dialog->destroy();
 }
 
 /**
@@ -901,7 +915,7 @@ function selection_bookmarks($selection, $array)
 
 function text_view($file)
 {
-    global $start, $panel;
+    global $start, $panel, $lang;
 
     $window = new GtkWindow();
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
@@ -979,23 +993,42 @@ function columns($tree_view, $cell_renderer)
 {
     global $lang;
 
+    $render = new GtkCellRendererPixbuf;
+    $column_image = new GtkTreeViewColumn;
+    $column_image->pack_start($render);
+    $column_image->set_cell_data_func($render, "image_column");
+
     $column_file = new GtkTreeViewColumn($lang['column']['title'], $cell_renderer, 'text', 0);
     $column_file->set_expand(TRUE);
+    $column_file->set_sizing(Gtk::TREE_VIEW_COLUMN_FIXED);
     $column_file->set_sort_column_id(0);
 
-    $column_df = new GtkTreeViewColumn($lang['column']['type'], $cell_renderer, 'text', 1);
-    $column_df->set_sort_column_id(1);
+    $column_df = new GtkTreeViewColumn('', $cell_renderer, 'text', 1);
+    $column_df->set_visible(FALSE);
 
     $column_size = new GtkTreeViewColumn($lang['column']['size'], $cell_renderer, 'text', 2);
-    $column_size->set_sort_column_id(2);
 
     $column_mtime = new GtkTreeViewColumn($lang['column']['mtime'], $cell_renderer, 'text', 3);
-    $column_mtime->set_sizing(Gtk::TREE_VIEW_COLUMN_FIXED);
-    $column_mtime->set_fixed_width(150);
+    $column_mtime->set_sizing(Gtk::TREE_VIEW_COLUMN_AUTOSIZE);
     $column_mtime->set_sort_column_id(3);
 
+    $tree_view->append_column($column_image);
     $tree_view->append_column($column_file);
     $tree_view->append_column($column_df);
     $tree_view->append_column($column_size);
     $tree_view->append_column($column_mtime);
+}
+
+/**
+ * Добавление изображения файла/папки для строки в списке.
+ */
+function image_column($column, $render, $model, $iter)
+{
+    $path = $model->get_path($iter);
+    $type = $model->get_value($iter, 1);
+    $file = $model->get_value($iter, 0);
+    if ($type == '<DIR>')
+        $render->set_property('stock-id', 'gtk-directory');
+    else
+        $render->set_property('stock-id', 'gtk-file');
 }

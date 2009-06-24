@@ -7,8 +7,7 @@
  */
 
 /**
- * Функция выводит диалоговое окно, в котором отображается
- * контрольная сумма указанного файла.
+ * Создание диалоговое окна, в котором отображается контрольная сумма указанного файла.
  * @param string $filename Адрес файла, для которого необходимо произвести операцию
  * @param string $alg Алгоритм шифрования (поддерживается MD5 и SHA1)
  */
@@ -26,14 +25,9 @@ function checksum_dialog($filename, $alg)
     $vbox->pack_start($hbox = new GtkHBox());
     $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_INFO, Gtk::ICON_SIZE_DIALOG), FALSE, FALSE);
     if ($alg == 'MD5')
-    {
         $hbox->pack_start(new GtkEntry(md5_file($filename), 32), TRUE, TRUE);
-    }
     elseif ($alg == 'SHA1')
-    {
         $hbox->pack_start(new GtkEntry(sha1_file($filename), 40), TRUE, TRUE );
-    }
-    
     $dialog->add_button(Gtk::STOCK_OK, Gtk::RESPONSE_OK);
     $dialog->set_has_separator(FALSE);
     $dialog->show_all();

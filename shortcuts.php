@@ -26,6 +26,8 @@ function shortcuts()
     $vbox = new GtkVBox;
     $array = array(
                     array($lang['shortcuts']['up'], 'Ctrl+Up'),
+                    array($lang['shortcuts']['back'], 'Ctrl+Left'),
+                    array($lang['shortcuts']['forward'], 'Ctrl+Right'),
                     array($lang['shortcuts']['refresh'], 'Ctrl+R'),
                     array($lang['shortcuts']['new_file'], 'Ctrl+N'),
                     array($lang['shortcuts']['new_dir'], 'Ctrl+Shift+N'),
@@ -34,19 +36,18 @@ function shortcuts()
                     array($lang['shortcuts']['copy'], 'Ctrl+C'),
                     array($lang['shortcuts']['cut'], 'Ctrl+X'),
                     array($lang['shortcuts']['paste'], 'Ctrl+V'),
+                    array($lang['shortcuts']['rename'], 'F2'),
                     array($lang['shortcuts']['toolbar'], 'F5'),
                     array($lang['shortcuts']['addressbar'], 'F6'),
                     array($lang['shortcuts']['statusbar'], 'F7'));
     $model = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING);
+    foreach ($array as $value)
+        $model->append(array($value[0], $value[1]));
     $view = new GtkTreeView($model);
     $render = new GtkCellRendererText;
     $view->append_column($column = new GtkTreeViewColumn($lang['shortcuts']['comand'], $render, 'text', 0));
     $column->set_expand(TRUE);
     $view->append_column(new GtkTreeViewColumn($lang['shortcuts']['shortcuts'], $render, 'text', 1));
-    foreach ($array as $value)
-    {
-        $model->append(array($value[0], $value[1]));
-    }
     
     $window->add($view);
     $window->show_all();

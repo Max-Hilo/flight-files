@@ -7,7 +7,7 @@
  */
 
 /**
- * Функция выводит окно "Управление закладками".
+ * Создание окна для управления закладками.
  */
 function bookmarks_edit()
 {
@@ -110,7 +110,8 @@ function bookmarks_edit()
 }
 
 /**
- * Добавление строчек с названиями закладок в список окна "Управление закладками".
+ * Генерация модели для списка закладок.
+ * @param object $model Модель GtkListStore
  */
 function bookmarks_list($model)
 {
@@ -200,7 +201,6 @@ function bookmarks_delete($array, $all = '')
     $array['button_ok']->set_sensitive(FALSE);
     $array['button_delete']->set_sensitive(FALSE);
     
-    // Изменяем меню
     foreach ($sub_menu['bookmarks']->get_children() as $widget)
         $sub_menu['bookmarks']->remove($widget);
     bookmarks_menu();
@@ -213,7 +213,6 @@ function bookmark_add($bool = FALSE, $array = '')
 {
     global $selection_bookmarks, $start, $panel, $sub_menu, $lang, $sqlite;
     
-    // Добавление в закладки текущей директории из меню
     if ($bool === TRUE)
     {
         if ($start[$panel] == '/')
@@ -224,7 +223,6 @@ function bookmark_add($bool = FALSE, $array = '')
         $path = sqlite_escape_string($start[$panel]);
         sqlite_query($sqlite, "INSERT INTO bookmarks(path, title) VALUES('$path', '$title')");
     }
-    // Добавление корневой директории из окна управления закладками
     else
     {
         $title = sqlite_escape_string($lang['bookmarks']['new']);
@@ -246,7 +244,6 @@ function bookmark_add($bool = FALSE, $array = '')
         $array['button_delete_all']->set_sensitive(TRUE);
     }
     
-    // Изменяем меню
     foreach ($sub_menu['bookmarks']->get_children() as $widget)
         $sub_menu['bookmarks']->remove($widget);
     bookmarks_menu();
@@ -278,7 +275,6 @@ function bookmarks_save_change($array)
     $array['button_ok']->set_sensitive(FALSE);
     $array['button_delete']->set_sensitive(FALSE);
     
-    // Изменяем меню
     foreach ($sub_menu['bookmarks']->get_children() as $widget)
         $sub_menu['bookmarks']->remove($widget);
     bookmarks_menu();
