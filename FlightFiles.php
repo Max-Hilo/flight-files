@@ -37,6 +37,7 @@ include SHARE_DIR.'/about.php';
 include SHARE_DIR.'/alert.php';
 include SHARE_DIR.'/bookmarks.php';
 include SHARE_DIR.'/checksum.php';
+include SHARE_DIR.'/mass_rename.php';
 include SHARE_DIR.'/preference.php';
 include SHARE_DIR.'/properties.php';
 include SHARE_DIR.'/shortcuts.php';
@@ -178,6 +179,7 @@ $array_menuitem = array(
     array('edit', '', 'paste', $lang['menu']['paste'], Gtk::STOCK_PASTE, 'paste_file', '', '', 'false', '<control>V'),
     array('edit', 'separator'),
     array('edit', '', 'rename', $lang['menu']['rename'], '', '_rename', '', '', 'false', 'F2'),
+    array('edit', '', 'mass_rename', $lang['menu']['mass_rename'], '', 'mass_rename_window', '', '', '', '<control>F2'),
     array('edit', 'separator'),
     array('edit', '', 'preference', $lang['menu']['preference'], Gtk::STOCK_PROPERTIES, 'preference'),
     array('view', 'toggle', 'toolbar_view', $lang['menu']['toolbar_view'], '', 'panel_view',
