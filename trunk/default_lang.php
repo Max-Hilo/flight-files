@@ -24,6 +24,7 @@ $lang['menu']['copy']                   = 'Копировать';
 $lang['menu']['cut']                    = 'Вырезать';
 $lang['menu']['paste']                  = 'Вставить';
 $lang['menu']['rename']                 = 'Переименовать';
+$lang['menu']['mass_rename']            = 'Массовое переименование';
 $lang['menu']['preference']             = 'Параметры';
 $lang['menu']['toolbar_view']           = 'Панель инструментов';
 $lang['menu']['addressbar_view']        = 'Адресная строка';

@@ -42,6 +42,8 @@ function on_button($view, $event, $type)
     $action['home']->set_sensitive(TRUE);
     $action['back']->set_sensitive(TRUE);
     $action['forward']->set_sensitive(TRUE);
+    $action['new_file']->set_sensitive(TRUE);
+    $action['new_dir']->set_sensitive(TRUE);
     $action_menu['cut']->set_sensitive(TRUE);
     $action_menu['back']->set_sensitive(TRUE);
     $action_menu['forward']->set_sensitive(TRUE);
@@ -66,6 +68,11 @@ function on_button($view, $event, $type)
     elseif ($start[$panel] == $_ENV['HOME'])
     {
         $action['home']->set_sensitive(FALSE);
+    }
+    if (!is_writable($start[$panel]))
+    {
+        $action['new_file']->set_sensitive(FALSE);
+        $action['new_dir']->set_sensitive(FALSE);
     }
 
     $entry_current_dir->set_text($start[$panel]);
@@ -270,6 +277,7 @@ function _rename($filename = '')
         )
     );
     $dialog->set_has_separator(FALSE);
+    $dialog->set_position(Gtk::WIN_POS_CENTER);
     $vbox = $dialog->vbox;
     $vbox->pack_start($hbox = new GtkHBox());
     $hbox->pack_start($entry = new GtkEntry(basename(basename($filename))));
@@ -427,6 +435,7 @@ function delete($filename)
             );
             $dialog->set_has_separator(FALSE);
             $dialog->set_resizable(FALSE);
+            $dialog->set_position(Gtk::WIN_POS_CENTER);
             $vbox = $dialog->vbox;
             $vbox->pack_start($hbox = new GtkHBox());
             $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
@@ -457,6 +466,7 @@ function delete($filename)
             );
             $dialog->set_has_separator(FALSE);
             $dialog->set_resizable(FALSE);
+            $dialog->set_position(Gtk::WIN_POS_CENTER);
             $vbox = $dialog->vbox;
             $vbox->pack_start($hbox = new GtkHBox());
             $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
