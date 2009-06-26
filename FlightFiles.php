@@ -179,7 +179,7 @@ $array_menuitem = array(
     array('edit', '', 'paste', $lang['menu']['paste'], Gtk::STOCK_PASTE, 'paste_file', '', '', 'false', '<control>V'),
     array('edit', 'separator'),
     array('edit', '', 'rename', $lang['menu']['rename'], '', '_rename', '', '', 'false', 'F2'),
-    array('edit', '', 'mass_rename', $lang['menu']['mass_rename'], '', 'mass_rename_window', '', '', '', '<control>F2'),
+    array('edit', '', 'mass_rename', $lang['menu']['mass_rename'], '', 'mass_rename_window', '', '', 'write', '<control>F2'),
     array('edit', 'separator'),
     array('edit', '', 'preference', $lang['menu']['preference'], Gtk::STOCK_PROPERTIES, 'preference'),
     array('view', 'toggle', 'toolbar_view', $lang['menu']['toolbar_view'], '', 'panel_view',

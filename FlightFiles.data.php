@@ -37,6 +37,9 @@ function on_button($view, $event, $type)
 
     $panel = $type;
 
+    current_dir($panel, 'status');
+    status_bar();
+
     $action['up']->set_sensitive(TRUE);
     $action['root']->set_sensitive(TRUE);
     $action['home']->set_sensitive(TRUE);
@@ -45,6 +48,7 @@ function on_button($view, $event, $type)
     $action['new_file']->set_sensitive(TRUE);
     $action['new_dir']->set_sensitive(TRUE);
     $action_menu['cut']->set_sensitive(TRUE);
+    $action_menu['mass_rename']->set_sensitive(TRUE);
     $action_menu['back']->set_sensitive(TRUE);
     $action_menu['forward']->set_sensitive(TRUE);
 
@@ -73,6 +77,7 @@ function on_button($view, $event, $type)
     {
         $action['new_file']->set_sensitive(FALSE);
         $action['new_dir']->set_sensitive(FALSE);
+        $action_menu['mass_rename']->set_sensitive(FALSE);
     }
 
     $entry_current_dir->set_text($start[$panel]);
@@ -516,7 +521,7 @@ function rm($dir)
 /**
  * Функция выводит список файлов и папок в текущей директории.
  */
-function current_dir($panel)
+function current_dir($panel, $status = '')
 {
     global $store, $_config, $count_element, $count_dir, $count_file, $start;
 
@@ -545,17 +550,21 @@ function current_dir($panel)
         // Заполняем колонки для файлов...
         if (is_file($start[$panel].'/'.$file))
         {
-            $store[$panel]->append(array(
-                    $file,
-                    '<FILE>',
-                    convert_size($start[$panel].'/'.$file),
-                    date('d.m.Y G:i:s',filemtime($start[$panel].'/'.$file))));
+            if (empty($status))
+            {
+                $store[$panel]->append(array(
+                        $file,
+                        '<FILE>',
+                        convert_size($start[$panel].'/'.$file),
+                        date('d.m.Y G:i:s',filemtime($start[$panel].'/'.$file))));
+            }
             $count_file++;
         }
         // ... и папок
         elseif (is_dir($start[$panel].'/'.$file))
         {
-            $store[$panel]->append(array($file, '<DIR>', '', ''));
+            if (empty($status))
+                $store[$panel]->append(array($file, '<DIR>', '', ''));
             $count_dir++;
         }
 
@@ -677,6 +686,7 @@ function change_dir($act = '', $dir = '', $all = FALSE)
     $action_menu['back']->set_sensitive(TRUE);
     $action_menu['forward']->set_sensitive(TRUE);
     $action_menu['rename']->set_sensitive(FALSE);
+    $action_menu['mass_rename']->set_sensitive(TRUE);
     $action_menu['paste']->set_sensitive(FALSE);
     $action_menu['copy']->set_sensitive(FALSE);
     $action_menu['cut']->set_sensitive(FALSE);
@@ -713,6 +723,7 @@ function change_dir($act = '', $dir = '', $all = FALSE)
     {
         $action_menu['new_file']->set_sensitive(FALSE);
         $action_menu['new_dir']->set_sensitive(FALSE);
+        $action_menu['mass_rename']->set_sensitive(FALSE);
         $action['new_file']->set_sensitive(FALSE);
         $action['new_dir']->set_sensitive(FALSE);
         $action['paste']->set_sensitive(FALSE);
