@@ -33,7 +33,7 @@ function config_parser()
  */
 function on_button($view, $event, $type)
 {
-    global $panel, $lang, $store, $action_menu, $action, $start, $entry_current_dir, $number, $sqlite;
+    global $panel, $lang, $store, $action_menu, $action, $start, $entry_current_dir, $number, $sqlite, $active_files;
 
     $panel = $type;
 
@@ -47,6 +47,7 @@ function on_button($view, $event, $type)
     $action['forward']->set_sensitive(TRUE);
     $action['new_file']->set_sensitive(TRUE);
     $action['new_dir']->set_sensitive(TRUE);
+    $action_menu['up']->set_sensitive(TRUE);
     $action_menu['cut']->set_sensitive(TRUE);
     $action_menu['mass_rename']->set_sensitive(TRUE);
     $action_menu['back']->set_sensitive(TRUE);
@@ -67,6 +68,7 @@ function on_button($view, $event, $type)
     if ($start[$panel] == '/')
     {
         $action['up']->set_sensitive(FALSE);
+        $action_menu['up']->set_sensitive(FALSE);
         $action['root']->set_sensitive(FALSE);
     }
     elseif ($start[$panel] == $_ENV['HOME'])
@@ -148,7 +150,9 @@ function on_button($view, $event, $type)
             $cut = new GtkImageMenuItem(Gtk::STOCK_CUT);
             $rename = new GtkMenuItem($lang['popup']['rename_file']);
             $delete = new GtkMenuItem($lang['popup']['delete_file']);
+            $delete_active = new GtkMenuItem($lang['popup']['delete_active']);
             $checksum = new GtkMenuItem($lang['popup']['checksum']);
+            $terminal = new GtkMenuItem($lang['popup']['open_terminal']);
             $properties = new GtkImageMenuItem(Gtk::STOCK_PROPERTIES);
 
             $sub_checksum = new GtkMenu();
@@ -168,8 +172,8 @@ function on_button($view, $event, $type)
                 $cut->set_sensitive(FALSE);
                 $rename->set_sensitive(FALSE);
                 $delete->set_sensitive(FALSE);
+                $delete_active->set_sensitive(FALSE);
             }
-
             if (@mime_content_type($start[$panel].'/'.$file) == 'text/plain' OR
                 @mime_content_type($start[$panel].'/'.$file) == 'text/html')
             {
@@ -184,7 +188,11 @@ function on_button($view, $event, $type)
             $menu->append($rename);
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($delete);
+            if (!empty($active_files[$panel]))
+                $menu->append($delete_active);
             $menu->append($checksum);
+            $menu->append(new GtkSeparatorMenuItem());
+            $menu->append($terminal);
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($properties);
 
@@ -192,9 +200,11 @@ function on_button($view, $event, $type)
             $cut->connect_simple('activate', 'bufer_file', $start[$panel].'/'.$file, 'cut');
             $rename->connect_simple('activate', '_rename', $start[$panel].'/'.$file);
             $delete->connect_simple('activate', 'delete', $start[$panel].'/'.$file);
+            $delete_active->connect_simple('activate', 'delete_active');
             $md5->connect_simple('activate', 'checksum_dialog', $start[$panel].'/'.$file, 'MD5');
             $sha1->connect_simple('activate', 'checksum_dialog', $start[$panel].'/'.$file, 'SHA1');
             $properties->connect_simple('activate', 'properties', $start[$panel].'/'.$file);
+            $terminal->connect_simple('activate', 'open_terminal');
         }
         elseif ($dir_file == '<DIR>')
         {
@@ -203,12 +213,15 @@ function on_button($view, $event, $type)
             $cut = new GtkImageMenuItem(Gtk::STOCK_CUT);
             $rename = new GtkMenuItem($lang['popup']['rename_dir']);
             $delete = new GtkMenuItem($lang['popup']['delete_dir']);
+            $delete_active = new GtkMenuItem($lang['popup']['delete_active']);
+            $terminal = new GtkMenuItem($lang['popup']['open_terminal']);
 
             if (!is_writable($start[$panel]))
             {
                 $cut->set_sensitive(FALSE);
                 $rename->set_sensitive(FALSE);
                 $delete->set_sensitive(FALSE);
+                $delete_active->set_sensitive(FALSE);
             }
 
             $menu->append($open);
@@ -219,23 +232,32 @@ function on_button($view, $event, $type)
             $menu->append($rename);
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($delete);
+            if (!empty($active_files[$panel]))
+                $menu->append($delete_active);
+            $menu->append(new GtkSeparatorMenuItem());
+            $menu->append($terminal);
 
             $open->connect_simple('activate', 'change_dir', 'open', $file);
             $copy->connect_simple('activate', 'bufer_file', $start[$panel].'/'.$file, 'copy');
             $cut->connect_simple('activate', 'bufer_file', $start[$panel].'/'.$file, 'cut');
             $rename->connect_simple('activate', '_rename', $start[$panel].'/'.$file);
             $delete->connect_simple('activate', 'delete', $start[$panel].'/'.$file);
+            $delete_active->connect_simple('activate', 'delete_active');
+            $terminal->connect_simple('activate', 'open_terminal');
         }
         else
         {
             $new_file = new GtkMenuItem($lang['popup']['new_file']);
             $new_dir = new GtkMenuItem($lang['popup']['new_dir']);
             $paste = new GtkImageMenuItem(Gtk::STOCK_PASTE);
+            $terminal = new GtkMenuItem($lang['popup']['open_terminal']);
+            $delete_active = new GtkMenuItem($lang['popup']['delete_active']);
 
             if (!is_writable($start[$panel]))
             {
                 $new_file->set_sensitive(FALSE);
                 $new_dir->set_sensitive(FALSE);
+                $delete_active->set_sensitive(FALSE);
             }
             if (!file_exists(BUFER_FILE) OR !is_writable($start[$panel]))
                 $paste->set_sensitive(FALSE);
@@ -244,10 +266,19 @@ function on_button($view, $event, $type)
             $menu->append($new_dir);
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($paste);
+            $menu->append(new GtkSeparatorMenuItem());
+            $menu->append($terminal);
+            if (!empty($active_files[$panel]))
+            {
+                $menu->append(new GtkSeparatorMenuItem());
+                $menu->append($delete_active);
+            }
 
             $paste->connect_simple('activate', 'paste_file');
             $new_file->connect_simple('activate', 'new_element', 'file');
             $new_dir->connect_simple('activate', 'new_element', 'dir');
+            $terminal->connect_simple('activate', 'open_terminal');
+            $delete_active = new GtkMenuItem($lang['popup']['delete_active']);
         }
 
         // Показываем контекстное меню
@@ -393,12 +424,11 @@ function paste_file()
     }
 }
 
-/*
+/**
  * Рекурсивное копирование директорий.
  * @param string $source_dir Исходная директория
  * @param string $dest_dir Создаваемая директория
  */
-
 function _copy($source_dir, $dest_dir)
 {
     $opendir = opendir($source_dir);
@@ -415,6 +445,60 @@ function _copy($source_dir, $dest_dir)
         }
     }
     closedir($opendir);
+}
+
+/**
+ * Удаление выбранных файлов/папок.
+ */
+function delete_active()
+{
+    global $active_files, $panel, $start, $_config, $lang;
+
+    if ($_config['ask_delete'] == 'on')
+    {
+        $dialog = new GtkDialog(
+            $lang['delete']['title'],
+            NULL,
+            Gtk::DIALOG_MODAL,
+            array(
+                Gtk::STOCK_NO, Gtk::RESPONSE_NO,
+                Gtk::STOCK_YES, Gtk::RESPONSE_YES
+            )
+        );
+        $dialog->set_has_separator(FALSE);
+        $dialog->set_resizable(FALSE);
+        $dialog->set_position(Gtk::WIN_POS_CENTER);
+        $vbox = $dialog->vbox;
+        $vbox->pack_start($hbox = new GtkHBox());
+        $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
+        $hbox->pack_start(new GtkLabel($lang['delete']['active']));
+        $dialog->show_all();
+        $result = $dialog->run();
+        if ($result == Gtk::RESPONSE_YES)
+        {
+            foreach ($active_files[$panel] as $file)
+            {
+                $filename = $start[$panel].'/'.$file;
+                if (is_file($filename))
+                    unlink($filename);
+                elseif (is_dir($filename))
+                    rm($filename);
+            }
+        }
+        $dialog->destroy();
+    }
+    else
+    {
+        foreach ($active_files[$panel] as $file)
+        {
+            $filename = $start[$panel].'/'.$file;
+            if (is_file($filename))
+                unlink($filename);
+            elseif (is_dir($filename))
+                rm($filename);
+        }
+    }
+    change_dir('none', '', 'all');
 }
 
 /**
@@ -454,7 +538,6 @@ function delete($filename)
         }
         else
             rm($filename);
-        change_dir('none');
     }
     else
     {
@@ -488,11 +571,9 @@ function delete($filename)
                 $dialog->destroy();
         }
         else
-        {
             unlink($filename);
-        }
-        change_dir('none');
     }
+    change_dir('none', '', 'all');
 }
 
 /*
@@ -556,7 +637,8 @@ function current_dir($panel, $status = '')
                         $file,
                         '<FILE>',
                         convert_size($start[$panel].'/'.$file),
-                        date('d.m.Y G:i:s',filemtime($start[$panel].'/'.$file))));
+                        date('d.m.Y G:i:s',filemtime($start[$panel].'/'.$file)),
+                        FALSE));
             }
             $count_file++;
         }
@@ -564,7 +646,7 @@ function current_dir($panel, $status = '')
         elseif (is_dir($start[$panel].'/'.$file))
         {
             if (empty($status))
-                $store[$panel]->append(array($file, '<DIR>', '', ''));
+                $store[$panel]->append(array($file, '<DIR>', '', '', FALSE));
             $count_dir++;
         }
 
@@ -630,7 +712,7 @@ function history($direct)
  */
 function change_dir($act = '', $dir = '', $all = FALSE)
 {
-    global $vbox, $entry_current_dir, $action, $action_menu, $lang, $panel, $store, $start, $number, $sqlite;
+    global $vbox, $entry_current_dir, $action, $action_menu, $lang, $panel, $store, $start, $number, $sqlite, $active_files;
     
     // Устанавливаем новое значение текущей директории
     if ($act == 'user')
@@ -683,6 +765,8 @@ function change_dir($act = '', $dir = '', $all = FALSE)
     $action['home']->set_sensitive(TRUE);
     $action['new_file']->set_sensitive(TRUE);
     $action['new_dir']->set_sensitive(TRUE);
+    $action_menu['comparison_file']->set_sensitive(FALSE);
+    $action_menu['comparison_dir']->set_sensitive(FALSE);
     $action_menu['back']->set_sensitive(TRUE);
     $action_menu['forward']->set_sensitive(TRUE);
     $action_menu['rename']->set_sensitive(FALSE);
@@ -748,6 +832,8 @@ function change_dir($act = '', $dir = '', $all = FALSE)
 
     // Устанавливаем новое значение в адресную строку
     $entry_current_dir->set_text($start[$panel]);
+
+    unset($active_files[$panel]);
 }
 
 /**
@@ -1028,16 +1114,54 @@ function columns($tree_view, $cell_renderer)
     $column_df->set_visible(FALSE);
 
     $column_size = new GtkTreeViewColumn($lang['column']['size'], $cell_renderer, 'text', 2);
+    $column_size->set_sort_column_id(2);
 
     $column_mtime = new GtkTreeViewColumn($lang['column']['mtime'], $cell_renderer, 'text', 3);
     $column_mtime->set_sizing(Gtk::TREE_VIEW_COLUMN_AUTOSIZE);
     $column_mtime->set_sort_column_id(3);
+
+    $render_boolen = new GtkCellRendererToggle();
+    $column_boolen = new GtkTreeViewColumn('', $render_boolen, 'active', 4);
+    $render_boolen->connect('toggled', 'column_bool');
 
     $tree_view->append_column($column_image);
     $tree_view->append_column($column_file);
     $tree_view->append_column($column_df);
     $tree_view->append_column($column_size);
     $tree_view->append_column($column_mtime);
+    $tree_view->append_column($column_boolen);
+}
+
+function column_bool($render, $row)
+{
+    global $store, $start, $panel, $active_files, $action_menu;
+
+    $iter = $store[$panel]->get_iter($row);
+    $file = $store[$panel]->get_value($iter, 0);
+    $active = $store[$panel]->get_value($iter, 4);
+    $store[$panel]->set($iter, 4, !$active);
+    if (!$active)
+        $active_files[$panel][$file] = $file;
+    else
+        unset($active_files[$panel][$file]);
+    $files = 0;
+    $dirs = 0;
+    foreach ($active_files[$panel] as $file)
+    {
+        $filename = $start[$panel].'/'.$file;
+        if (is_file($filename))
+            $files++;
+        elseif (is_dir($filename))
+            $dirs++;
+    }
+    if ($files == 2 OR $files == 3)
+        $action_menu['comparison_file']->set_sensitive(TRUE);
+    else
+        $action_menu['comparison_file']->set_sensitive(FALSE);
+    if ($dirs == 2 OR $dirs == 3)
+        $action_menu['comparison_dir']->set_sensitive(TRUE);
+    else
+        $action_menu['comparison_dir']->set_sensitive(FALSE);
 }
 
 /**
@@ -1052,4 +1176,48 @@ function image_column($column, $render, $model, $iter)
         $render->set_property('stock-id', 'gtk-directory');
     else
         $render->set_property('stock-id', 'gtk-file');
+}
+
+/**
+ * Открытие gnome-terminal в текущей директории.
+ */
+function open_terminal()
+{
+    global $start, $panel, $lang;
+
+    if (!file_exists('/usr/bin/gnome-terminal'))
+        alert($lang['command']['gnome-terminal']);
+    else
+        exec('gnome-terminal --working-directory '.$start[$panel]);
+}
+
+function comparison($type)
+{
+    global $active_files, $start, $panel, $lang;
+
+    if (!file_exists('/usr/bin/meld'))
+        alert($lang['command']['meld']);
+    else
+    {
+        $par = '';
+        foreach ($active_files[$panel] as $file)
+        {
+            $filename = $start[$panel].'/'.$file;
+            if ($type == 'file')
+            {
+                if (is_file($filename))
+                    $par .= "'$filename' ";
+                else
+                    continue;
+            }
+            elseif ($type == 'dir')
+            {
+                if (is_dir($filename))
+                    $par .= "'$filename' ";
+                else
+                    continue;
+            }
+        }
+        exec('meld '.$par);
+    }
 }

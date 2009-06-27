@@ -18,7 +18,7 @@ function mass_rename_window()
     $wnd->set_position(Gtk::WIN_POS_CENTER);
     $wnd->set_resizable(FALSE);
     $wnd->set_modal(TRUE);
-    $wnd->set_destroy_with_parent(TRUE);
+    $wnd->set_transient_for($window);
     $wnd->connect_simple('destroy', array('Gtk', 'main_quit'));
 
     $vbox = new GtkVBox;
@@ -106,19 +106,19 @@ function mass_rename_window()
     $hhbox->add($button_ok);
     $vbox->pack_start($hhbox);
     
-    $upper_radio->connect_simple('toggled', 'on_active_element', 'upper', $order_hbox, $replace_hbox);
-    $lower_radio->connect_simple('toggled', 'on_active_element', 'lower', $order_hbox, $replace_hbox);
-    $order_radio->connect_simple('toggled', 'on_active_element', 'order', $order_hbox, $replace_hbox);
-    $replace_radio->connect_simple('toggled', 'on_active_element', 'replace', $order_hbox, $replace_hbox);
+    $upper_radio->connect_simple('toggled', 'on_active_element', 'upper', $order_hbox, $replace_hbox, $ext_check);
+    $lower_radio->connect_simple('toggled', 'on_active_element', 'lower', $order_hbox, $replace_hbox, $ext_check);
+    $order_radio->connect_simple('toggled', 'on_active_element', 'order', $order_hbox, $replace_hbox, $ext_check);
+    $replace_radio->connect_simple('toggled', 'on_active_element', 'replace', $order_hbox, $replace_hbox, $ext_check);
     $button_cancel->connect_simple('clicked', 'mass_rename_close', $wnd);
-    $button_ok->connect_simple('clicked', 'mass_rename', $wnd, $ext_check, $order_name_entry);
+    $button_ok->connect_simple('clicked', 'mass_rename', $wnd, $ext_check, $order_name_entry, $replace_oldname_entry, $replace_newname_entry);
 
     $wnd->add($vbox);
     $wnd->show_all();
     Gtk::main();
 }
 
-function on_active_element($element, $order, $replace)
+function on_active_element($element, $order, $replace, $ext)
 {
     global $mass_rename_radio;
 
@@ -126,16 +126,19 @@ function on_active_element($element, $order, $replace)
     {
         $order->set_sensitive(TRUE);
         $replace->set_sensitive(FALSE);
+        $ext->set_sensitive(TRUE);
     }
     elseif ($element == 'replace')
     {
         $order->set_sensitive(FALSE);
         $replace->set_sensitive(TRUE);
+        $ext->set_sensitive(FALSE);
     }
     else
     {
         $order->set_sensitive(FALSE);
         $replace->set_sensitive(FALSE);
+        $ext->set_sensitive(TRUE);
     }
     $mass_rename_radio = $element;
 }
@@ -145,7 +148,7 @@ function on_active_element($element, $order, $replace)
  * @param object $window Окно, которое будет закрыто после завершения операции
  * @param object $ext Переключатель GtkCheckButton, отвечающий за переименование расширения
  */
-function mass_rename($window, $ext, $entry = '')
+function mass_rename($window, $ext, $entry1 = '', $entry2 = '', $entry3 = '')
 {
     global $mass_rename_radio, $start, $panel;
 
@@ -211,7 +214,7 @@ function mass_rename($window, $ext, $entry = '')
         // По порядку
         elseif ($mass_rename_radio == 'order')
         {
-            $name = $entry->get_text();
+            $name = $entry1->get_text();
             if (empty($name))
                 $name = 'Файл ';
 
@@ -229,6 +232,15 @@ function mass_rename($window, $ext, $entry = '')
             else
                 rename($filename, $start[$panel].'/'.$name.$i);
             $i++;
+        }
+        // Замена
+        elseif ($mass_rename_radio == 'replace')
+        {
+            $oldname = $entry2->get_text();
+            $newname = $entry3->get_text();
+            if (empty($oldname))
+                break;
+            rename($filename, $start[$panel].'/'.str_replace($oldname, $newname, $file));
         }
     }
     closedir($opendir);
@@ -255,9 +267,10 @@ function my_strto($type, $str)
         'Л','Д','Ж','Э', 'Я','Ч','С','М','И','Т',
         'Ь','Б','Ю');
     if ($type == 'lower')
-        return str_replace($upper, $lower, strtolower($str));
+        $str = str_replace($upper, $lower, strtolower($str));
     elseif ($type == 'upper')
-        return str_replace($lower, $upper, strtoupper($str));
+        $str = str_replace($lower, $upper, strtoupper($str));
+    return $str;
 }
 
 function mass_rename_close($window)

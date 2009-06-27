@@ -19,6 +19,8 @@ $lang['menu']['help']                   = '_Справка';
 $lang['menu']['new_file']               = 'Создать файл';
 $lang['menu']['new_dir']                = 'Создать папку';
 $lang['menu']['clear_bufer']            = 'Очистить буфер обмена';
+$lang['menu']['comparison_file']        = 'Сравнить файлы';
+$lang['menu']['comparison_dir']         = 'Сравнить папки';
 $lang['menu']['close']                  = 'Закрыть';
 $lang['menu']['copy']                   = 'Копировать';
 $lang['menu']['cut']                    = 'Вырезать';
@@ -161,6 +163,7 @@ $lang['alert']['new_not_chmod']         = 'У вас недостаточно п
 
 $lang['popup']['rename_file']           = 'Переименовать';
 $lang['popup']['delete_file']           = 'Удалить';
+$lang['popup']['delete_active']         = 'Удалить выбранные';
 $lang['popup']['checksum']              = 'Контрольная сумма';
 $lang['popup']['md5']                   = 'MD5';
 $lang['popup']['sha1']                  = 'SHA1';
@@ -169,12 +172,14 @@ $lang['popup']['rename_dir']            = 'Переименовать';
 $lang['popup']['delete_dir']            = 'Удалить';
 $lang['popup']['new_file']              = 'Создать файл';
 $lang['popup']['new_dir']               = 'Создать папку';
+$lang['popup']['open_terminal']         = 'Открыть терминал здесь';
 
 $lang['rename']['title']                = 'Переименовать';
 
-$lang['delete']['title']                = 'Удалить файл';
+$lang['delete']['title']                = 'Удалить';
 $lang['delete']['dir']                  = 'Вы действительно хотите удалить папку "%s" со всем её содержимым?';
 $lang['delete']['file']                 = 'Вы действительно хотите удалить файл "%s"?';
+$lang['delete']['active']               = 'Вы действительно хотите удалить выбранные файлы/папки?';
 
 $lang['size']['b']                      = 'Б';
 $lang['size']['kib']                    = 'КиБ';
@@ -195,5 +200,8 @@ $lang['checksum']['text']               = 'Файл - %s';
 
 $lang['close']['title']                 = 'Закрыть FlightFiles';
 $lang['close']['text']                  = 'Действительно закрыть FlightFiles?';
+
+$lang['command']['meld']                = "Команда 'meld' не найдена.";
+$lang['command']['gnome-terminal']      = "Команда 'gnome-terminal' не найдена.";
 
 ?>
