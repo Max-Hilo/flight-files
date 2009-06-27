@@ -173,6 +173,9 @@ $array_menuitem = array(
     array('file', 'separator'),
     array('file', '', 'clear_bufer', $lang['menu']['clear_bufer'], Gtk::STOCK_CLEAR, 'clear_bufer', '', '', 'false', ''),
     array('file', 'separator'),
+    array('file', '', 'comparison_file', $lang['menu']['comparison_file'], '', 'comparison', 'file', '', 'false', ''),
+    array('file', '', 'comparison_dir', $lang['menu']['comparison_dir'], '', 'comparison', 'dir', '', 'false', ''),
+    array('file', 'separator'),
     array('file', '', 'close', $lang['menu']['close'], Gtk::STOCK_CLOSE, 'close_window', '', '', '', '<control>Q'),
     array('edit', '', 'copy', $lang['menu']['copy'], Gtk::STOCK_COPY, 'bufer_file', '', 'copy', 'false', '<control>C'),
     array('edit', '', 'cut', $lang['menu']['cut'], Gtk::STOCK_CUT, 'bufer_file', '', 'cut', 'false', '<control>X'),
@@ -192,7 +195,7 @@ $array_menuitem = array(
     array('view', 'toggle', 'hidden_files', $lang['menu']['hidden_files'], '',
         'check_button_write', 'hidden_files', '', array($_config['hidden_files'], 'on'), '<control>H'),
     array('go', '', 'up', $lang['menu']['up'], Gtk::STOCK_GO_UP,
-        'change_dir', '', '', array($start[$panel], '/'), '<control>Up'),
+        'change_dir', '', '', array($start[$panel], '/'), 'BackSpace'),
     array('go', '', 'back', $lang['menu']['back'], Gtk::STOCK_GO_BACK,
         'history', 'back', '', 'false', '<control>Left'),
     array('go', '', 'forward', $lang['menu']['forward'], Gtk::STOCK_GO_FORWARD,
@@ -369,7 +372,8 @@ $hbox = new GtkHBox;
 $left = new GtkFrame;
 $left->set_shadow_type(Gtk::SHADOW_IN);
 
-$store['left'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING);
+$store['left'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING,
+    GObject::TYPE_STRING, GObject::TYPE_BOOLEAN);
 $tree_view['left'] = new GtkTreeView($store['left']);
 $selection['left'] = $tree_view['left']->get_selection();
 $tree_view['left']->connect('button-press-event', 'on_button', 'left');
@@ -395,7 +399,8 @@ $left->add($scroll_left);
 $right = new GtkFrame;
 $right->set_shadow_type(Gtk::SHADOW_IN);
 
-$store['right'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING);
+$store['right'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING,
+    GObject::TYPE_STRING, GObject::TYPE_BOOLEAN);
 sqlite_query($sqlite, "INSERT INTO history_right(path) VALUES('$start[right]')");
 current_dir('right');
 
