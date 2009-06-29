@@ -9,20 +9,37 @@
  * @link http://code.google.com/p/flight-files Домашняя страница проекта
  */
 
+// Домашняя и корневая директории
+// Для Unix
+if ($_ENV['HOME'])
+{
+    define('HOME_DIR', $_ENV['HOME']);
+    define('ROOT_DIR', '/');
+    define('OS', 'Unix');
+}
+// Для Windows
+else
+{
+    define('HOME_DIR', $_ENV['USERPROFILE']);
+    define('ROOT_DIR', 'C:');
+    define('OS', 'Windows');
+}
 // Папка с файлами программы
-define ('SHARE_DIR', '.');
+define('SHARE_DIR', dirname(__FILE__));
 // Папка с файлами настроек
-define ('CONFIG_DIR', './configuration');
+define('CONFIG_DIR', SHARE_DIR . DIRECTORY_SEPARATOR . 'configuration');
 // Папка с файлами локализации
-define ('LANG_DIR', CONFIG_DIR.'/languages');
+define('LANG_DIR', CONFIG_DIR . DIRECTORY_SEPARATOR . 'languages');
 // Файл буфера обмена
-define ('BUFER_FILE', CONFIG_DIR.'/bufer');
+define('BUFER_FILE', CONFIG_DIR . DIRECTORY_SEPARATOR . 'bufer');
 // Файл базы данных
-define ('DATABASE', CONFIG_DIR.'/database.sqlite');
+define('DATABASE', CONFIG_DIR . DIRECTORY_SEPARATOR . 'database.sqlite');
 // Версия программы
-define ('VERSION_PROGRAM', trim(file_get_contents(SHARE_DIR.'/VERSION')));
+define('VERSION_PROGRAM', trim(file_get_contents(SHARE_DIR . DIRECTORY_SEPARATOR . 'VERSION')));
 // Логотип программы
-define ('ICON_PROGRAM', SHARE_DIR.'/logo_program.png');
+define('ICON_PROGRAM', SHARE_DIR . DIRECTORY_SEPARATOR . 'logo_program.png');
+// Разделитель адресных путей
+define('DS', DIRECTORY_SEPARATOR);
 
 // Выводим версию программы
 if ($argv[1] == '--version' OR $argv[1] == '-v')
@@ -32,15 +49,15 @@ if ($argv[1] == '--version' OR $argv[1] == '-v')
 }
 
 // Файлы с функциями программы
-include SHARE_DIR.'/FlightFiles.data.php';
-include SHARE_DIR.'/about.php';
-include SHARE_DIR.'/alert.php';
-include SHARE_DIR.'/bookmarks.php';
-include SHARE_DIR.'/checksum.php';
-include SHARE_DIR.'/mass_rename.php';
-include SHARE_DIR.'/preference.php';
-include SHARE_DIR.'/properties.php';
-include SHARE_DIR.'/shortcuts.php';
+include SHARE_DIR . DIRECTORY_SEPARATOR . 'FlightFiles.data.php';
+include SHARE_DIR . DIRECTORY_SEPARATOR . 'about.php';
+include SHARE_DIR . DIRECTORY_SEPARATOR . 'alert.php';
+include SHARE_DIR . DIRECTORY_SEPARATOR . 'bookmarks.php';
+include SHARE_DIR . DIRECTORY_SEPARATOR . 'checksum.php';
+include SHARE_DIR . DIRECTORY_SEPARATOR . 'mass_rename.php';
+include SHARE_DIR . DIRECTORY_SEPARATOR . 'preference.php';
+include SHARE_DIR . DIRECTORY_SEPARATOR . 'properties.php';
+include SHARE_DIR . DIRECTORY_SEPARATOR . 'shortcuts.php';
 
 // Удаляем файл буфера обмена, если он по каким-либо причинам ещё не удалён
 @unlink(BUFER_FILE);
@@ -58,8 +75,8 @@ if (!file_exists(DATABASE))
     sqlite_query($sqlite, "CREATE TABLE history_left(id INTEGER PRIMARY KEY, path)");
     sqlite_query($sqlite, "CREATE TABLE history_right(id INTEGER PRIMARY KEY, path)");
     sqlite_query($sqlite, "INSERT INTO config(key, value) VALUES('HIDDEN_FILES', 'off');".
-                          "INSERT INTO config(key, value) VALUES('HOME_DIR_LEFT', '/');".
-                          "INSERT INTO config(key, value) VALUES('HOME_DIR_RIGHT', '".$_ENV['HOME']."');".
+                          "INSERT INTO config(key, value) VALUES('HOME_DIR_LEFT', '".ROOT_DIR."');".
+                          "INSERT INTO config(key, value) VALUES('HOME_DIR_RIGHT', '".HOME_DIR."');".
                           "INSERT INTO config(key, value) VALUES('ASK_DELETE', 'on');".
                           "INSERT INTO config(key, value) VALUES('ASK_CLOSE', 'on');".
                           "INSERT INTO config(key, value) VALUES('TOOLBAR_VIEW', 'on');".
@@ -79,28 +96,28 @@ else
 config_parser();
 
 // Основной языковой файл
-include SHARE_DIR.'/default_lang.php';
+include SHARE_DIR . DIRECTORY_SEPARATOR . 'default_lang.php';
 
 // Пользовательский языковой файл
-if (!empty($_config['language']))
-{
-    if (file_exists(LANG_DIR.'/'.$_config['language'].'.php'))
-    {
-        include LANG_DIR.'/'.$_config['language'].'.php';
-    }
-    else
-    {
-        $explode = explode('.', $_SERVER['LANG']);
-        if (file_exists(LANG_DIR.'/'.$explode[0].'.php'))
-            include LANG_DIR.'/'.$explode[0].'.php';
-    }
-}
-else
-{
-    $explode = explode('.', $_SERVER['LANG']);
-    if (file_exists(LANG_DIR.'/'.$explode[0].'.php'))
-        include LANG_DIR.'/'.$explode[0].'.php';
-}
+//if (!empty($_config['language']))
+//{
+//    if (file_exists(LANG_DIR.'/'.$_config['language'].'.php'))
+//    {
+//        include LANG_DIR.'/'.$_config['language'].'.php';
+//    }
+//    else
+//    {
+//        $explode = explode('.', $_SERVER['LANG']);
+//        if (file_exists(LANG_DIR.'/'.$explode[0].'.php'))
+//            include LANG_DIR.'/'.$explode[0].'.php';
+//    }
+//}
+//else
+//{
+//    $explode = explode('.', $_SERVER['LANG']);
+//    if (file_exists(LANG_DIR.'/'.$explode[0].'.php'))
+//        include LANG_DIR.'/'.$explode[0].'.php';
+//}
 
 // Активная панель по умолчанию
 $panel = 'left';
@@ -176,6 +193,9 @@ $array_menuitem = array(
     array('file', '', 'comparison_file', $lang['menu']['comparison_file'], '', 'comparison', 'file', '', 'false', ''),
     array('file', '', 'comparison_dir', $lang['menu']['comparison_dir'], '', 'comparison', 'dir', '', 'false', ''),
     array('file', 'separator'),
+    array('file', '', 'active_all', $lang['menu']['active_all'], '', 'active_all', TRUE, '', '', '<control>A'),
+    array('file', '', 'active_all', $lang['menu']['active_all_none'], '', 'active_all', FALSE, '', '', ''),
+    array('file', 'separator'),
     array('file', '', 'close', $lang['menu']['close'], Gtk::STOCK_CLOSE, 'close_window', '', '', '', '<control>Q'),
     array('edit', '', 'copy', $lang['menu']['copy'], Gtk::STOCK_COPY, 'bufer_file', '', 'copy', 'false', '<control>C'),
     array('edit', '', 'cut', $lang['menu']['cut'], Gtk::STOCK_CUT, 'bufer_file', '', 'cut', 'false', '<control>X'),
@@ -195,7 +215,7 @@ $array_menuitem = array(
     array('view', 'toggle', 'hidden_files', $lang['menu']['hidden_files'], '',
         'check_button_write', 'hidden_files', '', array($_config['hidden_files'], 'on'), '<control>H'),
     array('go', '', 'up', $lang['menu']['up'], Gtk::STOCK_GO_UP,
-        'change_dir', '', '', array($start[$panel], '/'), 'BackSpace'),
+        'change_dir', '', '', array($start[$panel], ROOT_DIR), 'BackSpace'),
     array('go', '', 'back', $lang['menu']['back'], Gtk::STOCK_GO_BACK,
         'history', 'back', '', 'false', '<control>Left'),
     array('go', '', 'forward', $lang['menu']['forward'], Gtk::STOCK_GO_FORWARD,
@@ -279,12 +299,12 @@ $array_toolbar = array(
     array('forward', $lang['toolbar']['forward'], $lang['toolbar']['forward_hint'],
           Gtk::STOCK_GO_FORWARD, 'history', 'forward', '', 'false'),
     array('up', $lang['toolbar']['up'], $lang['toolbar']['up_hint'],
-          Gtk::STOCK_GO_UP, 'change_dir', '', '', array($start[$panel], '/')),
+          Gtk::STOCK_GO_UP, 'change_dir', '', '', array($start[$panel], ROOT_DIR)),
     array('<hr>', 'separator_one'),
     array('root', $lang['toolbar']['root'], $lang['toolbar']['root_hint'],
-          Gtk::STOCK_HARDDISK, 'change_dir', 'bookmarks', '/', array($start[$panel], '/')),
+          Gtk::STOCK_HARDDISK, 'change_dir', 'bookmarks', ROOT_DIR, array($start[$panel], ROOT_DIR)),
     array('home', $lang['toolbar']['home'], $lang['toolbar']['home_hint'],
-          Gtk::STOCK_HOME, 'change_dir', 'home', '', array($start[$panel], $_ENV['HOME'])),
+          Gtk::STOCK_HOME, 'change_dir', 'home', '', array($start[$panel], HOME_DIR)),
     array('<hr>', 'separator_two'),
     array('refresh', $lang['toolbar']['refresh'], $lang['toolbar']['refresh_hint'],
           Gtk::STOCK_REFRESH, 'change_dir', 'none'),
@@ -432,6 +452,8 @@ $vbox->pack_start($hbox);
 ///// Статусная панель /////
 ////////////////////////////
 
+$store[$panel]->clear();
+current_dir($panel);
 $status = new GtkStatusBar();
 if ($_config['statusbar_view'] == 'on')
     $status->show();

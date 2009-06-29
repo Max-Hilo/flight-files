@@ -215,7 +215,7 @@ function bookmark_add($bool = FALSE, $array = '')
     
     if ($bool === TRUE)
     {
-        if ($start[$panel] == '/')
+        if ($start[$panel] == ROOT_DIR)
             $basename = $lang['bookmarks']['root'];
         else
             $basename = basename($start[$panel]);
@@ -226,7 +226,7 @@ function bookmark_add($bool = FALSE, $array = '')
     else
     {
         $title = sqlite_escape_string($lang['bookmarks']['new']);
-        sqlite_query($sqlite, "INSERT INTO bookmarks(path, title) VALUES('/', '$title')");
+        sqlite_query($sqlite, "INSERT INTO bookmarks(path, title) VALUES('".ROOT_DIR."', '$title')");
         
         list($model, $iter) = $selection_bookmarks->get_selected();
         

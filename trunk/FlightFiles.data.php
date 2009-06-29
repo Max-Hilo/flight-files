@@ -65,13 +65,13 @@ function on_button($view, $event, $type)
         $action_menu['forward']->set_sensitive(FALSE);
     }
 
-    if ($start[$panel] == '/')
+    if ($start[$panel] == ROOT_DIR)
     {
         $action['up']->set_sensitive(FALSE);
         $action_menu['up']->set_sensitive(FALSE);
         $action['root']->set_sensitive(FALSE);
     }
-    elseif ($start[$panel] == $_ENV['HOME'])
+    elseif ($start[$panel] == HOME_DIR)
     {
         $action['home']->set_sensitive(FALSE);
     }
@@ -111,10 +111,10 @@ function on_button($view, $event, $type)
         // При двойном клике по папке открываем её
         if ($event->type == Gdk::_2BUTTON_PRESS)
         {
-            if (is_dir($start[$panel].'/'.$file))
+            if (is_dir($start[$panel] . DS . $file))
             {
                 // При нехватке прав для просмотра директории
-                if (!is_readable($start[$panel].'/'.$file))
+                if (!is_readable($start[$panel]. DS .$file))
                     alert($lang['alert']['chmod_read_dir']);
                 else
                 {
@@ -122,12 +122,12 @@ function on_button($view, $event, $type)
                         change_dir('open', $file);
                 }
             }
-            elseif (is_file($start[$panel].'/'.$file))
+            elseif (is_file($start[$panel]. DS .$file))
             {
-                if (!is_readable($start[$panel].'/'.$file))
+                if (!is_readable($start[$panel]. DS .$file))
                     alert($lang['alert']['chmod_read_file']);
-                elseif (mime_content_type($start[$panel].'/'.$file) == 'text/plain' OR
-                    mime_content_type($start[$panel].'/'.$file) == 'text/html')
+                elseif (mime_content_type($start[$panel]. DS .$file) == 'text/plain' OR
+                    mime_content_type($start[$panel]. DS .$file) == 'text/html')
                 {
                     text_view($file);
                 }
@@ -174,8 +174,8 @@ function on_button($view, $event, $type)
                 $delete->set_sensitive(FALSE);
                 $delete_active->set_sensitive(FALSE);
             }
-            if (@mime_content_type($start[$panel].'/'.$file) == 'text/plain' OR
-                @mime_content_type($start[$panel].'/'.$file) == 'text/html')
+            if (@mime_content_type($start[$panel]. DS .$file) == 'text/plain' OR
+                @mime_content_type($start[$panel]. DS .$file) == 'text/html')
             {
                 $open = new GtkMenuItem($lang['popup']['open_text_file']);
                 $menu->append($open);
@@ -196,14 +196,14 @@ function on_button($view, $event, $type)
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($properties);
 
-            $copy->connect_simple('activate', 'bufer_file', $start[$panel].'/'.$file, 'copy');
-            $cut->connect_simple('activate', 'bufer_file', $start[$panel].'/'.$file, 'cut');
-            $rename->connect_simple('activate', '_rename', $start[$panel].'/'.$file);
-            $delete->connect_simple('activate', 'delete', $start[$panel].'/'.$file);
+            $copy->connect_simple('activate', 'bufer_file', $start[$panel]. DS .$file, 'copy');
+            $cut->connect_simple('activate', 'bufer_file', $start[$panel]. DS .$file, 'cut');
+            $rename->connect_simple('activate', '_rename', $start[$panel]. DS .$file);
+            $delete->connect_simple('activate', 'delete', $start[$panel]. DS .$file);
             $delete_active->connect_simple('activate', 'delete_active');
-            $md5->connect_simple('activate', 'checksum_dialog', $start[$panel].'/'.$file, 'MD5');
-            $sha1->connect_simple('activate', 'checksum_dialog', $start[$panel].'/'.$file, 'SHA1');
-            $properties->connect_simple('activate', 'properties', $start[$panel].'/'.$file);
+            $md5->connect_simple('activate', 'checksum_dialog', $start[$panel]. DS .$file, 'MD5');
+            $sha1->connect_simple('activate', 'checksum_dialog', $start[$panel]. DS .$file, 'SHA1');
+            $properties->connect_simple('activate', 'properties', $start[$panel]. DS .$file);
             $terminal->connect_simple('activate', 'open_terminal');
         }
         elseif ($dir_file == '<DIR>')
@@ -238,10 +238,10 @@ function on_button($view, $event, $type)
             $menu->append($terminal);
 
             $open->connect_simple('activate', 'change_dir', 'open', $file);
-            $copy->connect_simple('activate', 'bufer_file', $start[$panel].'/'.$file, 'copy');
-            $cut->connect_simple('activate', 'bufer_file', $start[$panel].'/'.$file, 'cut');
-            $rename->connect_simple('activate', '_rename', $start[$panel].'/'.$file);
-            $delete->connect_simple('activate', 'delete', $start[$panel].'/'.$file);
+            $copy->connect_simple('activate', 'bufer_file', $start[$panel]. DS .$file, 'copy');
+            $cut->connect_simple('activate', 'bufer_file', $start[$panel]. DS .$file, 'cut');
+            $rename->connect_simple('activate', '_rename', $start[$panel]. DS .$file);
+            $delete->connect_simple('activate', 'delete', $start[$panel]. DS .$file);
             $delete_active->connect_simple('activate', 'delete_active');
             $terminal->connect_simple('activate', 'open_terminal');
         }
@@ -290,7 +290,7 @@ function on_button($view, $event, $type)
 }
 
 /**
- * Переименование выбранного файла/каталога.
+ * Создание окна для ввода нового имени файла/папки.
  * @param string $filename Файл/каталог, для которого необходимо выполнить операцию.
  */
 function _rename($filename = '')
@@ -300,9 +300,8 @@ function _rename($filename = '')
     if (empty($filename))
     {
         list($model, $iter) = $selection[$panel]->get_selected();
-        $filename = $start[$panel].'/'.$model->get_value($iter, 0);
+        $filename = $start[$panel]. DS .$model->get_value($iter, 0);
     }
-
     $dialog = new GtkDialog(
         $lang['rename']['title'],
         NULL,
@@ -326,9 +325,15 @@ function _rename($filename = '')
     }
     else
         $dialog->destroy();
-    change_dir('none');
+    change_dir('none', '', 'all');
 }
 
+/**
+ * Переименование файла/папки.
+ * @param object $entry Поле ввода GtkEntryText, содержащее новое имя файла/папки.
+ * @param string $filename Файл, для которого необходимо провести операцию.
+ * @param object $dialog Окно для ввода нового имени файла/папки.
+ */
 function on_rename ($entry, $filename, $dialog)
 {
     global $lang;
@@ -342,39 +347,44 @@ function on_rename ($entry, $filename, $dialog)
     }
     else
     {
-        if (file_exists(dirname($filename).'/'.$new_name) AND $new_name != basename($filename))
+        if (file_exists(dirname($filename). DS .$new_name) AND $new_name != basename($filename))
         {
             $dialog->destroy();
-            if (is_dir($filename))
-                alert($lang['alert']['dir_exists_rename']);
-            else
-                alert($lang['alert']['file_exists_rename']);
+            $str = str_replace('%s', $new_name, $lang['alert']['file_exists_rename']);
+            alert($str);
             _rename($filename);
         }
         else
-            rename($filename, dirname($filename).'/'.$entry->get_text());
+            rename($filename, dirname($filename). DS .$entry->get_text());
         $dialog->destroy();
      }
 }
 
 /**
- *
- * Функция помещает адрес вырезанного/скопированного файла/каталога в файл буфера обмена.
+ * Функция помещает адреса выбранных файла/каталога в файл буфера обмена.
  * @param string $filename Файл, для которого необходимо выполнить операцию.
- * @param string $act Иденификатор операции вырезания/копирования.
+ * @param string $act Идентификатор операции вырезания/копирования.
  */
 function bufer_file($filename = '', $act)
 {
-    global $start, $panel, $action, $action_menu, $selection;
-
-    if (empty($filename))
-    {
-        list($model, $iter) = $selection[$panel]->get_selected();
-        $filename = $start[$panel].'/'.$model->get_value($iter, 0);
-    }
+    global $start, $panel, $action, $action_menu, $selection, $active_files;
 
     $fopen = fopen(BUFER_FILE, 'w+');
-    fwrite($fopen, $filename."\n".$act);
+    if (empty($active_files[$panel]))
+    {
+        if (empty($filename))
+        {
+            list($model, $iter) = $selection[$panel]->get_selected();
+            $filename = $start[$panel]. DS .$model->get_value($iter, 0);
+        }
+        fwrite($fopen, $act."\n".$filename);
+    }
+    else
+    {
+        fwrite($fopen, $act."\n");
+        foreach ($active_files[$panel] as $value)
+            fwrite($fopen, $start[$panel]. DS .$value."\n");
+    }
     fclose($fopen);
     $action_menu['clear_bufer']->set_sensitive(TRUE);
     if (is_writable($start[$panel]))
@@ -392,36 +402,37 @@ function paste_file()
     global $start, $panel, $lang;
 
     $file_array = file(BUFER_FILE);
-    $file = trim($file_array[0]);
-    $action = trim($file_array[1]);
-    $dest = basename($file);
-    if (is_file($start[$panel].'/'.$dest) AND is_file($file))
-       alert($lang['alert']['file_exists_paste']);
-    elseif (is_dir($start[$panel].'/'.$dest) AND is_dir($file))
-        alert($lang['alert']['dir_exists_paste']);
-    else
+    $action = trim($file_array[0]);
+    $count = count($file_array);
+    for ($i = 1; $i < $count; $i++)
     {
-    if ($action == 'copy')
-    {
-        if (is_file($file))
-            copy($file, $start[$panel].'/'.$dest);
-        elseif (is_dir($file))
+        $filename = trim($file_array[$i]);
+        $dest = $start[$panel]. DS .basename($filename);
+        if (file_exists($dest))
         {
-            mkdir($start[$panel].'/'.$dest);
-            _copy($file, $start[$panel].'/'.$dest);
+            $str = str_replace('%s', basename($filename), $lang['alert']['file_exists_paste']);
+            alert($str);
+            continue;
+        }
+        if ($action == 'copy')
+        {
+            if (is_file($filename))
+                copy($filename, $dest);
+            elseif (is_dir($filename))
+            {
+                mkdir($dest);
+                _copy($filename, $dest);
+            }
+        }
+        elseif ($action == 'cut')
+        {
+            if (is_file($filename))
+                rename($filename, $dest);
+            elseif (is_dir($filename))
+                exec("mv '$filename' '$dest'");
         }
     }
-    elseif ($action == 'cut')
-    {
-        if (is_file($file))
-            rename($file, $start[$panel].'/'.$dest);
-        elseif (is_dir($file))
-            // Применяется mv, т.к. rename() выдаёт ошибку, если начальная
-            // и конечная папки находятся на разных разделах диска
-            exec('mv '.$file.' '.$start[$panel].'/'.$dest);
-    }
     change_dir('none', '', 'all');
-    }
 }
 
 /**
@@ -436,12 +447,12 @@ function _copy($source_dir, $dest_dir)
     {
         if ($file == '.' OR $file == '..')
             continue;
-        if (is_file($source_dir.'/'.$file))
-            copy($source_dir.'/'.$file, $dest_dir.'/'.$file);
-        elseif (is_dir($source_dir.'/'.$file))
+        if (is_file($source_dir. DS .$file))
+            copy($source_dir. DS .$file, $dest_dir. DS .$file);
+        elseif (is_dir($source_dir. DS .$file))
         {
-            mkdir($dest_dir.'/'.$file);
-            _copy($source_dir.'/'.$file, $dest_dir.'/'.$file);
+            mkdir($dest_dir. DS .$file);
+            _copy($source_dir. DS .$file, $dest_dir. DS .$file);
         }
     }
     closedir($opendir);
@@ -478,7 +489,7 @@ function delete_active()
         {
             foreach ($active_files[$panel] as $file)
             {
-                $filename = $start[$panel].'/'.$file;
+                $filename = $start[$panel]. DS .$file;
                 if (is_file($filename))
                     unlink($filename);
                 elseif (is_dir($filename))
@@ -491,7 +502,7 @@ function delete_active()
     {
         foreach ($active_files[$panel] as $file)
         {
-            $filename = $start[$panel].'/'.$file;
+            $filename = $start[$panel]. DS .$file;
             if (is_file($filename))
                 unlink($filename);
             elseif (is_dir($filename))
@@ -588,15 +599,15 @@ function rm($dir)
     {
         if ($file == '.' OR $file == '..')
             continue;
-        if (is_file($dir.'/'.$file))
-            unlink($dir.'/'.$file);
-        elseif (is_dir($dir.'/'.$file))
+        if (is_file($dir. DS .$file))
+            unlink($dir. DS .$file);
+        elseif (is_dir($dir. DS .$file))
         {
-            rm($dir.'/'.$file);
+            rm($dir. DS .$file);
         }
     }
     closedir($opendir);
-    rmdir($dir.'/'.$file);
+    rmdir($dir. DS .$file);
 }
 
 /**
@@ -629,21 +640,21 @@ function current_dir($panel, $status = '')
         }
 
         // Заполняем колонки для файлов...
-        if (is_file($start[$panel].'/'.$file))
+        if (is_file($start[$panel]. DS .$file))
         {
             if (empty($status))
             {
                 $store[$panel]->append(array(
                         $file,
                         '<FILE>',
-                        convert_size($start[$panel].'/'.$file),
-                        date('d.m.Y G:i:s',filemtime($start[$panel].'/'.$file)),
+                        convert_size($start[$panel]. DS .$file),
+                        date('d.m.Y G:i:s',filemtime($start[$panel]. DS .$file)),
                         FALSE));
             }
             $count_file++;
         }
         // ... и папок
-        elseif (is_dir($start[$panel].'/'.$file))
+        elseif (is_dir($start[$panel]. DS .$file))
         {
             if (empty($status))
                 $store[$panel]->append(array($file, '<DIR>', '', '', FALSE));
@@ -720,9 +731,9 @@ function change_dir($act = '', $dir = '', $all = FALSE)
     elseif ($act == 'none')
         $new_dir = $start[$panel];
     elseif ($act == 'home')
-        $new_dir = $_ENV['HOME'];
+        $new_dir = HOME_DIR;
     elseif ($act == 'open')
-        $new_dir = $start[$panel].'/'.$dir;
+        $new_dir = $start[$panel]. DS .$dir;
     elseif ($act == 'bookmarks')
         $new_dir = $dir;
     elseif ($act == 'history')
@@ -755,9 +766,8 @@ function change_dir($act = '', $dir = '', $all = FALSE)
     else
         $start[$panel] = $new_dir;
 
-    $start[$panel] = preg_replace ('#/+#', '/', $start[$panel]);
+    $start[$panel] = preg_replace ('#'.DS.'+#', DS, $start[$panel]);
 
-    // Делаем неактивными некоторые кнопки на панели инструментов и пункты меню
     $action['back']->set_sensitive(TRUE);
     $action['forward']->set_sensitive(TRUE);
     $action['up']->set_sensitive(TRUE);
@@ -795,13 +805,13 @@ function change_dir($act = '', $dir = '', $all = FALSE)
         $action_menu['clear_bufer']->set_sensitive(TRUE);
         $action_menu['paste']->set_sensitive(TRUE);
     }
-    if ($start[$panel] == '/')
+    if ($start[$panel] == ROOT_DIR)
     {
         $action_menu['up']->set_sensitive(FALSE);
         $action['up']->set_sensitive(FALSE);
         $action['root']->set_sensitive(FALSE);
     }
-    if ($start[$panel] == $_ENV['HOME'])
+    if ($start[$panel] == HOME_DIR)
         $action['home']->set_sensitive(FALSE);
     if (!is_writable($start[$panel]))
     {
@@ -872,16 +882,16 @@ function new_element($type)
 
     if ($type == 'file')
     {
-        if (!file_exists($start[$panel].'/'.$lang['new']['file']))
-            fclose(fopen($start[$panel].'/'.$lang['new']['file'], 'a+'));
+        if (!file_exists($start[$panel]. DS .$lang['new']['file']))
+            fclose(fopen($start[$panel]. DS .$lang['new']['file'], 'a+'));
         else
         {
             $i = 2;
             while (TRUE)
             {
-                if (!file_exists($start[$panel].'/'.$lang['new']['file'].' '.$i))
+                if (!file_exists($start[$panel]. DS .$lang['new']['file'].' '.$i))
                 {
-                    fclose(fopen($start[$panel].'/'.$lang['new']['file'].' '.$i, 'a+'));
+                    fclose(fopen($start[$panel]. DS .$lang['new']['file'].' '.$i, 'a+'));
                     break;
                 }
                 else
@@ -891,16 +901,16 @@ function new_element($type)
     }
     elseif ($type == 'dir')
     {
-        if (!file_exists($start[$panel].'/'.$lang['new']['dir']))
-            mkdir($start[$panel].'/'.$lang['new']['dir']);
+        if (!file_exists($start[$panel]. DS .$lang['new']['dir']))
+            mkdir($start[$panel]. DS .$lang['new']['dir']);
         else
         {
             $i = 2;
             while (TRUE)
             {
-                if (!file_exists($start[$panel].'/'.$lang['new']['dir'].' '.$i))
+                if (!file_exists($start[$panel]. DS .$lang['new']['dir'].' '.$i))
                 {
-                    mkdir($start[$panel].'/'.$lang['new']['dir'].' '.$i);
+                    mkdir($start[$panel]. DS .$lang['new']['dir'].' '.$i);
                     break;
                 }
                 else
@@ -922,8 +932,8 @@ function delete_all($type)
         $opendir = opendir($start[$panel]);
         while (FALSE !== ($file = readdir($opendir)))
         {
-            if (is_file($start[$panel].'/'.$file))
-                unlink($start[$panel].'/'.$file);
+            if (is_file($start[$panel]. DS .$file))
+                unlink($start[$panel]. DS .$file);
         }
         change_dir('none');
     }
@@ -1039,7 +1049,7 @@ function text_view($file)
     $text_buffer = new GtkTextBuffer();
     $text_view = new GtkTextView();
 
-    $text_buffer->set_text(file_get_contents($start[$panel].'/'.$file));
+    $text_buffer->set_text(file_get_contents($start[$panel]. DS .$file));
 
     $text_view->set_buffer($text_buffer);
     $text_view->set_editable(TRUE);
@@ -1055,7 +1065,7 @@ function text_view($file)
     $status_bar = new GtkStatusBar();
 
     $path_id = $status_bar->get_context_id('path');
-    $status_bar->push($path_id, $lang['text_view']['statusbar'].' '.(($start[$panel] == '/') ? '' : $start[$panel]).'/'.$file);
+    $status_bar->push($path_id, $lang['text_view']['statusbar'].' '.(($start[$panel] == ROOT_DIR) ? '' : $start[$panel]). DS .$file);
 
     $vbox->pack_start($scroll, TRUE, TRUE);
     $vbox->pack_start($status_bar, FALSE, FALSE);
@@ -1148,7 +1158,7 @@ function column_bool($render, $row)
     $dirs = 0;
     foreach ($active_files[$panel] as $file)
     {
-        $filename = $start[$panel].'/'.$file;
+        $filename = $start[$panel]. DS .$file;
         if (is_file($filename))
             $files++;
         elseif (is_dir($filename))
@@ -1191,6 +1201,10 @@ function open_terminal()
         exec('gnome-terminal --working-directory '.$start[$panel]);
 }
 
+/**
+ * Вызов 'meld' для сравнения файлов.
+ * @param string $type Тип сравниваемых объектов - file|dir.
+ */
 function comparison($type)
 {
     global $active_files, $start, $panel, $lang;
@@ -1202,7 +1216,7 @@ function comparison($type)
         $par = '';
         foreach ($active_files[$panel] as $file)
         {
-            $filename = $start[$panel].'/'.$file;
+            $filename = $start[$panel]. DS .$file;
             if ($type == 'file')
             {
                 if (is_file($filename))
@@ -1219,5 +1233,51 @@ function comparison($type)
             }
         }
         exec('meld '.$par);
+    }
+}
+
+/**
+ * Выделение/снятие выделения со всех файлов и папок в текущей директории.
+ * @param bool $active Если TRUE, то произойдёт выделение, иначе выделение будет снято.
+ */
+function active_all($active = TRUE)
+{
+    global $store, $panel, $count_element, $active_files, $action_menu;
+
+    for ($i = 0; $i < $count_element; $i++)
+    {
+        $iter = $store[$panel]->get_iter($i);
+        $store[$panel]->set($iter, 4, FALSE);
+        unset($active_files[$panel]);
+    }
+
+    if ($active)
+    {
+        for ($i = 0; $i < $count_element; $i++)
+        {
+            $iter = $store[$panel]->get_iter($i);
+            $file = $store[$panel]->get_value($iter, 0);
+            $active = $store[$panel]->get_value($iter, 4);
+            $store[$panel]->set($iter, 4, TRUE);
+            $active_files[$panel][$file] = $file;
+            $files = 0;
+            $dirs = 0;
+            foreach ($active_files[$panel] as $file)
+            {
+                $filename = $start[$panel]. DS .$file;
+                if (is_file($filename))
+                    $files++;
+                elseif (is_dir($filename))
+                    $dirs++;
+            }
+            if ($files == 2 OR $files == 3)
+                $action_menu['comparison_file']->set_sensitive(TRUE);
+            else
+                $action_menu['comparison_file']->set_sensitive(FALSE);
+            if ($dirs == 2 OR $dirs == 3)
+                $action_menu['comparison_dir']->set_sensitive(TRUE);
+            else
+                $action_menu['comparison_dir']->set_sensitive(FALSE);
+        }
     }
 }
