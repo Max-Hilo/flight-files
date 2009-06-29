@@ -31,11 +31,11 @@ function preference()
     $ask_delete = new GtkCheckButton($lang['preference']['ask_delete']);
     $ask_delete->set_tooltip_text($lang['preference']['ask_delete_hint']);
     $label_home_dir_left = new GtkLabel($lang['preference']['home_dir_left']);
-    $radio_home_left = new GtkRadioButton(NULL, $_ENV['HOME']);
-    $radio_root_left = new GtkRadioButton($radio_home_left, '/');
+    $radio_home_left = new GtkRadioButton(NULL, HOME_DIR);
+    $radio_root_left = new GtkRadioButton($radio_home_left, ROOT_DIR);
     $label_home_dir_right = new GtkLabel($lang['preference']['home_dir_right']);
-    $radio_home_right = new GtkRadioButton(NULL, $_ENV['HOME']);
-    $radio_root_right = new GtkRadioButton($radio_home_right, '/');
+    $radio_home_right = new GtkRadioButton(NULL, HOME_DIR);
+    $radio_root_right = new GtkRadioButton($radio_home_right, ROOT_DIR);
     $ask_close = new GtkCheckButton($lang['preference']['ask_close']);
     $ask_close->set_tooltip_text($lang['preference']['ask_close_hint']);
     $label_lang = new GtkLabel($lang['preference']['lang']);
@@ -68,11 +68,11 @@ function preference()
         $ask_delete->set_active(TRUE);
     if ($_config['ask_close'] == 'on')
         $ask_close->set_active(TRUE);
-    if ($_config['home_dir_left'] == '/')
+    if ($_config['home_dir_left'] == ROOT_DIR)
         $radio_root_left->set_active(TRUE);
     else
         $radio_home_left->set_active(TRUE);
-    if ($_config['home_dir_right'] == '/')
+    if ($_config['home_dir_right'] == ROOT_DIR)
         $radio_root_right->set_active(TRUE);
     else
         $radio_home_right->set_active(TRUE);
@@ -89,10 +89,10 @@ function preference()
     $label_hidden_files->connect('toggled', 'check_button_write', 'hidden_files');
     $ask_delete->connect('toggled', 'check_button_write', 'ask_delete');
     $ask_close->connect('toggled', 'check_button_write', 'ask_close');
-    $radio_home_left->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_LEFT', $_ENV['HOME']);
-    $radio_root_left->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_LEFT', '/');
-    $radio_home_right->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_RIGHT', $_ENV['HOME']);
-    $radio_root_right->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_RIGHT', '/');
+    $radio_home_left->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_LEFT', HOME_DIR);
+    $radio_root_left->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_LEFT', ROOT_DIR);
+    $radio_home_right->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_RIGHT', HOME_DIR);
+    $radio_root_right->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_RIGHT', ROOT_DIR);
     $combo->connect('changed', 'combo_write', 'language');
     $maximize->connect('toggled', 'check_button_write', 'maximize');
     
