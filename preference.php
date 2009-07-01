@@ -11,7 +11,7 @@
  */
 function preference()
 {
-    global $_config, $lang;
+    global $_config, $lang, $sqlite;
     
     $window = new GtkWindow();
     $window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
@@ -153,10 +153,53 @@ function preference()
     $hbox->pack_start($button_font_select, FALSE, FALSE);
     
     $notebook->append_page($vbox, new GtkLabel($lang['preference']['fonts']));
+
+    /**
+     * Вкладка "Внешние программы"
+     */
+     $label_comparison = new GtkLabel();
+     $label_comparison->set_alignment(0, 0);
+     $label_comparison->set_markup('<b>'.$lang['preference']['comparison'].'</b>');
+     $button_comparison = new GtkFileChooserButton($lang['preference']['select_file'], Gtk::FILE_CHOOSER_ACTION_OPEN);
+     if (file_exists($_config['comparison']))
+     {
+         $button_comparison->set_filename($_config['comparison']);
+         sqlite_query($sqlite, "UPDATE config SET value = 'COMPARISON' WHERE key = ''");
+     }
+     $button_comparison->connect('selection-changed', 'file_select', 'comparison');
+     $label_terminal = new GtkLabel();
+     $label_terminal->set_alignment(0, 0);
+     $label_terminal->set_markup('<b>'.$lang['preference']['terminal'].'</b>');
+     $button_terminal = new GtkFileChooserButton($lang['lang']['select_file'], Gtk::FILE_CHOOSER_ACTION_OPEN);
+     if (file_exists($_config['terminal']))
+     {
+         $button_terminal->set_filename($_config['terminal']);
+         sqlite_query($sqlite, "UPDATE config SET value = 'TERMINAL' WHERE key = ''");
+     }
+     $button_terminal->connect('selection-changed', 'file_select', 'terminal');
+
+     $vbox = new GtkVBox();
+     $vbox->pack_start($label_comparison, FALSE, FALSE);
+     $vbox->pack_start($button_comparison, FALSE, FALSE);
+     $vbox->pack_start($label_terminal, FALSE, FALSE);
+     $vbox->pack_start($button_terminal, FALSE, FALSE);
+
+     $notebook->append_page($vbox, new GtkLabel($lang['preference']['program']));
+
+    ///////////////////////
     
     $window->add($notebook);
     $window->show_all();
     Gtk::main();
+}
+
+function file_select($button, $param)
+{
+    global $sqlite;
+
+    $param = strtoupper($param);
+    $filename = $button->get_filename();
+    sqlite_query($sqlite, "UPDATE config SET value = '$filename' WHERE key = '$param'");
 }
 
 /**

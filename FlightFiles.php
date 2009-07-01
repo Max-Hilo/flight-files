@@ -84,7 +84,9 @@ if (!file_exists(DATABASE))
                           "INSERT INTO config(key, value) VALUES('STATUSBAR_VIEW', 'on');".
                           "INSERT INTO config(key, value) VALUES('FONT_LIST', '');".
                           "INSERT INTO config(key, value) VALUES('LANGUAGE', '');".
-                          "INSERT INTO config(key, value) VALUES('MAXIMIZE', 'on');");
+                          "INSERT INTO config(key, value) VALUES('MAXIMIZE', 'on');".
+                          "INSERT INTO config(key, value) VALUES('TERMINAL', '');".
+                          "INSERT INTO config(key, value) VALUES('COMPARISON', '');");
 }
 else
 {
@@ -194,7 +196,7 @@ $array_menuitem = array(
     array('file', '', 'comparison_dir', $lang['menu']['comparison_dir'], '', 'comparison', 'dir', '', 'false', ''),
     array('file', 'separator'),
     array('file', '', 'active_all', $lang['menu']['active_all'], '', 'active_all', TRUE, '', '', '<control>A'),
-    array('file', '', 'active_all', $lang['menu']['active_all_none'], '', 'active_all', FALSE, '', '', ''),
+    array('file', '', 'active_all_none', $lang['menu']['active_all_none'], '', 'active_all', FALSE, '', '', '<control><shift>A'),
     array('file', 'separator'),
     array('file', '', 'close', $lang['menu']['close'], Gtk::STOCK_CLOSE, 'close_window', '', '', '', '<control>Q'),
     array('edit', '', 'copy', $lang['menu']['copy'], Gtk::STOCK_COPY, 'bufer_file', '', 'copy', 'false', '<control>C'),
@@ -214,12 +216,9 @@ $array_menuitem = array(
     array('view', 'separator'),
     array('view', 'toggle', 'hidden_files', $lang['menu']['hidden_files'], '',
         'check_button_write', 'hidden_files', '', array($_config['hidden_files'], 'on'), '<control>H'),
-    array('go', '', 'up', $lang['menu']['up'], Gtk::STOCK_GO_UP,
-        'change_dir', '', '', array($start[$panel], ROOT_DIR), 'BackSpace'),
-    array('go', '', 'back', $lang['menu']['back'], Gtk::STOCK_GO_BACK,
-        'history', 'back', '', 'false', '<control>Left'),
-    array('go', '', 'forward', $lang['menu']['forward'], Gtk::STOCK_GO_FORWARD,
-        'history', 'forward', '', 'false', '<control>Right'),
+    array('go', '', 'up', $lang['menu']['up'], Gtk::STOCK_GO_UP, 'change_dir', '', '', array($start[$panel], ROOT_DIR), 'BackSpace'),
+    array('go', '', 'back', $lang['menu']['back'], Gtk::STOCK_GO_BACK, 'history', 'back', '', 'false', '<control>Left'),
+    array('go', '', 'forward', $lang['menu']['forward'], Gtk::STOCK_GO_FORWARD, 'history', 'forward', '', 'false', '<control>Right'),
     array('go', 'separator'),
     array('go', '', 'refresh', $lang['menu']['refresh'], Gtk::STOCK_REFRESH, 'change_dir', 'none', '', '', '<control>R'),
     array('bookmarks', 'bookmarks'),
@@ -294,8 +293,7 @@ $toolbar = new GtkToolBar();
  * [7] => Условие неактивности кнопки
  */
 $array_toolbar = array(
-    array('back', $lang['toolbar']['back'], $lang['toolbar']['back_hint'],
-          Gtk::STOCK_GO_BACK, 'history', 'back', '', 'false'),
+    array('back', $lang['toolbar']['back'], $lang['toolbar']['back_hint'], Gtk::STOCK_GO_BACK, 'history', 'back', '', 'false'),
     array('forward', $lang['toolbar']['forward'], $lang['toolbar']['forward_hint'],
           Gtk::STOCK_GO_FORWARD, 'history', 'forward', '', 'false'),
     array('up', $lang['toolbar']['up'], $lang['toolbar']['up_hint'],
