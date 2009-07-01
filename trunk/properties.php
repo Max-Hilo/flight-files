@@ -79,80 +79,85 @@ function properties($filename)
     ///////////////////////////
     ///// Вкладка "Права" /////
     ///////////////////////////
-    
-    $table = new GtkTable();
-    
-    $label_owner = new GtkLabel($lang['properties']['owner']);
-    $label_group = new GtkLabel($lang['properties']['group']);
-    $label_perms = new GtkLabel($lang['properties']['perms']);
-    $label_perms_text = new GtkLabel($lang['properties']['perms_text']);
-    $owner = posix_getpwuid(fileowner($filename));
-    $owner = new GtkLabel($owner['name'].' - '.str_replace(',', '', $owner['gecos']));
-    $group = posix_getpwuid(filegroup($filename));
-    $group = new GtkLabel($group['name']);
-    $perm = substr(sprintf('%o', fileperms($filename)), -4);
-    $perms = new GtkLabel($perm);
-    if (substr($perm, 0, 1) == '1')
-        $perms_text .= 'd';
-    else
-        $perms_text .= '-';
-    for ($i = 1; $i <= 3; $i++)
+    if (OS == 'Unix')
     {
-        switch (substr($perm, $i, 1))
+        $table = new GtkTable();
+
+        $label_owner = new GtkLabel($lang['properties']['owner']);
+        $label_owner->modify_font(new PangoFontDescription('Bold'));
+        $label_group = new GtkLabel($lang['properties']['group']);
+        $label_group->modify_font(new PangoFontDescription('Bold'));
+        $label_perms = new GtkLabel($lang['properties']['perms']);
+        $label_perms->modify_font(new PangoFontDescription('Bold'));
+        $label_perms_text = new GtkLabel($lang['properties']['perms_text']);
+        $label_perms_text->modify_font(new PangoFontDescription('Bold'));
+        $owner = posix_getpwuid(fileowner($filename));
+        $owner = new GtkLabel($owner['name'].' - '.str_replace(',', '', $owner['gecos']));
+        $group = posix_getpwuid(filegroup($filename));
+        $group = new GtkLabel($group['name']);
+        $perm = substr(sprintf('%o', fileperms($filename)), -4);
+        $perms = new GtkLabel($perm);
+        if (substr($perm, 0, 1) == '1')
+            $perms_text .= 'd';
+        else
+            $perms_text .= '-';
+        for ($i = 1; $i <= 3; $i++)
         {
-            case 0:
-                $perms_text .= '---';
-                break;
-            case 1:
-                $perms_text .= '--x';
-                break;
-            case 2:
-                $perms_text .= '-w-';
-                break;
-            case 3:
-                $perms_text .= '-wx';
-                break;
-            case 4:
-                $perms_text .= 'r--';
-                break;
-            case 5:
-                $perms_text .= 'r-x';
-                break;
-            case 6:
-                $perms_text .= 'rw-';
-                break;
-            case 7:
-                $perms_text .= 'rwx';
-                break;
+            switch (substr($perm, $i, 1))
+            {
+                case 0:
+                    $perms_text .= '---';
+                    break;
+                case 1:
+                    $perms_text .= '--x';
+                    break;
+                case 2:
+                    $perms_text .= '-w-';
+                    break;
+                case 3:
+                    $perms_text .= '-wx';
+                    break;
+                case 4:
+                    $perms_text .= 'r--';
+                    break;
+                case 5:
+                    $perms_text .= 'r-x';
+                    break;
+                case 6:
+                    $perms_text .= 'rw-';
+                    break;
+                case 7:
+                    $perms_text .= 'rwx';
+                    break;
+            }
         }
+        $perms_text = new GtkLabel($perms_text);
+
+        $label_owner->set_alignment(0,0);
+        $label_group->set_alignment(0,0);
+        $label_perms->set_alignment(0,0);
+        $label_perms_text->set_alignment(0,0);
+        $owner->set_alignment(0,0);
+        $group->set_alignment(0,0);
+        $perms->set_alignment(0,0);
+        $perms_text->set_alignment(0,0);
+
+        $table->attach($label_owner, 0, 1, 0, 1, Gtk::FILL, Gtk::FILL, 10, 5);
+        $table->attach($owner, 1, 2, 0, 1, Gtk::FILL, Gtk::FILL, 10, 5);
+        $table->attach($label_group, 0, 1, 1, 2, Gtk::FILL, Gtk::FILL, 10, 5);
+        $table->attach($group, 1, 2, 1, 2, Gtk::FILL, Gtk::FILL, 10, 5);
+        $table->attach($label_perms, 0, 1, 2, 3, Gtk::FILL, Gtk::FILL, 10, 5);
+        $table->attach($perms, 1, 2, 2, 3, Gtk::FILL, Gtk::FILL, 10, 5);
+        $table->attach($label_perms_text, 0, 1, 3, 4, Gtk::FILL, Gtk::FILL, 10, 5);
+        $table->attach($perms_text, 1, 2, 3, 4, Gtk::FILL, Gtk::FILL, 10, 5);
+
+        $table->set_col_spacing(0, 10);
+
+        $notebook->append_page($table, new GtkLabel($lang['properties']['perms_tab']));
     }
-    $perms_text = new GtkLabel($perms_text);
-    
-    $label_owner->set_alignment(1,0);
-    $label_group->set_alignment(1,0);
-    $label_perms->set_alignment(1,0);
-    $label_perms_text->set_alignment(1,0);
-    $owner->set_alignment(0,0);
-    $group->set_alignment(0,0);
-    $perms->set_alignment(0,0);
-    $perms_text->set_alignment(0,0);
-    
-    $table->attach($label_owner, 0, 1, 0, 1, Gtk::FILL, Gtk::FILL, 10, 5);
-    $table->attach($owner, 1, 2, 0, 1, Gtk::FILL, Gtk::FILL, 10, 5);
-    $table->attach($label_group, 0, 1, 1, 2, Gtk::FILL, Gtk::FILL, 10, 5);
-    $table->attach($group, 1, 2, 1, 2, Gtk::FILL, Gtk::FILL, 10, 5);
-    $table->attach($label_perms, 0, 1, 2, 3, Gtk::FILL, Gtk::FILL, 10, 5);
-    $table->attach($perms, 1, 2, 2, 3, Gtk::FILL, Gtk::FILL, 10, 5);
-    $table->attach($label_perms_text, 0, 1, 3, 4, Gtk::FILL, Gtk::FILL, 10, 5);
-    $table->attach($perms_text, 1, 2, 3, 4, Gtk::FILL, Gtk::FILL, 10, 5);
-    
-    $table->set_col_spacing(0, 10);
-    
-    $notebook->append_page($table, new GtkLabel($lang['properties']['perms_tab']));
-    
+
     $vbox = new GtkVBox();
     $vbox->pack_start($notebook, FALSE, FALSE);
-    
     $window->add($vbox);
     $window->show_all();
     Gtk::main();

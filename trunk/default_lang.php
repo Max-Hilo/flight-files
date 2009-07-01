@@ -137,6 +137,10 @@ $lang['preference']['lang']             = 'Язык программы:';
 $lang['preference']['lang_default']     = 'Язык по умолчанию';
 $lang['preference']['maximize']         = 'Разворачивать на весь экран при запуске';
 $lang['preference']['maximize_hint']    = 'При запуске главное окно FlightFiles будет развёрнуто на весь экран';
+$lang['preference']['program']          = 'Внешние программы';
+$lang['preference']['comparison']       = 'Сравнение файлов:';
+$lang['preference']['select_file']      = 'Выбрать файл';
+$lang['preference']['terminal']         = 'Терминал:';
 
 $lang['properties']['title']            = 'Свойства "%s"';
 $lang['properties']['name']             = 'Имя:';
@@ -144,12 +148,12 @@ $lang['properties']['size']             = 'Размер:';
 $lang['properties']['path']             = 'Адрес:';
 $lang['properties']['mtime']            = 'Дата изменения:';
 $lang['properties']['atime']            = 'Дата доступа:';
-$lang['properties']['general']          = 'Основные:';
+$lang['properties']['general']          = 'Основные';
 $lang['properties']['owner']            = 'Владелец:';
 $lang['properties']['group']            = 'Группа:';
 $lang['properties']['perms']            = 'Права доступа:';
 $lang['properties']['perms_text']       = 'В текстовом виде:';
-$lang['properties']['perms_tab']        = 'Права';
+$lang['properties']['perms_tab']        = 'Права доступа';
 
 $lang['alert']['title']                 = 'Внимание';
 $lang['alert']['bufer_clear']           = 'Буфер обмена очищен';
@@ -161,6 +165,8 @@ $lang['alert']['file_exists_paste']     = "Имя '%s' уже используе
 $lang['alert']['dir_not_exists']        = 'Указанная вами директория не существует. Переход выполнен не будет.';
 $lang['alert']['new_not_chmod']         = 'У вас недостаточно прав на выполнение данной операции!';
 
+$lang['popup']['copy_file']             = 'Копировать';
+$lang['popup']['cut_file']              = 'Вырезать';
 $lang['popup']['rename_file']           = 'Переименовать';
 $lang['popup']['delete_file']           = 'Удалить';
 $lang['popup']['delete_active']         = 'Удалить выбранные';
@@ -168,11 +174,15 @@ $lang['popup']['checksum']              = 'Контрольная сумма';
 $lang['popup']['md5']                   = 'MD5';
 $lang['popup']['sha1']                  = 'SHA1';
 $lang['popup']['open_text_file']        = 'Открыть в текстовом редакторе';
+$lang['popup']['open_dir']              = 'Открыть папку';
+$lang['popup']['copy_dir']              = 'Копировать';
+$lang['popup']['cut_dir']               = 'Вырезать';
 $lang['popup']['rename_dir']            = 'Переименовать';
 $lang['popup']['delete_dir']            = 'Удалить';
 $lang['popup']['new_file']              = 'Создать файл';
 $lang['popup']['new_dir']               = 'Создать папку';
 $lang['popup']['open_terminal']         = 'Открыть терминал здесь';
+$lang['popup']['paste']                 = 'Вставить';
 
 $lang['rename']['title']                = 'Переименовать';
 
@@ -201,7 +211,9 @@ $lang['checksum']['text']               = 'Файл - %s';
 $lang['close']['title']                 = 'Закрыть FlightFiles';
 $lang['close']['text']                  = 'Действительно закрыть FlightFiles?';
 
-$lang['command']['meld']                = "Команда 'meld' не найдена.";
-$lang['command']['gnome-terminal']      = "Команда 'gnome-terminal' не найдена.";
+$lang['command']['comparison_none']     = "Команда '%s' не найдена.";
+$lang['command']['comparison_empty']    = 'Не выбрана программа для сравнения файлов.';
+$lang['command']['terminal_none']       = "Команда '%s' не найдена.";
+$lang['command']['terminal_empty']      = 'Не выбрана программа в качестве терминала.';
 
 ?>
