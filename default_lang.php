@@ -31,6 +31,7 @@ $lang['menu']['rename']                 = 'Переименовать';
 $lang['menu']['mass_rename']            = 'Массовое переименование';
 $lang['menu']['preference']             = 'Параметры';
 $lang['menu']['toolbar_view']           = 'Панель инструментов';
+$lang['menu']['partbar_view']           = 'Список разделов';
 $lang['menu']['addressbar_view']        = 'Адресная строка';
 $lang['menu']['statusbar_view']         = 'Строка состояния';
 $lang['menu']['hidden_files']           = 'Показывать скрытые файлы';
@@ -62,6 +63,9 @@ $lang['toolbar']['new_dir']             = 'Создать папку';
 $lang['toolbar']['new_dir_hint']        = 'Создать папку в текущей директории';
 $lang['toolbar']['paste']               = 'Вставить';
 $lang['toolbar']['paste_hint']          = 'Вставить элемент из буфера обмена в текущую директорию';
+
+$lang['partbar']['label']               = 'Список разделов:';
+$lang['partbar']['mount']               = 'Точка монтирования - ';
 
 $lang['addressbar']['label']            = 'Текущий каталог:';
 $lang['addressbar']['button']           = 'Сменить';
@@ -141,6 +145,8 @@ $lang['preference']['program']          = 'Внешние программы';
 $lang['preference']['comparison']       = 'Сравнение файлов:';
 $lang['preference']['select_file']      = 'Выбрать файл';
 $lang['preference']['terminal']         = 'Терминал:';
+$lang['preference']['partbar_refresh']  = 'Автообновление списка разделов';
+$lang['preference']['partbar_refresh_hint'] = 'Список разделов будет автоматически обновляться каждую секунду.';
 
 $lang['properties']['title']            = 'Свойства "%s"';
 $lang['properties']['name']             = 'Имя:';

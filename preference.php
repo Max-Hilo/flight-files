@@ -61,6 +61,8 @@ function preference()
     closedir($opendir);
     $maximize = new GtkCheckButton($lang['preference']['maximize']);
     $maximize->set_tooltip_text($lang['preference']['maximize_hint']);
+    $partbar_refresh = new GtkCheckButton($lang['preference']['partbar_refresh']);
+    $partbar_refresh->set_tooltip_text($lang['preference']['partbar_refresh_hint']);
     
     if ($_config['hidden_files'] == 'on')
         $label_hidden_files->set_active(TRUE);
@@ -78,13 +80,16 @@ function preference()
         $radio_home_right->set_active(TRUE);
     if ($_config['maximize'] == 'on')
         $maximize->set_active(TRUE);
+    if ($_config['partbar_refresh'] == 'on')
+        $partbar_refresh->set_active(TRUE);
     
-    $label_hidden_files->set_alignment(0,0);
-    $label_home_dir_right->set_alignment(0,0);
-    $ask_delete->set_alignment(0,0);
-    $label_home_dir_left->set_alignment(0,0);
-    $ask_close->set_alignment(0,0);
-    $label_lang->set_alignment(0,0);
+    $label_hidden_files->set_alignment(0, 0);
+    $label_home_dir_right->set_alignment(0, 0);
+    $ask_delete->set_alignment(0, 0);
+    $label_home_dir_left->set_alignment(0, 0);
+    $ask_close->set_alignment(0, 0);
+    $label_lang->set_alignment(0, 0);
+    $partbar_refresh->set_alignment(0, 0);
     
     $label_hidden_files->connect('toggled', 'check_button_write', 'hidden_files');
     $ask_delete->connect('toggled', 'check_button_write', 'ask_delete');
@@ -95,12 +100,14 @@ function preference()
     $radio_root_right->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_RIGHT', ROOT_DIR);
     $combo->connect('changed', 'combo_write', 'language');
     $maximize->connect('toggled', 'check_button_write', 'maximize');
+    $partbar_refresh->connect('toggled', 'check_button_write', 'partbar_refresh', 'partbar');
     
     $vbox = new GtkVBox;
     $vbox->pack_start($label_hidden_files, FALSE, FALSE);
     $vbox->pack_start($ask_delete, FALSE, FALSE);
     $vbox->pack_start($ask_close, FALSE, FALSE);
     $vbox->pack_start($maximize, FALSE, FALSE);
+    $vbox->pack_start($partbar_refresh, FALSE, FALSE);
     $vbox->pack_start(new GtkHSeparator, FALSE, FALSE);
     $vbox->pack_start($label_home_dir_left, FALSE, FALSE);
     $vbox->pack_start($hbox = new GtkHBox, FALSE, FALSE);
@@ -223,14 +230,22 @@ function combo_write($combo, $param)
  * @param object $check Переключатель GtkCheckButton
  * @param string $param Изменяемый параметр
  */
-function check_button_write($check, $param)
+function check_button_write($check, $param, $timeout = '')
 {
-    global $sqlite;
+    global $sqlite, $refresh_id;
     
     $value = $check->get_active() ? 'on' : 'off';
     
     $param = strtoupper($param);
     sqlite_query($sqlite, "UPDATE config SET value = '$value' WHERE key = '$param'");
+
+    if ($timeout == 'partbar')
+    {
+        if ($value == 'on')
+            $refresh_id = Gtk::timeout_add(1000, 'partbar');
+        else
+            Gtk::timeout_remove($refresh_id);
+    }
     
     change_dir('none', '', TRUE);
 }
