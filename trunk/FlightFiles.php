@@ -58,6 +58,7 @@ include SHARE_DIR . DIRECTORY_SEPARATOR . 'mass_rename.php';
 include SHARE_DIR . DIRECTORY_SEPARATOR . 'preference.php';
 include SHARE_DIR . DIRECTORY_SEPARATOR . 'properties.php';
 include SHARE_DIR . DIRECTORY_SEPARATOR . 'shortcuts.php';
+include SHARE_DIR . DIRECTORY_SEPARATOR . 'text_editor.php';
 
 // Удаляем файл буфера обмена, если он по каким-либо причинам ещё не удалён
 @unlink(BUFER_FILE);
@@ -82,11 +83,13 @@ if (!file_exists(DATABASE))
                           "INSERT INTO config(key, value) VALUES('TOOLBAR_VIEW', 'on');".
                           "INSERT INTO config(key, value) VALUES('ADDRESSBAR_VIEW', 'on');".
                           "INSERT INTO config(key, value) VALUES('STATUSBAR_VIEW', 'on');".
+                          "INSERT INTO config(key, value) VALUES('PARTBAR_VIEW', 'on');".
                           "INSERT INTO config(key, value) VALUES('FONT_LIST', '');".
                           "INSERT INTO config(key, value) VALUES('LANGUAGE', '');".
                           "INSERT INTO config(key, value) VALUES('MAXIMIZE', 'on');".
                           "INSERT INTO config(key, value) VALUES('TERMINAL', '');".
-                          "INSERT INTO config(key, value) VALUES('COMPARISON', '');");
+                          "INSERT INTO config(key, value) VALUES('COMPARISON', '');".
+                          "INSERT INTO config(key, value) VALUES('PARTBAR_REFRESH', 'off');");
 }
 else
 {
@@ -207,12 +210,14 @@ $array_menuitem = array(
     array('edit', '', 'mass_rename', $lang['menu']['mass_rename'], '', 'mass_rename_window', '', '', 'write', '<control>F2'),
     array('edit', 'separator'),
     array('edit', '', 'preference', $lang['menu']['preference'], Gtk::STOCK_PROPERTIES, 'preference'),
-    array('view', 'toggle', 'toolbar_view', $lang['menu']['toolbar_view'], '', 'panel_view',
-        'toolbar_view', '', array($_config['toolbar_view'], 'on'), 'F5'),
+    array('view', 'toggle', 'toolbar_view', $lang['menu']['toolbar_view'], '',
+        'panel_view', 'toolbar_view', '', array($_config['toolbar_view'], 'on'), 'F5'),
     array('view', 'toggle', 'addressbar_view', $lang['menu']['addressbar_view'], '',
         'panel_view', 'addressbar_view', '', array($_config['addressbar_view'], 'on'), 'F6'),
     array('view', 'toggle', 'statusbar_view', $lang['menu']['statusbar_view'], '',
         'panel_view', 'statusbar_view', '', array($_config['statusbar_view'], 'on'), 'F7'),
+    array('view', 'toggle', 'partbar_view', $lang['menu']['partbar_view'], '',
+        'panel_view', 'partbar_view', '', array($_config['partbar_view'], 'on'), 'F8'),
     array('view', 'separator'),
     array('view', 'toggle', 'hidden_files', $lang['menu']['hidden_files'], '',
         'check_button_write', 'hidden_files', '', array($_config['hidden_files'], 'on'), '<control>H'),
@@ -346,6 +351,15 @@ else
     $toolbar->hide();
 $vbox->pack_start($toolbar, FALSE, FALSE);
 
+///////////////////////////
+///// Панель разделов /////
+///////////////////////////
+$partbar = new GtkHBox();
+$partbar = partbar();
+$vbox->pack_start($partbar, FALSE, FALSE);
+if ($_config['partbar_refresh'] == 'on')
+    $refresh_id = Gtk::timeout_add(1000, 'partbar');
+
 //////////////////////////
 ///// Адреная строка /////
 //////////////////////////
@@ -370,9 +384,7 @@ $addressbar->pack_start(new GtkLabel(' '), FALSE, FALSE);
 $addressbar->pack_start($label_current_dir, FALSE, FALSE);
 $addressbar->pack_start(new GtkLabel(' '), FALSE, FALSE);
 $addressbar->pack_start($entry_current_dir);
-$addressbar->pack_start(new GtkLabel(' '), FALSE, FALSE);
 $addressbar->pack_start($button_change_dir, FALSE, FALSE);
-$addressbar->pack_start(new GtkLabel(' '), FALSE, FALSE);
 
 if ($_config['addressbar_view'] == 'on')
     $addressbar->show_all();

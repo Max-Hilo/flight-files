@@ -20,7 +20,7 @@ function config_parser()
                    'ASK_DELETE', 'TOOLBAR_VIEW', 'ADDRESSBAR_VIEW',
                    'STATUSBAR_VIEW', 'FONT_LIST', 'ASK_CLOSE',
                    'LANGUAGE', 'MAXIMIZE', 'COMPARISON',
-                   'TERMINAL');
+                   'TERMINAL', 'PARTBAR_VIEW', 'PARTBAR_REFRESH');
     foreach ($array as $value)
     {
         $query = sqlite_query($sqlite, "SELECT * FROM config WHERE key = '$value'");
@@ -202,7 +202,8 @@ function on_button($view, $event, $type)
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($checksum);
             $menu->append(new GtkSeparatorMenuItem());
-            $menu->append($terminal);
+            if (OS == 'Unix')
+                $menu->append($terminal);
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($properties);
 
@@ -250,7 +251,8 @@ function on_button($view, $event, $type)
             if (!empty($active_files[$panel]))
                 $menu->append($delete_active);
             $menu->append(new GtkSeparatorMenuItem());
-            $menu->append($terminal);
+            if (OS == 'Unix')
+                $menu->append($terminal);
 
             $open->connect_simple('activate', 'change_dir', 'open', $file);
             $copy->connect_simple('activate', 'bufer_file', $start[$panel]. DS .$file, 'copy');
@@ -291,7 +293,8 @@ function on_button($view, $event, $type)
                 $menu->append($delete_active);
             }
             $menu->append(new GtkSeparatorMenuItem());
-            $menu->append($terminal);
+            if (OS == 'Unix')
+                $menu->append($terminal);
 
             $paste->connect_simple('activate', 'paste_file');
             $new_file->connect_simple('activate', 'new_element', 'file');
@@ -695,17 +698,18 @@ function convert_size($filename)
 {
     global $panel, $lang;
 
-    if (OS == 'Unix')
+    $size_byte = filesize($filename);
+    if ($size_byte < 0)
     {
-        unset($du);
-        exec("du '$filename'", $du);
-        $du = preg_replace('#\t#is', ' ', $du[0]);
-        $explode = explode(' ', $du);
-        $size_byte = $explode[0];
+        if (OS == 'Unix')
+        {
+            unset($du);
+            exec("du '$filename'", $du);
+            $du = preg_replace('#\t#is', ' ', $du[0]);
+            $explode = explode(' ', $du);
+            $size_byte = $explode[0];
+        }
     }
-    else
-        $size_byte = filesize($filename);
-
     if ($size_byte >= 0 AND $size_byte < 1024)
         return $size_byte.' '.$lang['size']['b'];
     elseif ($size_byte >= 1024 AND $size_byte < 1048576)
@@ -714,6 +718,10 @@ function convert_size($filename)
         return round($size_byte / 1048576, 2).' '.$lang['size']['mib'];
     elseif ($size_byte >= 1073741824 AND $size_byte < 2147483648)
         return round($size_byte / 1073741824, 2).' '.$lang['size']['gib'];
+    else
+    {
+
+    }
 }
 
 /**
@@ -772,7 +780,7 @@ function change_dir($act = '', $dir = '', $all = FALSE)
 
     if ($act != 'none' AND $act != 'history' OR ($act == 'user' AND $new_dir != $entry_current_dir->get_text() AND file_exists($new_dir)))
     {
-        if ($act == 'user')
+        if ($act == 'user' OR $act == 'bookmarks')
         {
             if ($new_dir != $start[$panel] AND file_exists($new_dir))
             {
@@ -1059,54 +1067,9 @@ function selection_bookmarks($selection, $array)
     $array['path_entry']->set_text($row['path']);
 }
 
-function text_view($file)
-{
-    global $start, $panel, $lang;
-
-    $window = new GtkWindow();
-    $window->connect_simple('destroy', array('Gtk', 'main_quit'));
-    $window->set_size_request(700, 400);
-    $window->set_position(Gtk::WIN_POS_CENTER);
-    $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
-    $window->set_title($lang['text_view']['title']);
-
-    $vbox = new GtkVBox();
-
-    /**
-     * Содержимое файла.
-     */
-    $text_buffer = new GtkTextBuffer();
-    $text_view = new GtkTextView();
-
-    $text_buffer->set_text(file_get_contents($start[$panel]. DS .$file));
-
-    $text_view->set_buffer($text_buffer);
-    $text_view->set_editable(TRUE);
-    $text_view->set_left_margin(10);
-
-    $scroll = new GtkScrolledWindow;
-    $scroll->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
-    $scroll->add($text_view);
-
-    /**
-     * Статусбар.
-     */
-    $status_bar = new GtkStatusBar();
-
-    $path_id = $status_bar->get_context_id('path');
-    $status_bar->push($path_id, $lang['text_view']['statusbar'].' '.(($start[$panel] == ROOT_DIR) ? '' : $start[$panel]). DS .$file);
-
-    $vbox->pack_start($scroll, TRUE, TRUE);
-    $vbox->pack_start($status_bar, FALSE, FALSE);
-
-    $window->add($vbox);
-    $window->show_all();
-    Gtk::main();
-}
-
 function panel_view($widget, $key)
 {
-    global $toolbar, $addressbar, $status, $sqlite;
+    global $toolbar, $partbar, $addressbar, $status, $sqlite;
 
     $value = $widget->get_active() ? 'on' : 'off';
     $key = strtoupper($key);
@@ -1118,6 +1081,13 @@ function panel_view($widget, $key)
             $toolbar->show_all();
         else
             $toolbar->hide();
+    }
+    elseif ($key == 'PARTBAR_VIEW')
+    {
+        if ($value == 'on')
+            $partbar->show_all();
+        else
+            $partbar->hide();
     }
     elseif ($key == 'ADDRESSBAR_VIEW')
     {
@@ -1325,4 +1295,53 @@ function active_all($active = TRUE)
                 $action_menu['comparison_dir']->set_sensitive(FALSE);
         }
     }
+}
+
+function partbar()
+{
+    global $lang, $partbar, $_config;
+
+    foreach ($partbar->get_children() as $widget)
+        $partbar->remove($widget);
+    $partbar->pack_start(new GtkLabel('  '.$lang['partbar']['label'].'  '), FALSE, FALSE);
+
+    if (OS == 'Unix')
+    {
+        exec('df -h', $output);
+        foreach ($output as $key => $value)
+        {
+            if ($key == 0)
+                continue;
+            $value = preg_replace('#(\s+)#is', '|', $value);
+            $explode = explode('|', $value);
+            $system = $explode[0];
+            if (!preg_match('#^/(.+?)#', $system))
+                continue;
+            $size = $explode[1];
+            $size = str_replace('K', ' '.$lang['size']['kib'], $size);
+            $size = str_replace('M', ' '.$lang['size']['mib'], $size);
+            $size = str_replace('G', ' '.$lang['size']['gib'], $size);
+            $mount = $explode[5];
+            $button = new GtkButton($size.' - '.$system);
+            $button->set_tooltip_text($lang['partbar']['mount'].$mount);
+            $button->connect_simple('clicked', 'change_dir', 'bookmarks', $mount);
+            $partbar->pack_start($button, FALSE, FALSE);
+        }
+    }
+
+    $refresh_button = new GtkButton();
+    $button_hbox = new GtkHBox();
+    $button_hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_REFRESH, Gtk::ICON_SIZE_BUTTON), FALSE, FALSE);
+    $button_hbox->pack_start(new GtkLabel());
+    $button_hbox->pack_start(new GtkLabel('Обновить'));
+    $refresh_button->add($button_hbox);
+    $refresh_button->set_tooltip_text('Обновить список разделов');
+    $refresh_button->connect_simple('clicked', 'partbar', TRUE);
+    $partbar->pack_end($refresh_button, FALSE, FALSE);
+    
+    if ($_config['partbar_view'] == 'on')
+        $partbar->show_all();
+    else
+        $partbar->hide();
+    return $partbar;
 }
