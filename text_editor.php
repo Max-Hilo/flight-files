@@ -11,38 +11,73 @@ function text_view($file)
     global $start, $panel, $lang;
 
     $filename = $start[$panel]. DS .$file;
+    $filename = preg_replace ('#'.DS.'+#', DS, $filename);
 
     $window = new GtkWindow();
-    $window->connect_simple('destroy', array('Gtk', 'main_quit'));
     $window->set_size_request(700, 400);
     $window->set_position(Gtk::WIN_POS_CENTER);
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
-    $window->set_title($lang['text_view']['title']);
+    $window->set_title(basename($filename).' - '.$lang['text_view']['title']);
+    $accel_group = new GtkAccelGroup();
+    $window->add_accel_group($accel_group);
+    $action_group = new GtkActionGroup('menu');
 
     $vbox = new GtkVBox();
 
+    /////////////////////////
+    ///// Тестовое поле /////
+    /////////////////////////
     $buffer = new GtkSourceBuffer;
-    $buffer->set_text(trim(file_get_contents($filename)));
+    $buffer->set_text(preg_replace('#(.+?)\n$#is', '$1', file_get_contents($filename)));
+    $old_text = $buffer;
     $source = GtkSourceView::new_with_buffer($buffer);;
     $source->set_show_line_numbers(TRUE);
     $scroll = new GtkScrolledWindow();
     $scroll->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
     $scroll->add($source);
 
-    /**
-     * Статусбар.
-     */
+    ////////////////
+    ///// Меню /////
+    ////////////////
+    $menu = new GtkMenuBar();
+
+    $file = new gtkMenuItem('Файл');
+    $sub_file = new GtkMenu();
+    $file->set_submenu($sub_file);
+    $menu->append($file);
+
+    $action = new GtkAction('save', 'Сохранить', '', Gtk::STOCK_SAVE);
+    $action->connect_simple('activate', 'file_save', $buffer, $filename);
+    $action_group->add_action_with_accel($action, '<control>s');
+    $action->set_accel_group($accel_group);
+    $action->connect_accelerator();
+    $sub_file->append($action->create_menu_item());
+
+    $sub_file->append(new GtkSeparatorMenuItem());
+
+    $action = new GtkAction('close', 'Закрыть', '', Gtk::STOCK_CLOSE);
+    $action->connect_simple('activate', 'text_editor_close', $buffer, $filename, $window);
+    $action_group->add_action_with_accel($action, '<control>q');
+    $action->set_accel_group($accel_group);
+    $action->connect_accelerator();
+    $sub_file->append($action->create_menu_item());
+
+    /////////////////////
+    ///// Статусбар /////
+    /////////////////////
     $status_bar = new GtkStatusBar();
 
     $path_id = $status_bar->get_context_id('path');
-    $status_bar->push($path_id, $lang['text_view']['statusbar'].' '.(($start[$panel] == ROOT_DIR) ? '' : $start[$panel]). DS .$file);
+    $status_bar->push($path_id, $lang['text_view']['statusbar'].' '.$filename);
 
+    //////////
+
+    $vbox->pack_start($menu, FALSE, FALSE, 0);
     $vbox->pack_start($scroll, TRUE, TRUE);
-    $vbox->pack_start($b = new GtkButton('Save'), FALSE, FALSE);
-    $b->connect_simple('clicked', 'file_save', $buffer, $filename);
     $vbox->pack_start($status_bar, FALSE, FALSE);
 
     $window->add($vbox);
+    $window->connect_simple('delete-event', 'text_editor_close', $buffer, $filename, $window);
     $window->show_all();
     Gtk::main();
 }
@@ -53,4 +88,65 @@ function file_save($buffer, $filename)
     $fopen = fopen($filename, 'w+');
     fwrite($fopen, $text);
     fclose($fopen);
+}
+
+function text_editor_close($buffer, $filename, $window)
+{
+    global $lang;
+    
+    $new_text = $buffer->get_text($buffer->get_start_iter(), $buffer->get_end_iter());
+    $old_text = preg_replace('#(.+?)\n$#is', '$1', file_get_contents($filename));
+    if ($old_text != $new_text)
+    {
+        $dialog = new GtkDialog(
+            $lang['text_editor_close']['title'],
+            NULL,
+            Gtk::DIALOG_MODAL,
+            array(
+                Gtk::STOCK_YES, Gtk::RESPONSE_YES,
+                Gtk::STOCK_NO, Gtk::RESPONSE_NO,
+                Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL
+            )
+        );
+        $dialog->set_has_separator(FALSE);
+        $dialog->set_resizable(FALSE);
+        $dialog->set_position(Gtk::WIN_POS_CENTER);
+        $vbox = $dialog->vbox;
+        $vbox->pack_start($hbox = new GtkHBox());
+        $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
+        $str = str_replace('%s', basename($filename), $lang['text_editor_close']['label']);
+        $label = new GtkLabel($str);
+        $hbox->pack_start($label);
+        $dialog->show_all();
+        $result = $dialog->run();
+        if ($result == Gtk::RESPONSE_YES)
+        {
+            $fopen = fopen($filename, 'w+');
+            fwrite($fopen, $new_text);
+            fclose($fopen);
+            $dialog->destroy();
+            $window->destroy();
+            Gtk::main_quit();
+            return FALSE;
+        }
+        elseif ($result == Gtk::RESPONSE_NO)
+        {
+            echo "Файл сохранён не будет\n";
+            $dialog->destroy();
+            $window->destroy();
+            Gtk::main_quit();
+            return FALSE;
+        }
+        else
+        {
+            echo "Отмена\n";
+            $dialog->destroy();
+            return TRUE;
+        }
+    }
+    else
+    {
+        $window->destroy();
+        Gtk::main_quit();
+    }
 }

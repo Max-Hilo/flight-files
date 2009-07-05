@@ -63,6 +63,8 @@ function preference()
     $maximize->set_tooltip_text($lang['preference']['maximize_hint']);
     $partbar_refresh = new GtkCheckButton($lang['preference']['partbar_refresh']);
     $partbar_refresh->set_tooltip_text($lang['preference']['partbar_refresh_hint']);
+    $view_lines_files = new GtkCheckButton($lang['preference']['view_lines_files']);
+    $view_lines_columns = new GtkCheckButton($lang['preference']['view_lines_columns']);
     
     if ($_config['hidden_files'] == 'on')
         $label_hidden_files->set_active(TRUE);
@@ -82,6 +84,10 @@ function preference()
         $maximize->set_active(TRUE);
     if ($_config['partbar_refresh'] == 'on')
         $partbar_refresh->set_active(TRUE);
+    if ($_config['view_lines_files'] == 'on')
+        $view_lines_files->set_active(TRUE);
+    if ($_config['view_lines_columns'] == 'on')
+        $view_lines_columns->set_active(TRUE);
     
     $label_hidden_files->set_alignment(0, 0);
     $label_home_dir_right->set_alignment(0, 0);
@@ -90,6 +96,8 @@ function preference()
     $ask_close->set_alignment(0, 0);
     $label_lang->set_alignment(0, 0);
     $partbar_refresh->set_alignment(0, 0);
+    $view_lines_files->set_alignment(0, 0);
+    $view_lines_columns->set_alignment(0, 0);
     
     $label_hidden_files->connect('toggled', 'check_button_write', 'hidden_files');
     $ask_delete->connect('toggled', 'check_button_write', 'ask_delete');
@@ -101,6 +109,8 @@ function preference()
     $combo->connect('changed', 'combo_write', 'language');
     $maximize->connect('toggled', 'check_button_write', 'maximize');
     $partbar_refresh->connect('toggled', 'check_button_write', 'partbar_refresh', 'partbar');
+    $view_lines_files->connect('toggled', 'check_button_write', 'view_lines_files');
+    $view_lines_columns->connect('toggled', 'check_button_write', 'view_lines_columns');
     
     $vbox = new GtkVBox;
     $vbox->pack_start($label_hidden_files, FALSE, FALSE);
@@ -108,6 +118,8 @@ function preference()
     $vbox->pack_start($ask_close, FALSE, FALSE);
     $vbox->pack_start($maximize, FALSE, FALSE);
     $vbox->pack_start($partbar_refresh, FALSE, FALSE);
+    $vbox->pack_start($view_lines_files, FALSE, FALSE);
+    $vbox->pack_start($view_lines_columns, FALSE, FALSE);
     $vbox->pack_start(new GtkHSeparator, FALSE, FALSE);
     $vbox->pack_start($label_home_dir_left, FALSE, FALSE);
     $vbox->pack_start($hbox = new GtkHBox, FALSE, FALSE);
