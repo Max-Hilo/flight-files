@@ -20,7 +20,8 @@ function config_parser()
                    'ASK_DELETE', 'TOOLBAR_VIEW', 'ADDRESSBAR_VIEW',
                    'STATUSBAR_VIEW', 'FONT_LIST', 'ASK_CLOSE',
                    'LANGUAGE', 'MAXIMIZE', 'COMPARISON',
-                   'TERMINAL', 'PARTBAR_VIEW', 'PARTBAR_REFRESH');
+                   'TERMINAL', 'PARTBAR_VIEW', 'PARTBAR_REFRESH',
+                   'VIEW_LINES_FILES', 'VIEW_LINES_COLUMNS');
     foreach ($array as $value)
     {
         $query = sqlite_query($sqlite, "SELECT * FROM config WHERE key = '$value'");
@@ -201,9 +202,11 @@ function on_button($view, $event, $type)
                 $menu->append($delete_active);
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($checksum);
-            $menu->append(new GtkSeparatorMenuItem());
             if (OS == 'Unix')
+            {
+                $menu->append(new GtkSeparatorMenuItem());
                 $menu->append($terminal);
+            }
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($properties);
 
@@ -250,9 +253,11 @@ function on_button($view, $event, $type)
             $menu->append($delete);
             if (!empty($active_files[$panel]))
                 $menu->append($delete_active);
-            $menu->append(new GtkSeparatorMenuItem());
             if (OS == 'Unix')
+            {
+                $menu->append(new GtkSeparatorMenuItem());
                 $menu->append($terminal);
+            }
 
             $open->connect_simple('activate', 'change_dir', 'open', $file);
             $copy->connect_simple('activate', 'bufer_file', $start[$panel]. DS .$file, 'copy');
@@ -292,9 +297,11 @@ function on_button($view, $event, $type)
                 $menu->append(new GtkSeparatorMenuItem());
                 $menu->append($delete_active);
             }
-            $menu->append(new GtkSeparatorMenuItem());
             if (OS == 'Unix')
+            {
+                $menu->append(new GtkSeparatorMenuItem());
                 $menu->append($terminal);
+            }
 
             $paste->connect_simple('activate', 'paste_file');
             $new_file->connect_simple('activate', 'new_element', 'file');
@@ -760,7 +767,8 @@ function history($direct)
  */
 function change_dir($act = '', $dir = '', $all = FALSE)
 {
-    global $vbox, $entry_current_dir, $action, $action_menu, $lang, $panel, $store, $start, $number, $sqlite, $active_files;
+    global $vbox, $entry_current_dir, $action, $action_menu, $lang, $panel, $store,
+           $start, $number, $sqlite, $active_files, $tree_view, $_config;
 
     // Устанавливаем новое значение текущей директории
     if ($act == 'user')
@@ -873,6 +881,27 @@ function change_dir($act = '', $dir = '', $all = FALSE)
     {
         $store[$panel]->clear();
         current_dir($panel);
+    }
+
+    if ($_config['view_lines_columns'] == 'on' AND $_config['view_lines_files'] == 'on')
+    {
+        $tree_view['left']->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_BOTH);
+        $tree_view['right']->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_BOTH);
+    }
+    elseif ($_config['view_lines_columns'] == 'on' AND $_config['view_lines_files'] == 'off')
+    {
+        $tree_view['left']->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_VERTICAL);
+        $tree_view['right']->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_VERTICAL);
+    }
+    elseif ($_config['view_lines_columns'] == 'off' AND $_config['view_lines_files'] == 'on')
+    {
+        $tree_view['left']->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_HORIZONTAL);
+        $tree_view['right']->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_HORIZONTAL);
+    }
+    else
+    {
+        $tree_view['left']->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_NONE);
+        $tree_view['right']->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_NONE);
     }
 
     status_bar();
@@ -1328,6 +1357,17 @@ function partbar()
             $partbar->pack_start($button, FALSE, FALSE);
         }
     }
+    elseif (OS == 'Windows')
+    {
+        $combo = GtkComboBox::new_text();
+        $array = array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
+            'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z');
+        foreach ($array as $value)
+            $combo->append_text($value.':');
+        $combo->set_active(0);
+        $combo->connect('changed', 'on_change_part');
+        $partbar->pack_start($combo, FALSE, FALSE);
+    }
 
     $refresh_button = new GtkButton();
     $button_hbox = new GtkHBox();
@@ -1344,4 +1384,9 @@ function partbar()
     else
         $partbar->hide();
     return $partbar;
+}
+
+function on_change_part($combo)
+{
+    change_dir('bookmarks', $combo->get_active_text());
 }

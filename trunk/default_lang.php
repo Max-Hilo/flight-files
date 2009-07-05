@@ -147,6 +147,8 @@ $lang['preference']['select_file']      = 'Выбрать файл';
 $lang['preference']['terminal']         = 'Терминал:';
 $lang['preference']['partbar_refresh']  = 'Автообновление списка разделов';
 $lang['preference']['partbar_refresh_hint'] = 'Список разделов будет автоматически обновляться каждую секунду.';
+$lang['preference']['view_lines_files'] = 'Показывать линии между файлами';
+$lang['preference']['view_lines_columns'] = 'Показывать линии между колонками';
 
 $lang['properties']['title']            = 'Свойства "%s"';
 $lang['properties']['name']             = 'Имя:';
@@ -210,6 +212,9 @@ $lang['font']['preview']                = 'Файловый менеджер Fli
 
 $lang['text_view']['title']             = 'Текстовый редактор';
 $lang['text_view']['statusbar']         = 'Файл:';
+
+$lang['text_editor_close']['title']      = 'Сохранить изменения';
+$lang['text_editor_close']['label']      = "Файл '%s' был изменён.\nСохранить изменения?";
 
 $lang['checksum']['title']              = 'Контрольная сумма - %s';
 $lang['checksum']['text']               = 'Файл - %s';

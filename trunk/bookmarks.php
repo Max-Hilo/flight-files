@@ -7,7 +7,10 @@
  */
 
 /**
- * Создание окна для управления закладками.
+ * Функция отображает окно для управления закладками.
+ * @global object $selection_bookmarks
+ * @global array $lang
+ * @global resource $sqlite
  */
 function bookmarks_edit()
 {
@@ -25,10 +28,11 @@ function bookmarks_edit()
     
     $array['button_delete'] = new GtkButton($lang['bookmarks']['delete']);
     $array['button_delete_all'] = new GtkButton($lang['bookmarks']['delete_all']);
-    
-    /**
-     * Поля ввода
-     */
+
+    //////////////////////
+    ///// Поля ввода /////
+    //////////////////////
+
     $array['name_label'] = new GtkLabel($lang['bookmarks']['name']);
     $array['name_label']->set_sensitive(FALSE);
     $array['name_label']->set_alignment(0,0);
@@ -55,10 +59,11 @@ function bookmarks_edit()
     $vbox->pack_start($array['button_ok'], FALSE, FALSE);
     
     $table->attach($vbox, 3, 4, 0, 1, Gtk::FILL, Gtk::FILL);
+
+    //////////////////
+    ///// Кнопки /////
+    //////////////////
     
-    /**
-     * Кнопки
-     */
     $array['button_delete']->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_BUTTON));
     $array['button_delete']->set_sensitive(FALSE);
     $array['button_delete']->connect_simple('clicked', 'bookmarks_delete', $array);
@@ -68,22 +73,23 @@ function bookmarks_edit()
     $array['button_delete_all']->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_BUTTON));
     if (sqlite_num_rows(sqlite_query($sqlite, "SELECT * FROM bookmarks")) == 0)
         $array['button_delete_all']->set_sensitive(FALSE);
-    $array['button_delete_all']->connect_simple('clicked', 'bookmarks_delete', $array, 'all');
+    $array['button_delete_all']->connect_simple('clicked', 'bookmarks_delete', $array, TRUE);
     $array['button_delete_all']->set_tooltip_text($lang['bookmarks']['delete_all_hint']);
     $table->attach($array['button_delete_all'], 1, 2, 1, 2, Gtk::FILL, GTK::FILL);
     
     $array['button_add'] = new GtkButton($lang['bookmarks']['add']);
     $array['button_add']->set_image(GtkImage::new_from_stock(Gtk::STOCK_ADD, Gtk::ICON_SIZE_BUTTON));
-    $array['button_add']->connect_simple('clicked', 'bookmark_add', FALSE, $array);
+    $array['button_add']->connect_simple('clicked', 'bookmark_add', $array, FALSE);
     $array['button_add']->set_tooltip_text($lang['bookmarks']['add_hint']);
     $table->attach($array['button_add'], 2, 3, 1, 2, Gtk::FILL, Gtk::FILL);
     
-    /**
-     * Список закладок
-     */
+    ///////////////////////////
+    ///// Список закладок /////
+    ///////////////////////////
+
     $scrolled = new GtkScrolledWindow();
     $scrolled->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
-    
+
     $model = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING);
     
     $view = new GtkTreeView($model);
@@ -111,7 +117,8 @@ function bookmarks_edit()
 
 /**
  * Генерация модели для списка закладок.
- * @param object $model Модель GtkListStore
+ * @param GtkListStore $model Модель списка закладкок
+ * @global resource $sqlite
  */
 function bookmarks_list($model)
 {
@@ -124,13 +131,17 @@ function bookmarks_list($model)
 }
 
 /**
- * Автоматическое генерирование меню "Закладки".
+ * Генерирование меню "Закладки" на основании данных, полученных из базы SQLite.
+ * @global GtkAccelGroup $accel_group
+ * @global GtkActionGroup $action_group
+ * @global GtkMenu $sub_menu
+ * @global GtkAction $action_menu
+ * @global array $lang
+ * @global resource $sqlite
  */
 function bookmarks_menu()
 {
-    global $menu_item, $menu, $accel_group, $action_group, $sub_menu, $action_menu, $lang, $sqlite;
-    
-    unset($menu_item);
+    global $accel_group, $action_group, $sub_menu, $action_menu, $lang, $sqlite;
 
     $query = sqlite_query($sqlite, "SELECT * FROM bookmarks");
     if (sqlite_num_rows($query) == 0)
@@ -156,7 +167,7 @@ function bookmarks_menu()
 
     $action_menu['bookmarks_add'] = new GtkAction('BOOKMARKS_ADD', $lang['menu']['bookmarks_add'], '', Gtk::STOCK_ADD);
     $menu_item['bookmarks_add'] = $action_menu['bookmarks_add']->create_menu_item();
-    $action_menu['bookmarks_add']->connect_simple('activate', 'bookmark_add', TRUE);
+    $action_menu['bookmarks_add']->connect_simple('activate', 'bookmark_add', '', TRUE);
 
     $action_menu['bookmarks_edit'] = new GtkAction('BOOKMARKS_EDIT', $lang['menu']['bookmarks_edit'], '', Gtk::STOCK_EDIT);
     $menu_item['bookmarks_edit'] = $action_menu['bookmarks_edit']->create_menu_item();
@@ -169,14 +180,20 @@ function bookmarks_menu()
 
 /**
  * Удаление выбранной закладки.
+ * @global object $selection_bookmarks
+ * @global GtkAction $action_menu
+ * @global GtkMenu $sub_menu
+ * @global resource $sqlite
+ * @param array $array Массив, содержащий элементы интерфейса окна управления закладками
+ * @param bool $all Есл TRUE, то будут удалены все закладки
  */
-function bookmarks_delete($array, $all = '')
+function bookmarks_delete($array, $all = 'FALSE')
 {
     global $selection_bookmarks, $action_menu, $sub_menu, $sqlite;
     
     list($model, $iter) = $selection_bookmarks->get_selected();
     
-    if ($all == 'all')
+    if ($all === TRUE)
     {
         sqlite_query($sqlite, "DELETE FROM bookmarks");
         $array['button_delete_all']->set_sensitive(FALSE);
@@ -208,8 +225,16 @@ function bookmarks_delete($array, $all = '')
 
 /**
  * Добавление новой закладки.
+ * @global object $selection_bookmarks
+ * @global array $start
+ * @global string $panel
+ * @global GtkMenu $sub_menu
+ * @global array $lang
+ * @global resource $sqlite
+ * @param array $array Массив, содержащий элементы интерфейса окна управления закладками
+ * @param bool $bool Если TRUE, то в закладки будет добавлена текущая директория, иначе - корневая.
  */
-function bookmark_add($bool = FALSE, $array = '')
+function bookmark_add($array = '', $bool = FALSE)
 {
     global $selection_bookmarks, $start, $panel, $sub_menu, $lang, $sqlite;
     
@@ -250,7 +275,11 @@ function bookmark_add($bool = FALSE, $array = '')
 }
 
 /**
- * Сохранение изменений в выбранной закладке.
+ * Сохранение изменений для выбранной закладки.
+ * @global object $selection_bookmarks
+ * @global GtkMenu $sub_menu
+ * @global resource $sqlite
+ * @param array $array  Массив, содержащий элементы интерфейса окна управления закладками
  */
 function bookmarks_save_change($array)
 {

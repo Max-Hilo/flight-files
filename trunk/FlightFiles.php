@@ -9,37 +9,73 @@
  * @link http://code.google.com/p/flight-files Домашняя страница проекта
  */
 
-// Домашняя и корневая директории
-// Для Unix
 if ($_ENV['HOME'])
 {
-    define('HOME_DIR', $_ENV['HOME']);
-    define('ROOT_DIR', '/');
-    define('OS', 'Unix');
+    $os = 'Unix';
+    $home_dir = $_ENV['HOME'];
+    $root_dir = '/';
 }
-// Для Windows
 else
 {
-    define('HOME_DIR', $_ENV['USERPROFILE']);
-    define('ROOT_DIR', 'C:');
-    define('OS', 'Windows');
+    $os = 'Windows';
+    $home_dir = $_ENV['USERPROFILE'];
+    $root_dir = 'C:';
 }
-// Папка с файлами программы
-define('SHARE_DIR', dirname(__FILE__));
-// Папка с файлами настроек
-define('CONFIG_DIR', SHARE_DIR . DIRECTORY_SEPARATOR . 'configuration');
-// Папка с файлами локализации
-define('LANG_DIR', CONFIG_DIR . DIRECTORY_SEPARATOR . 'languages');
-// Файл буфера обмена
-define('BUFER_FILE', CONFIG_DIR . DIRECTORY_SEPARATOR . 'bufer');
-// Файл базы данных
-define('DATABASE', CONFIG_DIR . DIRECTORY_SEPARATOR . 'database.sqlite');
-// Версия программы
-define('VERSION_PROGRAM', trim(file_get_contents(SHARE_DIR . DIRECTORY_SEPARATOR . 'VERSION')));
-// Логотип программы
-define('ICON_PROGRAM', SHARE_DIR . DIRECTORY_SEPARATOR . 'logo_program.png');
-// Разделитель адресных путей
+
+/**
+ * Операционная система, на которой производится запуск программы.
+ */
+define('OS', $os);
+
+/**
+ * Домашняя директория.
+ */
+define('HOME_DIR', $home_dir);
+
+/**
+ * Корневая директория.
+ */
+define('ROOT_DIR', $root_dir);
+
+/**
+ * Разделитель адресных путей.
+ */
 define('DS', DIRECTORY_SEPARATOR);
+
+/**
+ * Папка, содержащая необходимые для работы программы файлы.
+ */
+define('SHARE_DIR', dirname(__FILE__));
+
+/**
+ * Папка, содержащая конфигурационные и вспомогательные файлы.
+ */
+define('CONFIG_DIR', SHARE_DIR . DS . 'configuration');
+
+/**
+ * Папка, содержащая файлы локализации.
+ */
+define('LANG_DIR', CONFIG_DIR . DS . 'languages');
+
+/**
+ * Файл буфера обмена.
+ */
+define('BUFER_FILE', CONFIG_DIR . DS . 'bufer');
+
+/**
+ * Файл базы данных.
+ */
+define('DATABASE', CONFIG_DIR . DS . 'database.sqlite');
+
+/**
+ * Версия программы.
+ */
+define('VERSION_PROGRAM', trim(file_get_contents(SHARE_DIR . DS . 'VERSION')));
+
+/**
+ * Файл-логотип программы.
+ */
+define('ICON_PROGRAM', SHARE_DIR . DS . 'logo_program.png');
 
 // Выводим версию программы
 if ($argv[1] == '--version' OR $argv[1] == '-v')
@@ -49,16 +85,16 @@ if ($argv[1] == '--version' OR $argv[1] == '-v')
 }
 
 // Файлы с функциями программы
-include SHARE_DIR . DIRECTORY_SEPARATOR . 'FlightFiles.data.php';
-include SHARE_DIR . DIRECTORY_SEPARATOR . 'about.php';
-include SHARE_DIR . DIRECTORY_SEPARATOR . 'alert.php';
-include SHARE_DIR . DIRECTORY_SEPARATOR . 'bookmarks.php';
-include SHARE_DIR . DIRECTORY_SEPARATOR . 'checksum.php';
-include SHARE_DIR . DIRECTORY_SEPARATOR . 'mass_rename.php';
-include SHARE_DIR . DIRECTORY_SEPARATOR . 'preference.php';
-include SHARE_DIR . DIRECTORY_SEPARATOR . 'properties.php';
-include SHARE_DIR . DIRECTORY_SEPARATOR . 'shortcuts.php';
-include SHARE_DIR . DIRECTORY_SEPARATOR . 'text_editor.php';
+include SHARE_DIR . DS . 'FlightFiles.data.php';
+include SHARE_DIR . DS . 'about.php';
+include SHARE_DIR . DS . 'alert.php';
+include SHARE_DIR . DS . 'bookmarks.php';
+include SHARE_DIR . DS . 'checksum.php';
+include SHARE_DIR . DS . 'mass_rename.php';
+include SHARE_DIR . DS . 'preference.php';
+include SHARE_DIR . DS . 'properties.php';
+include SHARE_DIR . DS . 'shortcuts.php';
+include SHARE_DIR . DS . 'text_editor.php';
 
 // Удаляем файл буфера обмена, если он по каким-либо причинам ещё не удалён
 @unlink(BUFER_FILE);
@@ -66,6 +102,10 @@ include SHARE_DIR . DIRECTORY_SEPARATOR . 'text_editor.php';
 // Создаём папку с конфигами
 if (!file_exists(CONFIG_DIR))
     mkdir(CONFIG_DIR);
+
+// Создаём папку с локализациями
+if (!file_exists(LANG_DIR))
+    mkdir(LANG_DIR);
 
 // Подключаемся к базе данных
 if (!file_exists(DATABASE))
@@ -89,7 +129,9 @@ if (!file_exists(DATABASE))
                           "INSERT INTO config(key, value) VALUES('MAXIMIZE', 'on');".
                           "INSERT INTO config(key, value) VALUES('TERMINAL', '');".
                           "INSERT INTO config(key, value) VALUES('COMPARISON', '');".
-                          "INSERT INTO config(key, value) VALUES('PARTBAR_REFRESH', 'off');");
+                          "INSERT INTO config(key, value) VALUES('PARTBAR_REFRESH', 'off');".
+                          "INSERT INTO config(key, value) VALUES('VIEW_LINES_FILES', 'off');".
+                          "INSERT INTO config(key, value) VALUES('VIEW_LINES_COLUMNS', 'on');");
 }
 else
 {
@@ -101,7 +143,7 @@ else
 config_parser();
 
 // Основной языковой файл
-include SHARE_DIR . DIRECTORY_SEPARATOR . 'default_lang.php';
+include SHARE_DIR . DS . 'default_lang.php';
 
 // Пользовательский языковой файл
 //if (!empty($_config['language']))
@@ -124,11 +166,27 @@ include SHARE_DIR . DIRECTORY_SEPARATOR . 'default_lang.php';
 //        include LANG_DIR.'/'.$explode[0].'.php';
 //}
 
-// Активная панель по умолчанию
+/**
+ * Панель, активная в текущий момент. По умолчанию активна левая панель.
+ * @global string $GLOBALS['panel']
+ * @name $panel
+ */
 $panel = 'left';
 
-$number['left'] = 1;
-$number['right'] = 1;
+/**
+ * Стартовая директория для левой и правой панелей.
+ * @global array $GLOBALS['start']
+ * @name $start
+ */
+$start = array('left' => (empty($argv[1]) OR !file_exists($argv[1])) ? $_config['home_dir_left'] : $argv[1],
+               'right' => $_config['home_dir_right']);
+
+/**
+ * Используется для навигации по истории посещения директорий.
+ * @global array $GLOBALS['number']
+ * @name $number
+ */
+$number = array('left' => 1, 'right' => 1);
 
 $window = new GtkWindow();
 $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
@@ -141,13 +199,6 @@ $window->connect_simple('delete-event', 'close_window');
 $accel_group = new GtkAccelGroup();
 $window->add_accel_group($accel_group);
 $action_group = new GtkActionGroup('menubar');
-
-// Стартовая директория
-if (empty($argv[1]) OR !file_exists($argv[1]))
-    $start['left'] = $_config['home_dir_left'];
-else
-    $start['left'] = $argv[1];
-$start['right'] = $_config['home_dir_right'];
 
 $vbox = new GtkVBox();
 $vbox->show();
@@ -229,20 +280,23 @@ $array_menuitem = array(
     array('bookmarks', 'bookmarks'),
     array('help', '', 'shortcuts', $lang['menu']['shortcuts'], Gtk::STOCK_INFO, 'shortcuts'),
     array('help', 'separator'),
-    array('help', '', 'about', $lang['menu']['about'], Gtk::STOCK_ABOUT, 'about')
+    array('help', '', 'about', $lang['menu']['about'], Gtk::STOCK_ABOUT, 'about_window')
 );
 foreach ($array_menuitem as $value)
 {
+    // Для разделителя не требуется каких-либо настроек
     if ($value[1] == 'separator')
     {
         $sub_menu[$value[0]]->append(new GtkSeparatorMenuItem);
         continue;
     }
+    // Меню "Закладки" генерирует отдельная функция bookmarks_menu().
     elseif ($value[1] == 'bookmarks')
     {
         bookmarks_menu();
         continue;
     }
+    // Переключатели
     elseif ($value[1] == 'toggle')
     {
         $action_menu[$value[2]] = new GtkToggleAction($value[2], $value[3], '', '');
@@ -250,17 +304,22 @@ foreach ($array_menuitem as $value)
             $action_menu[$value[2]]->set_active(TRUE);
         $action_menu[$value[2]]->connect('activate', $value[5], $value[6], $value[7]);
     }
+    // Обычные пункты меню
     else
     {
         $action_menu[$value[2]] = new GtkAction($value[2], $value[3], '', $value[4]);
         $action_menu[$value[2]]->connect_simple('activate', $value[5], $value[6], $value[7]);
     }
+
+    // Если указаны горячие кнопки, то добавляем их
     if ($value[9])
     {
         $action_group->add_action_with_accel($action_menu[$value[2]], $value[9]);
         $action_menu[$value[2]]->set_accel_group($accel_group);
         $action_menu[$value[2]]->connect_accelerator();
     }
+
+    // При необходимости делаем неактивными некоторые пункты меню
     if (is_array($value[8]) AND $value[1] != 'toggle')
     {
         if ($value[8][0] == $value[8][1])
@@ -271,10 +330,15 @@ foreach ($array_menuitem as $value)
     elseif ($value[8] == 'write')
     {
         if (!is_writable($start[$panel]))
+        {
             $action_menu[$value[2]]->set_sensitive(FALSE);
+        }
     }
     elseif ($value[8] == 'false')
+    {
         $action_menu[$value[2]]->set_sensitive(FALSE);
+    }
+
     $menu_item = $action_menu[$value[2]]->create_menu_item();
     $sub_menu[$value[0]]->append($menu_item);
 }
@@ -322,26 +386,33 @@ $array_toolbar = array(
 );
 foreach ($array_toolbar as $value)
 {
+    // Для разделителей не требуется каких-либо настроек
     if ($value[0] == '<hr>')
     {
         $toolbar->insert(new GtkSeparatorToolItem, -1);
         continue;
     }
+
     $action[$value[0]] = new GtkAction($value[0], $value[1], $value[2], $value[3]);
     $toolitem = $action[$value[0]]->create_tool_item();
     $action[$value[0]]->connect_simple('activate', $value[4], $value[5], $value[6]);
+
+    // При необходимости делаем неактивными некоторые пункты панели инструментов
     if (is_array($value[7]))
     {
         if ($value[7][0] == $value[7][1])
             $action[$value[0]]->set_sensitive(FALSE);
     }
     elseif ($value[7] == 'false')
+    {
         $action[$value[0]]->set_sensitive(FALSE);
+    }
     elseif ($value[7] == 'write')
     {
         if (!is_writable($start[$panel]))
             $action[$value[0]]->set_sensitive(FALSE);
     }
+
     $toolbar->insert($toolitem, -1);
 }
 
@@ -354,6 +425,7 @@ $vbox->pack_start($toolbar, FALSE, FALSE);
 ///////////////////////////
 ///// Панель разделов /////
 ///////////////////////////
+
 $partbar = new GtkHBox();
 $partbar = partbar();
 $vbox->pack_start($partbar, FALSE, FALSE);
@@ -399,12 +471,22 @@ $hbox = new GtkHBox;
 ////////////////////////
 ///// Левая панель /////
 ////////////////////////
+
 $left = new GtkFrame;
 $left->set_shadow_type(Gtk::SHADOW_IN);
 
 $store['left'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING,
     GObject::TYPE_STRING, GObject::TYPE_BOOLEAN);
 $tree_view['left'] = new GtkTreeView($store['left']);
+
+// При необходимости показываем линии между колонками и между файлами
+if ($_config['view_lines_columns'] == 'on' AND $_config['view_lines_files'] == 'on')
+    $tree_view['left']->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_BOTH);
+elseif ($_config['view_lines_columns'] == 'on')
+    $tree_view['left']->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_VERTICAL);
+elseif ($_config['view_lines_files'] == 'on')
+    $tree_view['left']->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_HORIZONTAL);
+
 $selection['left'] = $tree_view['left']->get_selection();
 $tree_view['left']->connect('button-press-event', 'on_button', 'left');
 $cell_renderer['left'] = new GtkCellRendererText();
@@ -435,6 +517,15 @@ sqlite_query($sqlite, "INSERT INTO history_right(path) VALUES('$start[right]')")
 current_dir('right');
 
 $tree_view['right'] = new GtkTreeView($store['right']);
+
+// При необходимости показываем линии между колонками и между файлами
+if ($_config['view_lines_columns'] == 'on' AND $_config['view_lines_files'] == 'on')
+    $tree_view['right']->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_BOTH);
+elseif ($_config['view_lines_columns'] == 'on')
+    $tree_view['right']->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_VERTICAL);
+elseif ($_config['view_lines_files'] == 'on')
+    $tree_view['right']->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_HORIZONTAL);
+
 $selection['right'] = $tree_view['right']->get_selection();
 $tree_view['right']->connect('button-press-event', 'on_button', 'right');
 $cell_renderer['right'] = new GtkCellRendererText();
