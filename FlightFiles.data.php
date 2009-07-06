@@ -117,7 +117,7 @@ function on_button($view, $event, $type)
             {
                 // При нехватке прав для просмотра директории
                 if (!is_readable($start[$panel]. DS .$file))
-                    alert($lang['alert']['chmod_read_dir']);
+                    AlertWindow($lang['alert']['chmod_read_dir']);
                 else
                 {
                     if (!empty($file))
@@ -127,12 +127,12 @@ function on_button($view, $event, $type)
             elseif (is_file($start[$panel]. DS .$file))
             {
                 if (!is_readable($start[$panel]. DS .$file))
-                    alert($lang['alert']['chmod_read_file']);
+                    AlertWindow($lang['alert']['chmod_read_file']);
                 if (OS == 'Unix')
                 {
                     $mime = mime_content_type($start[$panel]. DS .$file);
                     if ($mime == 'text/plain' OR $mime == 'text/html')
-                        text_view($file);
+                        TextEditorWindow($start[$panel].DS.$file);
                 }
             }
         }
@@ -189,7 +189,7 @@ function on_button($view, $event, $type)
                     $open = new GtkMenuItem($lang['popup']['open_text_file']);
                     $menu->append($open);
                     $menu->append(new GtkSeparatorMenuItem());
-                    $open->connect_simple('activate', 'text_view', $file);
+                    $open->connect_simple('activate', 'TextEditorWindow', $start[$panel].DS.$file);
                 }
             }
             $menu->append($copy);
@@ -215,9 +215,9 @@ function on_button($view, $event, $type)
             $rename->connect_simple('activate', '_rename', $start[$panel]. DS .$file);
             $delete->connect_simple('activate', 'delete', $start[$panel]. DS .$file);
             $delete_active->connect_simple('activate', 'delete_active');
-            $md5->connect_simple('activate', 'checksum_dialog', $start[$panel]. DS .$file, 'MD5');
-            $sha1->connect_simple('activate', 'checksum_dialog', $start[$panel]. DS .$file, 'SHA1');
-            $properties->connect_simple('activate', 'properties', $start[$panel]. DS .$file);
+            $md5->connect_simple('activate', 'CheckSumWindow', $start[$panel]. DS .$file, 'MD5');
+            $sha1->connect_simple('activate', 'CheckSumWindow', $start[$panel]. DS .$file, 'SHA1');
+            $properties->connect_simple('activate', 'PropertiesWindow', $start[$panel]. DS .$file);
             $terminal->connect_simple('activate', 'open_terminal');
         }
         elseif ($dir_file == '<DIR>')
@@ -320,6 +320,10 @@ function on_button($view, $event, $type)
 
 /**
  * Создание окна для ввода нового имени файла/папки.
+ * @global array $lang
+ * @global array $start
+ * @global string $panel
+ * @global object $selection
  * @param string $filename Файл/каталог, для которого необходимо выполнить операцию.
  */
 function _rename($filename = '')
@@ -359,9 +363,10 @@ function _rename($filename = '')
 
 /**
  * Переименование файла/папки.
- * @param object $entry Поле ввода GtkEntryText, содержащее новое имя файла/папки.
- * @param string $filename Файл, для которого необходимо провести операцию.
- * @param object $dialog Окно для ввода нового имени файла/папки.
+ * @global array $lang
+ * @param GtkEntryText $entry Поле ввода, содержащее новое имя файла/папки
+ * @param string $filename Файл, для которого необходимо провести операцию
+ * @param GtkWindow $dialog Окно для ввода нового имени файла/папки
  */
 function on_rename ($entry, $filename, $dialog)
 {
@@ -371,7 +376,7 @@ function on_rename ($entry, $filename, $dialog)
     if (empty($new_name))
     {
         $dialog->destroy();
-        alert($lang['alert']['empty_name']);
+        AlertWindow($lang['alert']['empty_name']);
         _rename($filename);
     }
     else
@@ -380,7 +385,7 @@ function on_rename ($entry, $filename, $dialog)
         {
             $dialog->destroy();
             $str = str_replace('%s', $new_name, $lang['alert']['file_exists_rename']);
-            alert($str);
+            AlertWindow($str);
             _rename($filename);
         }
         else
@@ -424,7 +429,10 @@ function bufer_file($filename = '', $act)
 }
 
 /**
- * Копирование/вырезание файла, находящегося в буфере обмена.
+ * Копирование/вырезание файлов, находящихся в буфере обмена.
+ * @global array $start
+ * @global string $panel
+ * @global array $lang
  */
 function paste_file()
 {
@@ -440,8 +448,31 @@ function paste_file()
         if (file_exists($dest))
         {
             $str = str_replace('%s', basename($filename), $lang['alert']['file_exists_paste']);
-            alert($str);
-            continue;
+            $dialog = new GtkDialog(
+                $lang['alert']['title'], NULL,
+                Gtk::DIALOG_MODAL,
+                array(Gtk::STOCK_YES, Gtk::RESPONSE_YES, Gtk::STOCK_NO, Gtk::RESPONSE_NO));
+            $dialog->set_position(Gtk::WIN_POS_CENTER_ALWAYS);
+            $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+            $dialog->set_skip_taskbar_hint(TRUE);
+            $dialog->set_resizable(FALSE);
+            $top_area = $dialog->vbox;
+            $top_area->pack_start($hbox = new GtkHBox());
+            $hbox->pack_start(new GtkLabel(' '));
+            $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_WARNING, Gtk::ICON_SIZE_DIALOG));
+            $hbox->pack_start(new GtkLabel(' '));
+            $label = new GtkLabel($str);
+            $label->set_justify(Gtk::JUSTIFY_CENTER);
+            $hbox->pack_start($label);
+            $hbox->pack_start(new GtkLabel(' '));
+            $dialog->set_has_separator(FALSE);
+            $dialog->show_all();
+            $result = $dialog->run();
+            $dialog->destroy();
+
+            // Если нажата кнопка "Нет", то пропускаем данный файл и переходим к следующему
+            if ($result == Gtk::RESPONSE_NO)
+                continue;
         }
         if ($action == 'copy')
         {
@@ -807,7 +838,7 @@ function change_dir($act = '', $dir = '', $all = FALSE)
 
     // Если указанной директории не существует, то информируем пользователя об этом
     if (!file_exists($new_dir))
-        alert($lang['alert']['dir_not_exists']);
+        AlertWindow($lang['alert']['dir_not_exists']);
     else
         $start[$panel] = $new_dir;
 
@@ -942,7 +973,7 @@ function new_element($type)
 
     if (!is_writable($start[$panel]))
     {
-        alert($lang['alert']['new_not_chmod']);
+        AlertWindow($lang['alert']['new_not_chmod']);
         return FALSE;
     }
 
@@ -1069,7 +1100,7 @@ function clear_bufer()
     $action['paste']->set_sensitive(FALSE);
     $action_menu['clear_bufer']->set_sensitive(FALSE);
     $action_menu['paste']->set_sensitive(FALSE);
-    alert($lang['alert']['bufer_clear']);
+    AlertWindow($lang['alert']['bufer_clear']);
 }
 
 /**
@@ -1224,11 +1255,11 @@ function open_terminal()
     global $start, $panel, $lang, $_config;
 
     if (empty($_config['terminal']))
-        alert ($lang['command']['terminal_empty']);
+        AlertWindow($lang['command']['terminal_empty']);
     elseif (!file_exists('/usr/bin/gnome-terminal'))
     {
         $str = str_replace('%s', basename($_config['terminal']), $lang['command']['terminal_none']);
-        alert($str);
+        AlertWindow($str);
     }
     else
     {
@@ -1249,11 +1280,11 @@ function comparison($type)
     global $active_files, $start, $panel, $lang, $_config;
 
     if (empty($_config['comparison']))
-        alert($lang['command']['comparison_empty']);
+        AlertWindow($lang['command']['comparison_empty']);
     elseif (!file_exists($_config['comparison']))
     {
         $str = str_replace('%s', basename($_config['comparison']), $lang['command']['comparison_none']);
-        alert($str);
+        AlertWindow($str);
     }
     else
     {

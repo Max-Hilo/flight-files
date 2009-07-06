@@ -8,9 +8,9 @@
 
 /**
  * Функция выводит окно со свойствами для указанного файла.
- * @param string $filename Адрес файла, для которого необходимо произвести операцию
+ * @param string $fileName Адрес файла, для которого необходимо произвести операцию
  */
-function properties($filename)
+function PropertiesWindow($fileName)
 {
     global $lang;
     
@@ -19,7 +19,7 @@ function properties($filename)
     $window->set_skip_taskbar_hint(TRUE);
     $window->set_resizable(FALSE);
     $window->set_position(Gtk::WIN_POS_CENTER);
-    $window->set_title(str_replace('%s', basename($filename), $lang['properties']['title']));
+    $window->set_title(str_replace('%s', basename($fileName), $lang['properties']['title']));
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $window->set_size_request(500, -1);
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
@@ -37,11 +37,11 @@ function properties($filename)
     $label_path = new GtkLabel($lang['properties']['path']);
     $label_mtime = new GtkLabel($lang['properties']['mtime']);
     $label_atime = new GtkLabel($lang['properties']['atime']);
-    $name = new GtkEntry($filename);
-    $size = new GtkLabel(convert_size($filename));
-    $path = new GtkLabel(dirname($filename));
-    $mtime = new GtkLabel(date('d.m.Y G:i:s', filemtime($filename)));
-    $atime = new GtkLabel(date('d.m.Y G:i:s', fileatime($filename)));
+    $name = new GtkEntry($fileName);
+    $size = new GtkLabel(convert_size($fileName));
+    $path = new GtkLabel(dirname($fileName));
+    $mtime = new GtkLabel(date('d.m.Y G:i:s', filemtime($fileName)));
+    $atime = new GtkLabel(date('d.m.Y G:i:s', fileatime($fileName)));
     
     $label_name->set_alignment(0.0, 0.5);
     $label_name->modify_font(new PangoFontDescription('Bold'));
@@ -91,11 +91,11 @@ function properties($filename)
         $label_perms->modify_font(new PangoFontDescription('Bold'));
         $label_perms_text = new GtkLabel($lang['properties']['perms_text']);
         $label_perms_text->modify_font(new PangoFontDescription('Bold'));
-        $owner = posix_getpwuid(fileowner($filename));
+        $owner = posix_getpwuid(fileowner($fileName));
         $owner = new GtkLabel($owner['name'].' - '.str_replace(',', '', $owner['gecos']));
-        $group = posix_getpwuid(filegroup($filename));
+        $group = posix_getpwuid(filegroup($fileName));
         $group = new GtkLabel($group['name']);
-        $perm = substr(sprintf('%o', fileperms($filename)), -4);
+        $perm = substr(sprintf('%o', fileperms($fileName)), -4);
         $perms = new GtkLabel($perm);
         if (substr($perm, 0, 1) == '1')
             $perms_text .= 'd';
