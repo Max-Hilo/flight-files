@@ -11,7 +11,7 @@
  * информация о программе, разработчике и лицензии.
  * @global array $lang
  */
-function about_window()
+function AboutWindow()
 {
     global $lang;
     

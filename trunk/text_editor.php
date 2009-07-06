@@ -6,18 +6,24 @@
  * @link http://code.google.com/p/flight-files/ Домашняя страница проекта
  */
 
-function text_view($file)
+/**
+ * Отбражает окно текстового редактора.
+ * @global array $start
+ * @global string $panel
+ * @global array $lang
+ * @param string $fileName Адрес файла, для которого необходимо произвести операцию
+ */
+function TextEditorWindow($fileName)
 {
     global $start, $panel, $lang;
 
-    $filename = $start[$panel]. DS .$file;
-    $filename = preg_replace ('#'.DS.'+#', DS, $filename);
+    $fileName = preg_replace ('#'.DS.'+#', DS, $fileName);
 
     $window = new GtkWindow();
     $window->set_size_request(700, 400);
     $window->set_position(Gtk::WIN_POS_CENTER);
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
-    $window->set_title(basename($filename).' - '.$lang['text_view']['title']);
+    $window->set_title(basename($fileName).' - '.$lang['text_view']['title']);
     $accel_group = new GtkAccelGroup();
     $window->add_accel_group($accel_group);
     $action_group = new GtkActionGroup('menu');
@@ -28,7 +34,7 @@ function text_view($file)
     ///// Тестовое поле /////
     /////////////////////////
     $buffer = new GtkSourceBuffer;
-    $buffer->set_text(preg_replace('#(.+?)\n$#is', '$1', file_get_contents($filename)));
+    $buffer->set_text(preg_replace('#(.+?)\n$#is', '$1', file_get_contents($fileName)));
     $old_text = $buffer;
     $source = GtkSourceView::new_with_buffer($buffer);;
     $source->set_show_line_numbers(TRUE);
@@ -47,7 +53,7 @@ function text_view($file)
     $menu->append($file);
 
     $action = new GtkAction('save', 'Сохранить', '', Gtk::STOCK_SAVE);
-    $action->connect_simple('activate', 'file_save', $buffer, $filename);
+    $action->connect_simple('activate', 'SaveFile', $buffer, $fileName);
     $action_group->add_action_with_accel($action, '<control>s');
     $action->set_accel_group($accel_group);
     $action->connect_accelerator();
@@ -56,7 +62,7 @@ function text_view($file)
     $sub_file->append(new GtkSeparatorMenuItem());
 
     $action = new GtkAction('close', 'Закрыть', '', Gtk::STOCK_CLOSE);
-    $action->connect_simple('activate', 'text_editor_close', $buffer, $filename, $window);
+    $action->connect_simple('activate', 'TextEditorWindowClose', $buffer, $fileName, $window);
     $action_group->add_action_with_accel($action, '<control>q');
     $action->set_accel_group($accel_group);
     $action->connect_accelerator();
@@ -68,7 +74,7 @@ function text_view($file)
     $status_bar = new GtkStatusBar();
 
     $path_id = $status_bar->get_context_id('path');
-    $status_bar->push($path_id, $lang['text_view']['statusbar'].' '.$filename);
+    $status_bar->push($path_id, $lang['text_view']['statusbar'].' '.$fileName);
 
     //////////
 
@@ -77,12 +83,17 @@ function text_view($file)
     $vbox->pack_start($status_bar, FALSE, FALSE);
 
     $window->add($vbox);
-    $window->connect_simple('delete-event', 'text_editor_close', $buffer, $filename, $window);
+    $window->connect_simple('delete-event', 'TextEditorWindowClose', $buffer, $fileName, $window);
     $window->show_all();
     Gtk::main();
 }
 
-function file_save($buffer, $filename)
+/**
+ * Сохранение файла.
+ * @param GtkSourceBuffer $buffer Текстовый буфер
+ * @param string $filename Адрес файла, для которого необходимо произвести операцию
+ */
+function SaveFile($buffer, $filename)
 {
     $text = $buffer->get_text($buffer->get_start_iter(), $buffer->get_end_iter());
     $fopen = fopen($filename, 'w+');
@@ -90,12 +101,19 @@ function file_save($buffer, $filename)
     fclose($fopen);
 }
 
-function text_editor_close($buffer, $filename, $window)
+/**
+ * Закрытие окна текстового редактора.
+ * @global array $lang
+ * @param GtkSourceBuffer $buffer
+ * @param string $fileName
+ * @param GtkWindow $textEditorWindow
+ */
+function TextEditorWindowClose($buffer, $fileName, $textEditorWindow)
 {
     global $lang;
     
     $new_text = $buffer->get_text($buffer->get_start_iter(), $buffer->get_end_iter());
-    $old_text = preg_replace('#(.+?)\n$#is', '$1', file_get_contents($filename));
+    $old_text = preg_replace('#(.+?)\n$#is', '$1', file_get_contents($fileName));
     if ($old_text != $new_text)
     {
         $dialog = new GtkDialog(
@@ -114,18 +132,18 @@ function text_editor_close($buffer, $filename, $window)
         $vbox = $dialog->vbox;
         $vbox->pack_start($hbox = new GtkHBox());
         $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
-        $str = str_replace('%s', basename($filename), $lang['text_editor_close']['label']);
+        $str = str_replace('%s', basename($fileName), $lang['text_editor_close']['label']);
         $label = new GtkLabel($str);
         $hbox->pack_start($label);
         $dialog->show_all();
         $result = $dialog->run();
         if ($result == Gtk::RESPONSE_YES)
         {
-            $fopen = fopen($filename, 'w+');
+            $fopen = fopen($fileName, 'w+');
             fwrite($fopen, $new_text);
             fclose($fopen);
             $dialog->destroy();
-            $window->destroy();
+            $textEditorWindow->destroy();
             Gtk::main_quit();
             return FALSE;
         }
@@ -133,7 +151,7 @@ function text_editor_close($buffer, $filename, $window)
         {
             echo "Файл сохранён не будет\n";
             $dialog->destroy();
-            $window->destroy();
+            $textEditorWindow->destroy();
             Gtk::main_quit();
             return FALSE;
         }
@@ -146,7 +164,7 @@ function text_editor_close($buffer, $filename, $window)
     }
     else
     {
-        $window->destroy();
+        $textEditorWindow->destroy();
         Gtk::main_quit();
     }
 }

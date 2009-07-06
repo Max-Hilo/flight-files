@@ -6,255 +6,296 @@
  * @link http://code.google.com/p/flight-files/ Домашняя страница проекта
  */
 
-function mass_rename_window()
+/**
+ * Отображение окна для массового переименования файлов.
+ * @global GtkRadioButton $active_type_rename
+ * @global GtkWindow $window
+ */
+function BulkRenameWindow()
 {
-    global $mass_rename_radio, $window;
+    global $active_type_rename, $window, $lang;
 
-    $mass_rename_radio = 'upper';
+    $active_type_rename = 'upper';
 
     $wnd = new GtkWindow();
-    $wnd->set_title('Массовое переименование');
+    $wnd->set_title($lang['bulk_rename']['title']);
     $wnd->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $wnd->set_position(Gtk::WIN_POS_CENTER);
-    $wnd->set_resizable(FALSE);
+    $wnd->set_resizable(TRUE);
     $wnd->set_modal(TRUE);
+    $wnd->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
     $wnd->set_transient_for($window);
     $wnd->connect_simple('destroy', array('Gtk', 'main_quit'));
 
     $vbox = new GtkVBox;
     $vbox->set_spacing(5);
 
-    $upper_radio = new GtkRadioButton(NULL, 'Верхний регистр');
-    $upper_hint = new GtkLabel('Все буквы в именах файлов будут преобразованы в верхний регистр.');
-    $upper_hint->modify_font(new PangoFontDescription('Italic'));
-    $upper_hint->set_alignment(0, 0);
-    $upper_vbox = new GtkVBox;
-    $upper_vbox->pack_start($upper_radio);
-    $upper_vbox->pack_start($upper_hint);
-    $vbox->pack_start($upper_vbox);
+    $upper_radio = new GtkRadioButton(NULL, $lang['bulk_rename']['upper']);
+    $upper_radio->set_tooltip_text($lang['bulk_rename']['upper_hint']);
+    $vbox->pack_start($upper_radio);
 
-    $vbox->pack_start(new GtkHSeparator);
+    $lower_radio = new GtkRadioButton($upper_radio, $lang['bulk_rename']['lower']);
+    $lower_radio->set_tooltip_text($lang['bulk_rename']['lower_hint']);
+    $vbox->pack_start($lower_radio);
 
-    $lower_radio = new GtkRadioButton($upper_radio, 'Нижний регистр');
-    $lower_hint = new GtkLabel("Все буквы в именах файлов будут преобразованы в нижний регистр.");
-    $lower_hint->modify_font(new PangoFontDescription('Italic'));
-    $lower_hint->set_alignment(0, 0);
-    $lower_vbox = new GtkVBox;
-    $lower_vbox->pack_start($lower_radio);
-    $lower_vbox->pack_start($lower_hint);
-    $vbox->pack_start($lower_vbox);
-
-    $vbox->pack_start(new GtkHSeparator);
-
-    $order_radio = new GtkRadioButton($upper_radio, 'По порядку');
-    $order_name_label = new GtkLabel('Имя для файлов:');
-    $order_name_entry = new GtkEntry('Файл ');
+    $order_radio = new GtkRadioButton($upper_radio, $lang['bulk_rename']['order']);
+    $order_radio->set_tooltip_text($lang['bulk_rename']['order_hint']);
+    $order_name_label = new GtkLabel($lang['bulk_rename']['order_label']);
+    $order_name_entry = new GtkEntry($lang['bulk_rename']['order_default_name']);
     $order_hbox = new GtkHBox;
     $order_hbox->set_sensitive(FALSE);
     $order_hbox->pack_start($order_name_label, FALSE, FALSE);
     $order_hbox->pack_start($order_name_entry, TRUE, TRUE);
-    $order_hint = new GtkLabel("Имена файлов будут иметь на конце цифровой индекс,\n".
-        "увеличивающийся на один для каждого следующего файла.\n".
-        "Пример: 'Файл 1', 'Файл 2', 'Файл 3' и т.д..");
-    $order_hint->modify_font(new PangoFontDescription('Italic'));
-    $order_hint->set_alignment(0, 0);
     $order_vbox = new GtkVBox;
     $order_vbox->pack_start($order_radio);
     $order_vbox->pack_start($order_hbox);
-    $order_vbox->pack_start($order_hint);
     $vbox->pack_start($order_vbox);
 
-    $vbox->pack_start(new GtkHSeparator);
-
-    $replace_radio = new GtkRadioButton($upper_radio, 'Замена');
-    $replace_oldname_label = new GtkLabel('Строка поиска:');
+    $replace_radio = new GtkRadioButton($upper_radio, $lang['bulk_rename']['replace']);
+    $replace_radio->set_tooltip_text($lang['bulk_rename']['replace_hint']);
+    $replace_oldname_label = new GtkLabel($lang['bulk_rename']['replace_match']);
     $replace_oldname_entry = new GtkEntry();
-    $replace_newname_label = new GtkLabel('Строка замены:');
+    $replace_newname_label = new GtkLabel($lang['bulk_rename']['replace_replace']);
     $replace_newname_entry = new GtkEntry();
-    $replace_hbox = new GtkHBox;
-    $replace_hbox->set_sensitive(FALSE);
-    $replace_hbox->pack_start($replace_oldname_label);
-    $replace_hbox->pack_start($replace_oldname_entry);
-    $replace_hbox->pack_start($replace_newname_label);
-    $replace_hbox->pack_start($replace_newname_entry);
-    $replace_hint = new GtkLabel("В именах всех файлов строка поиска будет заменена на строку замены.");
-    $replace_hint->modify_font(new PangoFontDescription('Italic'));
-    $replace_hint->set_alignment(0, 0);
-    $replace_vbox = new GtkVBox;
-    $replace_vbox->pack_start($replace_radio);
-    $replace_vbox->pack_start($replace_hbox);
-    $replace_vbox->pack_start($replace_hint);
-    $vbox->pack_start($replace_vbox);
+    $replace_table = new GtkTable();
+    $replace_table->set_sensitive(FALSE);
+    $replace_table->attach($replace_oldname_label, 0, 1, 0, 1, Gtk::SHRINK);
+    $replace_table->attach($replace_oldname_entry, 1, 2, 0, 1);
+    $replace_table->attach($replace_newname_label, 0, 1, 1, 2, Gtk::SHRINK);
+    $replace_table->attach($replace_newname_entry, 1, 2, 1, 2);
+    $vbox->pack_start($replace_radio);
+    $vbox->pack_start($replace_table);
 
     $vbox->pack_start(new GtkHSeparator);
 
-    $ext_check = new GtkCheckButton('Оставить прежние расширения');
-    $ext_hint = new GtkLabel('Расширения не будут подвергаться переименованию.');
-    $ext_hint->modify_font(new PangoFontDescription('Italic'));
-    $ext_hint->set_alignment(0, 0);
-    $ext_vbox = new GtkVBox;
-    $ext_vbox->pack_start($ext_check);
-    $ext_vbox->pack_start($ext_hint);
-    $vbox->pack_start($ext_vbox);
+    $ext_check = new GtkCheckButton($lang['bulk_rename']['ext']);
+    $ext_check->set_tooltip_text($lang['bulk_rename']['ext_hint']);
+    $hidden_check = new GtkCheckButton($lang['bulk_rename']['hidden']);
+    $hidden_check->set_active(TRUE);
+    $hidden_check->set_tooltip_text($lang['bulk_rename']['hidden_hint']);
+    $check_vbox = new GtkVBox;
+    $check_vbox->pack_start($ext_check);
+    $check_vbox->pack_start($hidden_check);
+    $vbox->pack_start($check_vbox);
 
-    $vbox->pack_start(new GtkHSeparator);
+    $vbox->pack_start(new GtkHSeparator(), FALSE, FALSE);
 
-    $button_cancel = new GtkButton('Отменить');
-    $button_ok = new GtkButton('Переименовать');
+    $button_cancel = new GtkButton();
+    $btn_hbox = new GtkHBox();
+    $btn_hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_CANCEL, Gtk::ICON_SIZE_BUTTON));
+    $btn_hbox->pack_start($label = new GtkLabel($lang['bulk_rename']['cancel']));
+    $label->set_use_underline(TRUE);
+    $button_cancel->add($btn_hbox);
+    $button_ok = new GtkButton();
+    $btn_hbox = new GtkHBox();
+    $btn_hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_OK, Gtk::ICON_SIZE_BUTTON));
+    $btn_hbox->pack_start($label = new GtkLabel($lang['bulk_rename']['rename']));
+    $label->set_use_underline(TRUE);
+    $button_ok->add($btn_hbox);
     $hhbox = new GtkHButtonBox();
     $hhbox->add($button_cancel);
     $hhbox->add($button_ok);
-    $vbox->pack_start($hhbox);
+    $vbox->pack_start($hhbox, FALSE, FALSE);
     
-    $upper_radio->connect_simple('toggled', 'on_active_element', 'upper', $order_hbox, $replace_hbox, $ext_check);
-    $lower_radio->connect_simple('toggled', 'on_active_element', 'lower', $order_hbox, $replace_hbox, $ext_check);
-    $order_radio->connect_simple('toggled', 'on_active_element', 'order', $order_hbox, $replace_hbox, $ext_check);
-    $replace_radio->connect_simple('toggled', 'on_active_element', 'replace', $order_hbox, $replace_hbox, $ext_check);
-    $button_cancel->connect_simple('clicked', 'mass_rename_close', $wnd);
-    $button_ok->connect_simple('clicked', 'mass_rename', $wnd, $ext_check, $order_name_entry, $replace_oldname_entry, $replace_newname_entry);
+    $upper_radio->connect_simple('toggled', 'ActiveTypeRename', 'upper', $order_hbox, $replace_table, $ext_check);
+    $lower_radio->connect_simple('toggled', 'ActiveTypeRename', 'lower', $order_hbox, $replace_table, $ext_check);
+    $order_radio->connect_simple('toggled', 'ActiveTypeRename', 'order', $order_hbox, $replace_table, $ext_check);
+    $replace_radio->connect_simple('toggled', 'ActiveTypeRename', 'replace', $order_hbox, $replace_table, $ext_check);
+    $button_cancel->connect_simple('clicked', 'BulkRenameWindowClose', $wnd);
+    $button_ok->connect_simple(
+        'clicked', 'BulkRenameAction', $wnd,
+        $ext_check, $hidden_check, $order_name_entry,
+        $replace_oldname_entry, $replace_newname_entry);
 
     $wnd->add($vbox);
     $wnd->show_all();
     Gtk::main();
 }
 
-function on_active_element($element, $order, $replace, $ext)
+/**
+ * Функция заносит в глобальную переменную тип переименования файлов
+ * и делает неактивными некоторые элементы интерфейса.
+ * @global string $active_type_rename
+ * @param string $typeRename
+ * @param GtkBox $orderBox
+ * @param GtkTable $replaceTable
+ * @param GtkCheckButton $extCheckButton
+ */
+function ActiveTypeRename($typeRename, $orderBox, $replaceTable, $extCheckButton)
 {
-    global $mass_rename_radio;
+    global $active_type_rename;
 
-    if ($element == 'order')
+    if ($typeRename == 'order')
     {
-        $order->set_sensitive(TRUE);
-        $replace->set_sensitive(FALSE);
-        $ext->set_sensitive(TRUE);
+        $orderBox->set_sensitive(TRUE);
+        $replaceTable->set_sensitive(FALSE);
+        $extCheckButton->set_sensitive(TRUE);
     }
-    elseif ($element == 'replace')
+    elseif ($typeRename == 'replace')
     {
-        $order->set_sensitive(FALSE);
-        $replace->set_sensitive(TRUE);
-        $ext->set_sensitive(FALSE);
+        $orderBox->set_sensitive(FALSE);
+        $replaceTable->set_sensitive(TRUE);
+        $extCheckButton->set_sensitive(FALSE);
     }
     else
     {
-        $order->set_sensitive(FALSE);
-        $replace->set_sensitive(FALSE);
-        $ext->set_sensitive(TRUE);
+        $orderBox->set_sensitive(FALSE);
+        $replaceTable->set_sensitive(FALSE);
+        $extCheckButton->set_sensitive(TRUE);
     }
-    $mass_rename_radio = $element;
+    $active_type_rename = $typeRename;
 }
 
-/**
- * Массовое переименование всех файлов в текущей директории.
- * @param object $window Окно, которое будет закрыто после завершения операции
- * @param object $ext Переключатель GtkCheckButton, отвечающий за переименование расширения
- */
-function mass_rename($window, $ext, $entry1 = '', $entry2 = '', $entry3 = '')
+ /**
+  * Массовое переименование всех файлов в текущей директории.
+  * @global string $active_type_rename
+  * @global array $start
+  * @global string $panel
+  * @param GtkWindow $renameWindow Окно, которое будет закрыто после завершения операции
+  * @param GtkCheckButton $extCheckButton Переключатель, отвечающий за переименование расширения
+  * @param GtkCheckButton $hiddenCheckButton Переключатель, отвечающий за пропуск скрытых файлов
+  * @param GtkEntry $orderEntry Поле ввода, используется, если тип переименования 'order'
+  * @param GtkEntry $replaceMatchEntry Поле ввода строки поиска, используется, если тип переименования 'replace'
+  * @param GtkEntry $replaceReplaceEntry Поле ввода строки замены, используется, если тип переименования 'replace'
+  */
+function BulkRenameAction($renameWindow, $extCheckButton, $hiddenCheckButton, $orderEntry, $replaceMatchEntry, $replaceReplaceEntry)
 {
-    global $mass_rename_radio, $start, $panel;
+    global $active_type_rename, $start, $panel;
 
     $opendir = opendir($start[$panel]);
+
+    // Используется для переименования файлов 'По порядку'
     $i = 1;
+
     while (FALSE !== ($file = readdir($opendir)))
     {
         $filename = $start[$panel].'/'.$file;
+
+        // Пропускаем директории '.' и '..'
         if ($file == '.' OR $file == '..' OR !is_file($filename))
-            continue;
-        // Верхний регистр
-        if ($mass_rename_radio == 'upper')
         {
-            // Оставляем преждние расширения
-            if ($ext->get_active() === TRUE)
+            continue;
+        }
+
+        // При необходимости пропускаем скрытые файлы
+        if ($hiddenCheckButton->get_active() === TRUE)
+        {
+            if (preg_match("#^\.(.+?)#", $file))
+                continue;
+        }
+
+        // Верхний регистр
+        if ($active_type_rename == 'upper')
+        {
+            // Оставляем прежние расширения
+            if ($extCheckButton->get_active() === TRUE)
             {
                 $explode = explode ('.', $file);
                 $count = count($explode);
+                // Если у файла нет расширения
                 if ($count == 1)
                 {
-                    rename($filename, $start[$panel].'/'.my_strto('upper', $file));
+                    rename($filename, $start[$panel].'/'.MyStrTo('upper', $file));
                     continue;
                 }
                 $new_file = '';
                 for ($i = 0; $i < $count; $i++)
                 {
                     if ($i < $count - 1)
-                        $new_file .= my_strto('upper', $explode[$i]).'.';
+                        $new_file .= MyStrTo('upper', $explode[$i]).'.';
                     else
                         $new_file .= $explode[$i];
                 }
                 rename($filename, $start[$panel].'/'.$new_file);
             }
+            // Переименовываем вместе с расширениями
             else
-                rename($filename, $start[$panel].'/'.my_strto('upper', $file));
+            {
+                rename($filename, $start[$panel].'/'.MyStrTo('upper', $file));
+            }
         }
         // Нижний регистр
-        elseif ($mass_rename_radio == 'lower')
+        elseif ($active_type_rename == 'lower')
         {
-            if ($ext->get_active() === TRUE)
+            // Оставляем прежние расширения
+            if ($extCheckButton->get_active() === TRUE)
             {
                 $explode = explode ('.', $file);
                 $count = count($explode);
                 // Если у файла нет расширения
                 if ($count == 1)
                 {
-                    rename($filename, $start[$panel].'/'.my_strto('lower', $file));
+                    rename($filename, $start[$panel].'/'.MyStrTo('lower', $file));
                     continue;
                 }
                 $new_file = '';
                 for ($i = 0; $i < $count; $i++)
                 {
                     if ($i < $count - 1)
-                        $new_file .= my_strto('lower', $explode[$i]).'.';
+                        $new_file .= MyStrTo('lower', $explode[$i]).'.';
                     else
                         $new_file .= $explode[$i];
                 }
                 rename($filename, $start[$panel].'/'.$new_file);
             }
+            // Переименовываем вместе с расширениями
             else
-                rename($filename, $start[$panel].'/'.my_strto('lower', $file));
+            {
+                rename($filename, $start[$panel].'/'.MyStrTo('lower', $file));
+            }
         }
         // По порядку
-        elseif ($mass_rename_radio == 'order')
+        elseif ($active_type_rename == 'order')
         {
-            $name = $entry1->get_text();
+            $name = $orderEntry->get_text();
             if (empty($name))
+            {
                 $name = 'Файл ';
+            }
 
-            if ($ext->get_active() === TRUE)
+            // Оставляем прежние расширения
+            if ($extCheckButton->get_active() === TRUE)
             {
                 $explode = explode ('.', $file);
                 $count = count($explode);
                 // Если у файла нет расширения
                 if ($count == 1)
+                {
                     $out = $name.$i;
+                }
                 else
+                {
                     $out = $name.$i.'.'.$explode[$count - 1];
+                }
                 rename($filename, $start[$panel].'/'.$out);
             }
+            // Переименовываем вместе с расширениями
             else
+            {
                 rename($filename, $start[$panel].'/'.$name.$i);
+            }
             $i++;
         }
         // Замена
-        elseif ($mass_rename_radio == 'replace')
+        elseif ($active_type_rename == 'replace')
         {
-            $oldname = $entry2->get_text();
-            $newname = $entry3->get_text();
-            if (empty($oldname))
-                break;
-            rename($filename, $start[$panel].'/'.str_replace($oldname, $newname, $file));
+            $match = $replaceMatchEntry->get_text();
+            $replace = $replaceReplaceEntry->get_text();
+            rename($filename, $start[$panel].'/'.str_replace($match, $replace, $file));
         }
     }
     closedir($opendir);
     change_dir('none', '', 'all');
-    $window->destroy();
+    $renameWindow->destroy();
 }
 
 /**
  * Правильное изменение регистра файлов с кириллическими символами в имени.
  * @param string $type Направление изменения регистра - lower|upper
- * @param string $str Имя файла
+ * @param string $str Старое имя файла
  * @return string Новое имя файла
  */
-function my_strto($type, $str)
+function MyStrTo($type, $str)
 {
     $lower = array(
         'ё','й','ц','у','к','е','н','г', 'ш','щ',
@@ -273,7 +314,11 @@ function my_strto($type, $str)
     return $str;
 }
 
-function mass_rename_close($window)
+/**
+ * Закрытие окна.
+ * @param GtkWindow $window Закрываемое окно
+ */
+function BulkRenameWindowClose($window)
 {
     $window->destroy();
 }

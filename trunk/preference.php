@@ -64,7 +64,9 @@ function preference()
     $partbar_refresh = new GtkCheckButton($lang['preference']['partbar_refresh']);
     $partbar_refresh->set_tooltip_text($lang['preference']['partbar_refresh_hint']);
     $view_lines_files = new GtkCheckButton($lang['preference']['view_lines_files']);
+    $view_lines_files->set_tooltip_text($lang['preference']['vlf_hint']);
     $view_lines_columns = new GtkCheckButton($lang['preference']['view_lines_columns']);
+    $view_lines_columns->set_tooltip_text($lang['preference']['vlc_hint']);
     
     if ($_config['hidden_files'] == 'on')
         $label_hidden_files->set_active(TRUE);

@@ -10,7 +10,7 @@
  * Функция выводит диалоговое окно, в котором
  * содержатся все "горячие клавиши" программы.
  */
-function shortcuts()
+function ShortcutsWindow()
 {
     global $lang;
     

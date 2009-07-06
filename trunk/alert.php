@@ -11,7 +11,7 @@
  * @param string $msg Текст, который будет отображён в окне
  * @global array $lang
  */
-function alert($msg)
+function AlertWindow($msg)
 {
     global $lang;
 
