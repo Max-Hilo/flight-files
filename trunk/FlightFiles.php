@@ -144,10 +144,12 @@ config_parser();
 // Основной языковой файл
 if (OS == 'Windows')
 {
+    ini_set('php-gtk.codepage', 'CP1251');
     include SHARE_DIR . DS . 'default_lang.CP1251.php';
 }
 else
 {
+    ini_set('php-gtk.codepage', 'UTF8');
     include SHARE_DIR . DS . 'default_lang.UTF8.php';
 }
 
