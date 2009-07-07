@@ -50,10 +50,10 @@ function preference()
         if ($file == '.' OR $file == '..')
             continue;
         $explode = explode('.', $file);
-        if ($explode[1] == 'php')
+        if ($explode[2] == 'php')
         {
-            $combo->append_text($explode[0]);
-            if ($explode[0] == $_config['language'])
+            $combo->append_text($explode[0].'.'.$explode[1]);
+            if ($explode[0].'.'.$explode[1] == $_config['language'])
                 $combo->set_active($i);
             $i++;
         }
