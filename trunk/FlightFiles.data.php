@@ -1387,6 +1387,15 @@ function partbar()
             $button->connect_simple('clicked', 'change_dir', 'bookmarks', $mount);
             $partbar->pack_start($button, FALSE, FALSE);
         }
+        $refresh_button = new GtkButton();
+        $button_hbox = new GtkHBox();
+        $button_hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_REFRESH, Gtk::ICON_SIZE_BUTTON), FALSE, FALSE);
+        $button_hbox->pack_start(new GtkLabel());
+        $button_hbox->pack_start(new GtkLabel($lang['partbar']['refresh']));
+        $refresh_button->add($button_hbox);
+        $refresh_button->set_tooltip_text($lang['partbar']['refresh_hint']);
+        $refresh_button->connect_simple('clicked', 'partbar', TRUE);
+        $partbar->pack_end($refresh_button, FALSE, FALSE);
     }
     elseif (OS == 'Windows')
     {
@@ -1400,16 +1409,6 @@ function partbar()
         $partbar->pack_start($combo, FALSE, FALSE);
     }
 
-    $refresh_button = new GtkButton();
-    $button_hbox = new GtkHBox();
-    $button_hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_REFRESH, Gtk::ICON_SIZE_BUTTON), FALSE, FALSE);
-    $button_hbox->pack_start(new GtkLabel());
-    $button_hbox->pack_start(new GtkLabel('Обновить'));
-    $refresh_button->add($button_hbox);
-    $refresh_button->set_tooltip_text('Обновить список разделов');
-    $refresh_button->connect_simple('clicked', 'partbar', TRUE);
-    $partbar->pack_end($refresh_button, FALSE, FALSE);
-    
     if ($_config['partbar_view'] == 'on')
         $partbar->show_all();
     else

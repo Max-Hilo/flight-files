@@ -64,6 +64,8 @@ $lang['toolbar']['new_dir_hint']        = 'Создать папку в теку
 $lang['toolbar']['paste']               = 'Вставить';
 $lang['toolbar']['paste_hint']          = 'Вставить элемент из буфера обмена в текущую директорию';
 
+$lang['partbar']['refresh']             = 'Обновить';
+$lang['partbar']['refresh_hint']        = 'Обновить список разделов';
 $lang['partbar']['label']               = 'Список разделов:';
 $lang['partbar']['mount']               = 'Точка монтирования - ';
 

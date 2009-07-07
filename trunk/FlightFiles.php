@@ -9,17 +9,16 @@
  * @link http://code.google.com/p/flight-files Домашняя страница проекта
  */
 
-if ($_ENV['HOME'])
-{
-    $os = 'Unix';
-    $home_dir = $_ENV['HOME'];
-    $root_dir = '/';
-}
-else
+if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
 {
     $os = 'Windows';
     $home_dir = $_ENV['USERPROFILE'];
     $root_dir = 'C:';
+}
+else{
+    $os = 'Unix';
+    $home_dir = $_ENV['HOME'];
+    $root_dir = '/';
 }
 
 /**
@@ -143,28 +142,20 @@ else
 config_parser();
 
 // Основной языковой файл
-include SHARE_DIR . DS . 'default_lang.php';
+if (OS == 'Windows')
+{
+    include SHARE_DIR . DS . 'default_lang.CP1251.php';
+}
+else
+{
+    include SHARE_DIR . DS . 'default_lang.UTF8.php';
+}
 
 // Пользовательский языковой файл
-//if (!empty($_config['language']))
-//{
-//    if (file_exists(LANG_DIR.'/'.$_config['language'].'.php'))
-//    {
-//        include LANG_DIR.'/'.$_config['language'].'.php';
-//    }
-//    else
-//    {
-//        $explode = explode('.', $_SERVER['LANG']);
-//        if (file_exists(LANG_DIR.'/'.$explode[0].'.php'))
-//            include LANG_DIR.'/'.$explode[0].'.php';
-//    }
-//}
-//else
-//{
-//    $explode = explode('.', $_SERVER['LANG']);
-//    if (file_exists(LANG_DIR.'/'.$explode[0].'.php'))
-//        include LANG_DIR.'/'.$explode[0].'.php';
-//}
+if (!empty($_config['language']) AND file_exists(LANG_DIR . DS . $_config['language'] . '.php'))
+{
+    include LANG_DIR . DS . $_config['language'] . '.php';
+}
 
 /**
  * Панель, активная в текущий момент. По умолчанию активна левая панель.
