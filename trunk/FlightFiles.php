@@ -142,6 +142,7 @@ else
 config_parser();
 
 // Основной языковой файл
+// По умолчанию используется русский язык (хотя должен английский) и кодировка CP1251
 if (OS == 'Windows')
 {
     ini_set('php-gtk.codepage', 'CP1251');
@@ -154,9 +155,16 @@ else
 }
 
 // Пользовательский языковой файл
+// Имеет следующую структуру: <locale>.<CHARSET>.php
+// locale - язык, CHARSET - подходящая для данного языка кодировка
 if (!empty($_config['language']) AND file_exists(LANG_DIR . DS . $_config['language'] . '.php'))
 {
-    include LANG_DIR . DS . $_config['language'] . '.php';
+    $filename = LANG_DIR . DS . $_config['language'] . '.php';
+    $explode = explode('.', $filename);
+    $charset = $explode[1];
+    echo 'CHARSET: '.$charset."\n";
+    ini_set('php-gtk.codepage', $charset);
+    include $filename;
 }
 
 /**
