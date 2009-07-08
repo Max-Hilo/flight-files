@@ -11,7 +11,7 @@
  * @param string $msg Текст, который будет отображён в окне
  * @global array $lang
  */
-function AlertWindow($msg)
+function alert_window($msg)
 {
     global $lang;
 
@@ -22,12 +22,11 @@ function AlertWindow($msg)
     $dialog->set_resizable(FALSE);
     $top_area = $dialog->vbox;
     $top_area->pack_start($hbox = new GtkHBox());
-    $hbox->pack_start(new GtkLabel(' '));
-    $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_WARNING, Gtk::ICON_SIZE_DIALOG));
-    $hbox->pack_start(new GtkLabel(' '));
+    $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_WARNING, Gtk::ICON_SIZE_DIALOG), FALSE, FALSE);
     $label = new GtkLabel($msg);
+    $label->set_line_wrap(TRUE);
     $label->set_justify(Gtk::JUSTIFY_CENTER);
-    $hbox->pack_start($label);
+    $hbox->pack_start($label, TRUE, TRUE, 20);
     $hbox->pack_start(new GtkLabel(' '));
     $dialog->set_has_separator(FALSE);
     $dialog->show_all();

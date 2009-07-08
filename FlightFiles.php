@@ -89,6 +89,7 @@ include SHARE_DIR . DS . 'about.php';
 include SHARE_DIR . DS . 'alert.php';
 include SHARE_DIR . DS . 'bookmarks.php';
 include SHARE_DIR . DS . 'checksum.php';
+include SHARE_DIR . DS . 'files_associations.php';
 include SHARE_DIR . DS . 'mass_rename.php';
 include SHARE_DIR . DS . 'preference.php';
 include SHARE_DIR . DS . 'properties.php';
@@ -114,18 +115,20 @@ if (!file_exists(DATABASE))
     sqlite_query($sqlite, "CREATE TABLE config(key, value)");
     sqlite_query($sqlite, "CREATE TABLE history_left(id INTEGER PRIMARY KEY, path)");
     sqlite_query($sqlite, "CREATE TABLE history_right(id INTEGER PRIMARY KEY, path)");
+    sqlite_query($sqlite, "CREATE TABLE type_files(id INTEGER PRIMARY KEY, type, command)");
+    sqlite_query($sqlite, "CREATE TABLE ext_files(id_type, ext)");
     sqlite_query($sqlite, "INSERT INTO config(key, value) VALUES('HIDDEN_FILES', 'off');".
                           "INSERT INTO config(key, value) VALUES('HOME_DIR_LEFT', '".ROOT_DIR."');".
                           "INSERT INTO config(key, value) VALUES('HOME_DIR_RIGHT', '".HOME_DIR."');".
                           "INSERT INTO config(key, value) VALUES('ASK_DELETE', 'on');".
-                          "INSERT INTO config(key, value) VALUES('ASK_CLOSE', 'on');".
+                          "INSERT INTO config(key, value) VALUES('ASK_CLOSE', 'off');".
                           "INSERT INTO config(key, value) VALUES('TOOLBAR_VIEW', 'on');".
                           "INSERT INTO config(key, value) VALUES('ADDRESSBAR_VIEW', 'on');".
                           "INSERT INTO config(key, value) VALUES('STATUSBAR_VIEW', 'on');".
                           "INSERT INTO config(key, value) VALUES('PARTBAR_VIEW', 'on');".
                           "INSERT INTO config(key, value) VALUES('FONT_LIST', '');".
                           "INSERT INTO config(key, value) VALUES('LANGUAGE', '');".
-                          "INSERT INTO config(key, value) VALUES('MAXIMIZE', 'on');".
+                          "INSERT INTO config(key, value) VALUES('MAXIMIZE', 'off');".
                           "INSERT INTO config(key, value) VALUES('TERMINAL', '');".
                           "INSERT INTO config(key, value) VALUES('COMPARISON', '');".
                           "INSERT INTO config(key, value) VALUES('PARTBAR_REFRESH', 'off');".
@@ -261,6 +264,7 @@ $array_menuitem = array(
     array('edit', '', 'rename', $lang['menu']['rename'], '', '_rename', '', '', 'false', 'F2'),
     array('edit', '', 'mass_rename', $lang['menu']['mass_rename'], '', 'BulkRenameWindow', '', '', 'write', '<control>F2'),
     array('edit', 'separator'),
+    array('edit', '', 'files_associations', $lang['menu']['files_ass'], '', 'FilesAssociationsWindow', '', '', '', ''),
     array('edit', '', 'preference', $lang['menu']['preference'], Gtk::STOCK_PROPERTIES, 'preference'),
     array('view', 'toggle', 'toolbar_view', $lang['menu']['toolbar_view'], '',
         'panel_view', 'toolbar_view', '', array($_config['toolbar_view'], 'on'), 'F5'),
@@ -477,7 +481,7 @@ $left = new GtkFrame;
 $left->set_shadow_type(Gtk::SHADOW_IN);
 
 $store['left'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING,
-    GObject::TYPE_STRING, GObject::TYPE_BOOLEAN);
+    GObject::TYPE_STRING, GObject::TYPE_BOOLEAN, GObject::TYPE_STRING, GObject::TYPE_STRING);
 $tree_view['left'] = new GtkTreeView($store['left']);
 
 // При необходимости показываем линии между колонками и между файлами
@@ -513,7 +517,7 @@ $right = new GtkFrame;
 $right->set_shadow_type(Gtk::SHADOW_IN);
 
 $store['right'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING,
-    GObject::TYPE_STRING, GObject::TYPE_BOOLEAN);
+    GObject::TYPE_STRING, GObject::TYPE_BOOLEAN, GObject::TYPE_STRING, GObject::TYPE_STRING);
 sqlite_query($sqlite, "INSERT INTO history_right(path) VALUES('$start[right]')");
 current_dir('right');
 
