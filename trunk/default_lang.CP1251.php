@@ -29,6 +29,7 @@ $lang['menu']['cut']                    = 'Вырезать';
 $lang['menu']['paste']                  = 'Вставить';
 $lang['menu']['rename']                 = 'Переименовать';
 $lang['menu']['mass_rename']            = 'Массовое переименование';
+$lang['menu']['files_ass']              = 'Файловые ассоциации';
 $lang['menu']['preference']             = 'Параметры';
 $lang['menu']['toolbar_view']           = 'Панель инструментов';
 $lang['menu']['partbar_view']           = 'Список разделов';
@@ -76,6 +77,7 @@ $lang['addressbar']['button_hint']      = 'Перейти в указанную папку';
 $lang['column']['title']                = 'Название';
 $lang['column']['size']                 = 'Размер';
 $lang['column']['mtime']                = 'Дата изменения';
+$lang['column']['ext']                  = 'Расш.';
 
 $lang['statusbar']['count']             = 'Количество элементов:';
 $lang['statusbar']['dirs']              = 'папок:';
@@ -96,15 +98,12 @@ $lang['bookmarks']['bookmarks']         = 'Закладки';
 $lang['bookmarks']['root']              = 'Корень';
 $lang['bookmarks']['new']               = 'Новая закладка';
 
-$lang['about']['comments']              = 'Небольшой файловый менеджер, написанный на языке PHP'.
-' с использованием библиотеки PHP-GTK2.';
-$lang['about']['license']               = "Программа FlightFiles является свободным программным обеспечением.\n\n".
-"Вы вправе распространять ее и/или модифицировать\n".
-"в соответствии с условиями лицензии MIT.\n\n".
-"Разработчик не предоставляет каких-либо гарантий на программу.\n\n".
-"Вы используете её на свой страх и риск.\n\n".
-"Вместе с данной программой вы должны были получить экземпляр\n".
-"лицензии MIT, распологающийся в файле LICENSE.";
+$lang['about']['description']           = "Небольшой файловый менеджер, написанный на языке PHP с использованием библиотеки PHP-GTK2.";
+$lang['about']['license']               = "Программа FlightFiles является свободным программным\n".
+"обеспечением. Вы вправе распространять ее и/или\n".
+"модифицировать в соответствии с условиями лицензии MIT.\n\n".
+"Разработчик не предоставляет каких-либо гарантий\nна программу. Вы используете её на свой страх и риск.\n\n".
+"Ниже приведён оригинальный текст лицензии MIT:\n\n";
 
 $lang['shortcuts']['title']             = 'Сочетания клавиш';
 $lang['shortcuts']['up']                = 'Вверх';
@@ -230,6 +229,8 @@ $lang['command']['comparison_none']     = "Команда '%s' не найдена.";
 $lang['command']['comparison_empty']    = 'Не выбрана программа для сравнения файлов.';
 $lang['command']['terminal_none']       = "Команда '%s' не найдена.";
 $lang['command']['terminal_empty']      = 'Не выбрана программа в качестве терминала.';
+$lang['command']['none']                = "Не выбрана программа для открытия файлов типа '%s'";
+$lang['command']['not_found']           = "Не верно указана программа для открытия файлов типа '%s'";
 
 $lang['bulk_rename']['title']           = 'Массовое переименование';
 $lang['bulk_rename']['upper']           = '_Верхний регистр';
@@ -252,3 +253,19 @@ $lang['bulk_rename']['hidden']          = 'Пропускать _скрытые файлы';
 $lang['bulk_rename']['hidden_hint']     = 'Скрытыми считаются файлы и папки, имена которых начинаются с точки';
 $lang['bulk_rename']['cancel']          = '_Отменить';
 $lang['bulk_rename']['rename']          = '_Переименовать';
+
+$lang['file_ass']['title']              = 'Файловые ассоциации';
+$lang['file_ass']['add_type']           = '_Добавить';
+$lang['file_ass']['edit_type']          = '_Изменить';
+$lang['file_ass']['remove_type']        = '_Удалить';
+$lang['file_ass']['types']              = 'Типы файлов:';
+$lang['file_ass']['extensions']         = 'Расширения:';
+$lang['file_ass']['add_ext']            = 'Д_обавить';
+$lang['file_ass']['edit_ext']           = 'И_зменить';
+$lang['file_ass']['remove_ext']         = 'Уд_алить';
+$lang['file_ass']['command_hint']       = 'Изменить программу для запуска';
+$lang['file_ass']['chooser_command']    = 'Выбрать файл';
+$lang['file_ass']['cancel_add_ext']     = '_Отменить';
+$lang['file_ass']['ok_add_ext']         = '_Добавить';
+$lang['file_ass']['cancel_add_type']    = '_Отменить';
+$lang['file_ass']['ok_add_type']        = '_Добавить';

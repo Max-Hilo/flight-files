@@ -91,7 +91,8 @@ function on_button($view, $event, $type)
 
     @$iter = $store[$panel]->get_iter($path);
     @$file = $store[$panel]->get_value($iter, 0);
-    @$dir_file = $store[$panel]->get_value($iter, 1);
+    @$extension = $store[$panel]->get_value($iter, 1);
+    @$dir_file = $store[$panel]->get_value($iter, 5);
     @$size = $store[$panel]->get_value($iter, 2);
 
     if (!empty($file))
@@ -113,27 +114,67 @@ function on_button($view, $event, $type)
         // При двойном клике по папке открываем её
         if ($event->type == Gdk::_2BUTTON_PRESS)
         {
-            if (is_dir($start[$panel] . DS . $file))
+            $filename = $start[$panel] . DS . $file;
+            if (is_dir($filename))
             {
                 // При нехватке прав для просмотра директории
-                if (!is_readable($start[$panel]. DS .$file))
-                    AlertWindow($lang['alert']['chmod_read_dir']);
+                if (!is_readable($filename))
+                    alert_window($lang['alert']['chmod_read_dir']);
                 else
                 {
                     if (!empty($file))
                         change_dir('open', $file);
                 }
             }
-            elseif (is_file($start[$panel]. DS .$file))
+            elseif (is_file($filename))
             {
-                if (!is_readable($start[$panel]. DS .$file))
-                    AlertWindow($lang['alert']['chmod_read_file']);
-                if (OS == 'Unix')
+                if (!is_readable($filename))
                 {
-                    $mime = mime_content_type($start[$panel]. DS .$file);
-                    if ($mime == 'text/plain' OR $mime == 'text/html')
-                        TextEditorWindow($start[$panel].DS.$file);
+                    alert_window($lang['alert']['chmod_read_file']);
+                    return FALSE;
                 }
+                $explode = explode('.', basename($filename));
+                $ext = '.'.$explode[count($explode) - 1];
+                $query = sqlite_query($sqlite, "SELECT id_type, ext FROM ext_files WHERE ext = '$ext'");
+                $snr = sqlite_num_rows($query);
+                if ($snr != 0)
+                {
+                    $sfa = sqlite_fetch_array($query);
+                    $id = $sfa['id_type'];
+                    $query = sqlite_query($sqlite, "SELECT id, type, command FROM type_files WHERE id = '$id'");
+                    $snr = sqlite_num_rows($query);
+                    if ($snr != 0)
+                    {
+                        $sfa = sqlite_fetch_array($query);
+                        if (empty($sfa['command']))
+                        {
+                            $str = str_replace('%s', $sfa['type'], $lang['command']['none']);
+                            alert_window($str);
+                        }
+                        else
+                        {
+                            if (!file_exists($sfa['command']))
+                            {
+                                $str = str_replace('%s', $sfa['type'], $lang['command']['not_found']);
+                                alert_window($str);
+                            }
+                            elseif (OS == 'Windows')
+                            {
+                                exec($sfa['command'] . " '$filename'");
+                            }
+                            else
+                            {
+                                exec($sfa['command']." '$filename' > /dev/null &");
+                            }
+                        }
+                    }
+                }
+//                if (OS == 'Unix')
+//                {
+//                    $mime = mime_content_type($start[$panel]. DS .$file);
+//                    if ($mime == 'text/plain' OR $mime == 'text/html')
+//                        TextEditorWindow($start[$panel].DS.$file);
+//                }
             }
         }
         return FALSE;
@@ -376,7 +417,7 @@ function on_rename ($entry, $filename, $dialog)
     if (empty($new_name))
     {
         $dialog->destroy();
-        AlertWindow($lang['alert']['empty_name']);
+        alert_window($lang['alert']['empty_name']);
         _rename($filename);
     }
     else
@@ -385,7 +426,7 @@ function on_rename ($entry, $filename, $dialog)
         {
             $dialog->destroy();
             $str = str_replace('%s', $new_name, $lang['alert']['file_exists_rename']);
-            AlertWindow($str);
+            alert_window($str);
             _rename($filename);
         }
         else
@@ -600,7 +641,9 @@ function delete($filename)
             $vbox->pack_start($hbox = new GtkHBox());
             $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
             $text = str_replace('%s', basename($filename), $lang['delete']['dir']);
-            $hbox->pack_start(new GtkLabel($text));
+            $label = new GtkLabel($text);
+            $label->set_line_wrap(TRUE);
+            $hbox->pack_start($label, TRUE, TRUE, 20);
             $dialog->show_all();
             $result = $dialog->run();
             if ($result == Gtk::RESPONSE_YES)
@@ -608,7 +651,9 @@ function delete($filename)
             $dialog->destroy();
         }
         else
+        {
             rm($filename);
+        }
     }
     else
     {
@@ -628,9 +673,11 @@ function delete($filename)
             $dialog->set_position(Gtk::WIN_POS_CENTER);
             $vbox = $dialog->vbox;
             $vbox->pack_start($hbox = new GtkHBox());
-            $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
+            $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG), FALSE, FALSE);
             $text = str_replace('%s', basename($filename), $lang['delete']['file']);
-            $hbox->pack_start(new GtkLabel($text));
+            $label = new GtkLabel($text);
+            $label->set_line_wrap(TRUE);
+            $hbox->pack_start($label, TRUE, TRUE, 20);
             $dialog->show_all();
             $result = $dialog->run();
             if ($result == Gtk::RESPONSE_YES)
@@ -690,7 +737,9 @@ function current_dir($panel, $status = '')
     {
         // Пропускаем папки '.' и '..'
         if ($file == '.' OR $file == '..')
+        {
             continue;
+        }
 
         // Пропускаем скрытые файлы, если это предусмотрено настройками
         if ($_config['hidden_files'] == 'off')
@@ -699,25 +748,47 @@ function current_dir($panel, $status = '')
                 continue;
         }
 
+        $filename = $start[$panel] . DS . $file;
         // Заполняем колонки для файлов...
-        if (is_file($start[$panel]. DS .$file))
+        if (is_file($filename))
         {
             if (empty($status))
             {
+                $explode = explode('.', $file);
+                $count = count($explode);
+                if ($count != 1)
+                {
+                    if (!preg_match("#^\.(.+?)#", $file))
+                    {
+                        $ext = '.'.$explode[count($explode) - 1];
+                    }
+                    else
+                    {
+                        $ext = '';
+                    }
+                }
+                else
+                {
+                    $ext = '';
+                }
                 $store[$panel]->append(array(
                         $file,
+                        $ext,
+                        convert_size($filename),
+                        date('d.m.Y G:i',filemtime($filename)),
+                        FALSE,
                         '<FILE>',
-                        convert_size($start[$panel]. DS .$file),
-                        date('d.m.Y G:i:s',filemtime($start[$panel]. DS .$file)),
-                        FALSE));
+                        ''));
             }
             $count_file++;
         }
         // ... и папок
-        elseif (is_dir($start[$panel]. DS .$file))
+        elseif (is_dir($filename))
         {
             if (empty($status))
-                $store[$panel]->append(array($file, '<DIR>', '', '', FALSE));
+            {
+                $store[$panel]->append(array($file, '', '', '', FALSE, '<DIR>', ''));
+            }
             $count_dir++;
         }
 
@@ -725,7 +796,7 @@ function current_dir($panel, $status = '')
     }
 
     $store[$panel]->set_sort_column_id(0, Gtk::SORT_ASCENDING);
-    $store[$panel]->set_sort_column_id(1, Gtk::SORT_ASCENDING);
+    $store[$panel]->set_sort_column_id(5, Gtk::SORT_ASCENDING);
 }
 
 /**
@@ -838,7 +909,7 @@ function change_dir($act = '', $dir = '', $all = FALSE)
 
     // Если указанной директории не существует, то информируем пользователя об этом
     if (!file_exists($new_dir))
-        AlertWindow($lang['alert']['dir_not_exists']);
+        alert_window($lang['alert']['dir_not_exists']);
     else
         $start[$panel] = $new_dir;
 
@@ -973,7 +1044,7 @@ function new_element($type)
 
     if (!is_writable($start[$panel]))
     {
-        AlertWindow($lang['alert']['new_not_chmod']);
+        alert_window($lang['alert']['new_not_chmod']);
         return FALSE;
     }
 
@@ -1100,7 +1171,7 @@ function clear_bufer()
     $action['paste']->set_sensitive(FALSE);
     $action_menu['clear_bufer']->set_sensitive(FALSE);
     $action_menu['paste']->set_sensitive(FALSE);
-    AlertWindow($lang['alert']['bufer_clear']);
+    alert_window($lang['alert']['bufer_clear']);
 }
 
 /**
@@ -1174,13 +1245,16 @@ function columns($tree_view, $cell_renderer)
     $column_image->pack_start($render);
     $column_image->set_cell_data_func($render, "image_column");
 
+    $cell_renderer->set_property('ellipsize', Pango::ELLIPSIZE_END);
+
     $column_file = new GtkTreeViewColumn($lang['column']['title'], $cell_renderer, 'text', 0);
     $column_file->set_expand(TRUE);
+    $column_file->set_resizable(TRUE);
     $column_file->set_sizing(Gtk::TREE_VIEW_COLUMN_FIXED);
     $column_file->set_sort_column_id(0);
 
-    $column_df = new GtkTreeViewColumn('', $cell_renderer, 'text', 1);
-    $column_df->set_visible(FALSE);
+    $column_ext = new GtkTreeViewColumn($lang['column']['ext'], $cell_renderer, 'text', 1);
+    $column_ext->set_sort_column_id(1);
 
     $column_size = new GtkTreeViewColumn($lang['column']['size'], $cell_renderer, 'text', 2);
     $column_size->set_sort_column_id(2);
@@ -1193,12 +1267,20 @@ function columns($tree_view, $cell_renderer)
     $column_boolen = new GtkTreeViewColumn('', $render_boolen, 'active', 4);
     $render_boolen->connect('toggled', 'column_bool');
 
+    $column_df = new GtkTreeViewColumn('', $cell_renderer, 'text', 5);
+    $column_df->set_visible(FALSE);
+
+    $column_null = new GtkTreeViewColumn('', $cell_renderer, 'text', 6);
+    $column_null->set_sizing(Gtk::TREE_VIEW_COLUMN_FIXED);
+
     $tree_view->append_column($column_image);
     $tree_view->append_column($column_file);
-    $tree_view->append_column($column_df);
+    $tree_view->append_column($column_ext);
     $tree_view->append_column($column_size);
     $tree_view->append_column($column_mtime);
     $tree_view->append_column($column_boolen);
+    $tree_view->append_column($column_df);
+    $tree_view->append_column($column_null);
 }
 
 function column_bool($render, $row)
@@ -1239,7 +1321,7 @@ function column_bool($render, $row)
 function image_column($column, $render, $model, $iter)
 {
     $path = $model->get_path($iter);
-    $type = $model->get_value($iter, 1);
+    $type = $model->get_value($iter, 5);
     $file = $model->get_value($iter, 0);
     if ($type == '<DIR>')
         $render->set_property('stock-id', 'gtk-directory');
@@ -1255,11 +1337,11 @@ function open_terminal()
     global $start, $panel, $lang, $_config;
 
     if (empty($_config['terminal']))
-        AlertWindow($lang['command']['terminal_empty']);
+        alert_window($lang['command']['terminal_empty']);
     elseif (!file_exists('/usr/bin/gnome-terminal'))
     {
         $str = str_replace('%s', basename($_config['terminal']), $lang['command']['terminal_none']);
-        AlertWindow($str);
+        alert_window($str);
     }
     else
     {
@@ -1280,11 +1362,11 @@ function comparison($type)
     global $active_files, $start, $panel, $lang, $_config;
 
     if (empty($_config['comparison']))
-        AlertWindow($lang['command']['comparison_empty']);
+        alert_window($lang['command']['comparison_empty']);
     elseif (!file_exists($_config['comparison']))
     {
         $str = str_replace('%s', basename($_config['comparison']), $lang['command']['comparison_none']);
-        AlertWindow($str);
+        alert_window($str);
     }
     else
     {
