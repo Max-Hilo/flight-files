@@ -27,7 +27,6 @@ function alert_window($msg)
     $label->set_line_wrap(TRUE);
     $label->set_justify(Gtk::JUSTIFY_CENTER);
     $hbox->pack_start($label, TRUE, TRUE, 20);
-    $hbox->pack_start(new GtkLabel(' '));
     $dialog->set_has_separator(FALSE);
     $dialog->show_all();
     $dialog->run();

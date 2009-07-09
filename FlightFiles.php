@@ -285,7 +285,7 @@ $array_menuitem = array(
     array('bookmarks', 'bookmarks'),
     array('help', '', 'shortcuts', $lang['menu']['shortcuts'], Gtk::STOCK_INFO, 'ShortcutsWindow'),
     array('help', 'separator'),
-    array('help', '', 'about', $lang['menu']['about'], Gtk::STOCK_ABOUT, 'AboutWindow')
+    array('help', '', 'about', $lang['menu']['about'], Gtk::STOCK_ABOUT, 'about_window')
 );
 foreach ($array_menuitem as $value)
 {

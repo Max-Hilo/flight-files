@@ -160,11 +160,11 @@ function on_button($view, $event, $type)
                             }
                             elseif (OS == 'Windows')
                             {
-                                exec($sfa['command'] . " '$filename'");
+                                pclose(popen('start /B "'.$sfa['command'].'" '.$filename, "r"));
                             }
                             else
                             {
-                                exec($sfa['command']." '$filename' > /dev/null &");
+                                exec('"'.$sfa['command'].'" "'.$filename.'" > /dev/null &');
                             }
                         }
                     }
@@ -243,11 +243,8 @@ function on_button($view, $event, $type)
                 $menu->append($delete_active);
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($checksum);
-            if (OS == 'Unix')
-            {
-                $menu->append(new GtkSeparatorMenuItem());
-                $menu->append($terminal);
-            }
+            $menu->append(new GtkSeparatorMenuItem());
+            $menu->append($terminal);
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($properties);
 
@@ -294,11 +291,8 @@ function on_button($view, $event, $type)
             $menu->append($delete);
             if (!empty($active_files[$panel]))
                 $menu->append($delete_active);
-            if (OS == 'Unix')
-            {
-                $menu->append(new GtkSeparatorMenuItem());
-                $menu->append($terminal);
-            }
+            $menu->append(new GtkSeparatorMenuItem());
+            $menu->append($terminal);
 
             $open->connect_simple('activate', 'change_dir', 'open', $file);
             $copy->connect_simple('activate', 'bufer_file', $start[$panel]. DS .$file, 'copy');
@@ -338,11 +332,8 @@ function on_button($view, $event, $type)
                 $menu->append(new GtkSeparatorMenuItem());
                 $menu->append($delete_active);
             }
-            if (OS == 'Unix')
-            {
-                $menu->append(new GtkSeparatorMenuItem());
-                $menu->append($terminal);
-            }
+            $menu->append(new GtkSeparatorMenuItem());
+            $menu->append($terminal);
 
             $paste->connect_simple('activate', 'paste_file');
             $new_file->connect_simple('activate', 'new_element', 'file');
@@ -491,29 +482,34 @@ function paste_file()
             $str = str_replace('%s', basename($filename), $lang['alert']['file_exists_paste']);
             $dialog = new GtkDialog(
                 $lang['alert']['title'], NULL,
-                Gtk::DIALOG_MODAL,
-                array(Gtk::STOCK_YES, Gtk::RESPONSE_YES, Gtk::STOCK_NO, Gtk::RESPONSE_NO));
+                Gtk::DIALOG_MODAL);
+            $dialog->add_button(Gtk::STOCK_YES, Gtk::RESPONSE_YES);
+            $dialog->add_button(Gtk::STOCK_NO, Gtk::RESPONSE_NO);
             $dialog->set_position(Gtk::WIN_POS_CENTER_ALWAYS);
             $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
             $dialog->set_skip_taskbar_hint(TRUE);
             $dialog->set_resizable(FALSE);
             $top_area = $dialog->vbox;
             $top_area->pack_start($hbox = new GtkHBox());
-            $hbox->pack_start(new GtkLabel(' '));
-            $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_WARNING, Gtk::ICON_SIZE_DIALOG));
-            $hbox->pack_start(new GtkLabel(' '));
+            $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_WARNING, Gtk::ICON_SIZE_DIALOG), FALSE, FALSE);
             $label = new GtkLabel($str);
+            $label->set_line_wrap(TRUE);
             $label->set_justify(Gtk::JUSTIFY_CENTER);
-            $hbox->pack_start($label);
-            $hbox->pack_start(new GtkLabel(' '));
+            $hbox->pack_start($label, TRUE, TRUE, 20);
             $dialog->set_has_separator(FALSE);
             $dialog->show_all();
             $result = $dialog->run();
             $dialog->destroy();
 
-            // Если нажата кнопка "Нет", то пропускаем данный файл и переходим к следующему
-            if ($result == Gtk::RESPONSE_NO)
+            // Если нажата кнопка "Да", то удаляем существующий файл/папку
+            if ($result == Gtk::RESPONSE_YES)
+            {
+                my_rmdir($dest);
+            }
+            else
+            {
                 continue;
+            }
         }
         if ($action == 'copy')
         {
@@ -522,15 +518,21 @@ function paste_file()
             elseif (is_dir($filename))
             {
                 mkdir($dest);
-                _copy($filename, $dest);
+                my_copy($filename, $dest);
             }
         }
         elseif ($action == 'cut')
         {
             if (is_file($filename))
+            {
                 rename($filename, $dest);
+            }
             elseif (is_dir($filename))
-                exec("mv '$filename' '$dest'");
+            {
+                mkdir($dest);
+                _copy($filename, $dest);
+                my_rmdir($filename);
+            }
         }
     }
     change_dir('none', '', 'all');
@@ -538,25 +540,39 @@ function paste_file()
 
 /**
  * Рекурсивное копирование директорий.
- * @param string $source_dir Исходная директория
- * @param string $dest_dir Создаваемая директория
+ * @param string $source Исходная директория
+ * @param string $dest Создаваемая директория
  */
-function _copy($source_dir, $dest_dir)
+function my_copy($source, $dest)
 {
-    $opendir = opendir($source_dir);
-    while (FALSE !== ($file = readdir($opendir)))
+    if (!file_exists($source))
     {
-        if ($file == '.' OR $file == '..')
-            continue;
-        if (is_file($source_dir. DS .$file))
-            copy($source_dir. DS .$file, $dest_dir. DS .$file);
-        elseif (is_dir($source_dir. DS .$file))
-        {
-            mkdir($dest_dir. DS .$file);
-            _copy($source_dir. DS .$file, $dest_dir. DS .$file);
-        }
+        return TRUE;
     }
-    closedir($opendir);
+
+    if (!is_dir($source))
+    {
+        copy($source, $dest);
+        return TRUE;
+    }
+    else
+    {
+        $opendir = opendir($source);
+        while (FALSE !== ($file = readdir($opendir)))
+        {
+            if ($file == '.' OR $file == '..')
+            {
+                continue;
+            }
+            if (is_dir($source . DS . $file))
+            {
+                mkdir($dest . DS . $file);
+            }
+            my_copy($source . DS . $file, $dest . DS . $file);
+        }
+        closedir($opendir);
+        return TRUE;
+    }
 }
 
 /**
@@ -594,7 +610,7 @@ function delete_active()
                 if (is_file($filename))
                     unlink($filename);
                 elseif (is_dir($filename))
-                    rm($filename);
+                    my_rmdir($filename);
             }
         }
         $dialog->destroy();
@@ -607,7 +623,7 @@ function delete_active()
             if (is_file($filename))
                 unlink($filename);
             elseif (is_dir($filename))
-                rm($filename);
+                my_rmdir($filename);
         }
     }
     change_dir('none', '', 'all');
@@ -621,100 +637,97 @@ function delete($filename)
 {
     global $_config, $lang;
 
-    if (is_dir($filename))
+    if ($_config['ask_delete'] == 'on')
     {
-        if ($_config['ask_delete'] == 'on')
+        $dialog = new GtkDialog(
+            $lang['delete']['title'],
+            NULL,
+            Gtk::DIALOG_MODAL,
+            array(
+                Gtk::STOCK_NO, Gtk::RESPONSE_NO,
+                Gtk::STOCK_YES, Gtk::RESPONSE_YES
+            )
+        );
+        $dialog->set_has_separator(FALSE);
+        $dialog->set_resizable(FALSE);
+        $dialog->set_position(Gtk::WIN_POS_CENTER);
+        $vbox = $dialog->vbox;
+        $vbox->pack_start($hbox = new GtkHBox());
+        $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
+        if (is_dir($filename))
         {
-            $dialog = new GtkDialog(
-                $lang['delete']['title'],
-                NULL,
-                Gtk::DIALOG_MODAL,
-                array(
-                    Gtk::STOCK_NO, Gtk::RESPONSE_NO,
-                    Gtk::STOCK_YES, Gtk::RESPONSE_YES
-                )
-            );
-            $dialog->set_has_separator(FALSE);
-            $dialog->set_resizable(FALSE);
-            $dialog->set_position(Gtk::WIN_POS_CENTER);
-            $vbox = $dialog->vbox;
-            $vbox->pack_start($hbox = new GtkHBox());
-            $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
-            $text = str_replace('%s', basename($filename), $lang['delete']['dir']);
-            $label = new GtkLabel($text);
-            $label->set_line_wrap(TRUE);
-            $hbox->pack_start($label, TRUE, TRUE, 20);
-            $dialog->show_all();
-            $result = $dialog->run();
-            if ($result == Gtk::RESPONSE_YES)
-                rm($filename);
-            $dialog->destroy();
+            $str = str_replace('%s', basename($filename), $lang['delete']['dir']);
         }
         else
         {
-            rm($filename);
+            $str = str_replace('%s', basename($filename), $lang['delete']['file']);
         }
+        $label = new GtkLabel($str);
+        $label->set_line_wrap(TRUE);
+        $hbox->pack_start($label, TRUE, TRUE, 20);
+        $dialog->show_all();
+        $result = $dialog->run();
+        if ($result == Gtk::RESPONSE_YES)
+            my_rmdir($filename);
+        $dialog->destroy();
     }
     else
     {
-        if ($_config['ask_delete'] == 'on')
-        {
-            $dialog = new GtkDialog(
-                $lang['delete']['title'],
-                NULL,
-                Gtk::DIALOG_MODAL,
-                array(
-                    Gtk::STOCK_NO, Gtk::RESPONSE_NO,
-                    Gtk::STOCK_YES, Gtk::RESPONSE_YES
-                )
-            );
-            $dialog->set_has_separator(FALSE);
-            $dialog->set_resizable(FALSE);
-            $dialog->set_position(Gtk::WIN_POS_CENTER);
-            $vbox = $dialog->vbox;
-            $vbox->pack_start($hbox = new GtkHBox());
-            $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG), FALSE, FALSE);
-            $text = str_replace('%s', basename($filename), $lang['delete']['file']);
-            $label = new GtkLabel($text);
-            $label->set_line_wrap(TRUE);
-            $hbox->pack_start($label, TRUE, TRUE, 20);
-            $dialog->show_all();
-            $result = $dialog->run();
-            if ($result == Gtk::RESPONSE_YES)
-            {
-                unlink($filename);
-                $dialog->destroy();
-            }
-            else
-                $dialog->destroy();
-        }
-        else
-            unlink($filename);
+        my_rmdir($filename);
     }
     change_dir('none', '', 'all');
 }
 
-/*
- * Рекурсивное удаление каталогов.
- * @param string $dir Каталог, который необходимо удалить
+/**
+ * Удаление файлов и рекурсивное удаление директорий.
+ * @param string $filename Файл/директория, которую необходимо удалить
  */
-
-function rm($dir)
+function my_rmdir($filename)
 {
-    $opendir = opendir($dir);
-    while (FALSE !== ($file = readdir($opendir)))
+    // Если файла не существует, то возвращаем FALSE
+    if (!file_exists($filename))
     {
-        if ($file == '.' OR $file == '..')
-            continue;
-        if (is_file($dir. DS .$file))
-            unlink($dir. DS .$file);
-        elseif (is_dir($dir. DS .$file))
-        {
-            rm($dir. DS .$file);
-        }
+        return TRUE;
     }
-    closedir($opendir);
-    rmdir($dir. DS .$file);
+
+    // Если $filename не папка, то удаляем функцией unlink()
+    if (!is_dir($filename))
+    {
+        unlink($filename);
+        return TRUE;
+    }
+    // Если папка...
+    else
+    {
+        if (!is_readable($filename) OR !is_writeable($filename))
+        {
+            return FALSE;
+        }
+        $opendir = opendir($filename);
+        while (FALSE !== ($file = readdir($opendir)))
+        {
+            // Пропускаем системные директории
+            if ($file == '.' OR $file == '..')
+            {
+                continue;
+            }
+
+            $dir = $filename . DS . $file;
+            // Если удалить не получается, то присваиваем права 0777
+            // и пытаемся повторно удалить
+            if (!my_rmdir($dir))
+            {
+                chmod($dir, 0777);
+                if (!my_rmdir($dir))
+                {
+                    return FALSE;
+                }
+            }
+        }
+        closedir($opendir);
+        rmdir($filename);
+        return TRUE;
+    }
 }
 
 /**
@@ -1091,24 +1104,6 @@ function new_element($type)
 
 /**
  *
- * Функция удаляет все файлы/папки из текущего каталога.
- */
-function delete_all($type)
-{
-    if ($type == 'file')
-    {
-        $opendir = opendir($start[$panel]);
-        while (FALSE !== ($file = readdir($opendir)))
-        {
-            if (is_file($start[$panel]. DS .$file))
-                unlink($start[$panel]. DS .$file);
-        }
-        change_dir('none');
-    }
-}
-
-/**
- *
  * При закрытии окна программы данная функция удаляет файл буфера обмена.
  */
 function close_window()
@@ -1336,8 +1331,14 @@ function open_terminal()
 {
     global $start, $panel, $lang, $_config;
 
-    if (empty($_config['terminal']))
+    if (OS == 'Windows')
+    {
+        pclose(popen('start', 'r'));
+    }
+    elseif (empty($_config['terminal']))
+    {
         alert_window($lang['command']['terminal_empty']);
+    }
     elseif (!file_exists('/usr/bin/gnome-terminal'))
     {
         $str = str_replace('%s', basename($_config['terminal']), $lang['command']['terminal_none']);
