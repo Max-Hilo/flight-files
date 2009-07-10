@@ -12,14 +12,14 @@
  * @global array $lang
  * @global resource $sqlite
  */
-function bookmarks_edit()
+function bookmarks_window()
 {
     global $selection_bookmarks, $lang, $sqlite;
     
     $window = new GtkWindow();
+    $window->set_position(Gtk::WIN_POS_CENTER);
     $window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
-    $window->set_size_request(600, 220);
     $window->set_skip_taskbar_hint(TRUE);
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $window->set_title($lang['bookmarks']['title']);
@@ -50,15 +50,13 @@ function bookmarks_edit()
     $array['button_ok']->set_tooltip_text($lang['bookmarks']['save_hint']);
     
     $vbox = new GtkVBox();
-    $vbox->pack_start($array['name_label'], FALSE, FALSE);
-    $vbox->pack_start($array['name_entry'], FALSE, FALSE);
-    $vbox->pack_start(new GtkLabel(''), FALSE, FALSE);
-    $vbox->pack_start($array['path_label'], FALSE, FALSE);
-    $vbox->pack_start($array['path_entry'], FALSE, FALSE);
-    $vbox->pack_start(new GtkLabel(''), FALSE, FALSE);
-    $vbox->pack_start($array['button_ok'], FALSE, FALSE);
+    $vbox->pack_start($array['name_label'], FALSE, FALSE, 5);
+    $vbox->pack_start($array['name_entry'], FALSE, FALSE, 5);
+    $vbox->pack_start($array['path_label'], FALSE, FALSE, 5);
+    $vbox->pack_start($array['path_entry'], FALSE, FALSE, 5);
+    $vbox->pack_start($array['button_ok'], FALSE, FALSE, 5);
     
-    $table->attach($vbox, 3, 4, 0, 1, Gtk::FILL, Gtk::FILL);
+    $table->attach($vbox, 1, 2, 0, 1, Gtk::FILL, Gtk::FILL);
 
     //////////////////
     ///// Кнопки /////
@@ -68,20 +66,24 @@ function bookmarks_edit()
     $array['button_delete']->set_sensitive(FALSE);
     $array['button_delete']->connect_simple('clicked', 'bookmarks_delete', $array);
     $array['button_delete']->set_tooltip_text($lang['bookmarks']['delete_hint']);
-    $table->attach($array['button_delete'], 0, 1, 1, 2, Gtk::FILL, Gtk::FILL);
     
     $array['button_delete_all']->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_BUTTON));
     if (sqlite_num_rows(sqlite_query($sqlite, "SELECT * FROM bookmarks")) == 0)
         $array['button_delete_all']->set_sensitive(FALSE);
     $array['button_delete_all']->connect_simple('clicked', 'bookmarks_delete', $array, TRUE);
     $array['button_delete_all']->set_tooltip_text($lang['bookmarks']['delete_all_hint']);
-    $table->attach($array['button_delete_all'], 1, 2, 1, 2, Gtk::FILL, GTK::FILL);
     
     $array['button_add'] = new GtkButton($lang['bookmarks']['add']);
     $array['button_add']->set_image(GtkImage::new_from_stock(Gtk::STOCK_ADD, Gtk::ICON_SIZE_BUTTON));
     $array['button_add']->connect_simple('clicked', 'bookmark_add', $array, FALSE);
     $array['button_add']->set_tooltip_text($lang['bookmarks']['add_hint']);
-    $table->attach($array['button_add'], 2, 3, 1, 2, Gtk::FILL, Gtk::FILL);
+
+    $hbbox = new GtkHButtonBox();
+    $hbbox->set_layout(Gtk::BUTTONBOX_EDGE);
+    $hbbox->add($array['button_delete']);
+    $hbbox->add($array['button_delete_all']);
+    $hbbox->add($array['button_add']);
+    $table->attach($hbbox, 0, 1, 1, 2, Gtk::FILL, Gtk::FILL);
     
     ///////////////////////////
     ///// Список закладок /////
@@ -108,7 +110,7 @@ function bookmarks_edit()
     $selection_bookmarks = $view->get_selection();
     $selection_bookmarks->connect('changed', 'selection_bookmarks', $array);
     
-    $table->attach($scrolled, 0, 3, 0, 1);
+    $table->attach($scrolled, 0, 1, 0, 1);
     
     $window->add($table);
     $window->show_all();
@@ -171,7 +173,7 @@ function bookmarks_menu()
 
     $action_menu['bookmarks_edit'] = new GtkAction('BOOKMARKS_EDIT', $lang['menu']['bookmarks_edit'], '', Gtk::STOCK_EDIT);
     $menu_item['bookmarks_edit'] = $action_menu['bookmarks_edit']->create_menu_item();
-    $action_menu['bookmarks_edit']->connect_simple('activate', 'bookmarks_edit');
+    $action_menu['bookmarks_edit']->connect_simple('activate', 'bookmarks_window');
 
     foreach ($menu_item as $value)
         $sub_menu['bookmarks']->append($value);

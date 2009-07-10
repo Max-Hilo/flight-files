@@ -181,29 +181,35 @@ function preference()
      $label_comparison = new GtkLabel();
      $label_comparison->set_alignment(0, 0);
      $label_comparison->set_markup('<b>'.$lang['preference']['comparison'].'</b>');
-     $button_comparison = new GtkFileChooserButton($lang['preference']['select_file'], Gtk::FILE_CHOOSER_ACTION_OPEN);
+     $hbox_comparison = new GtkHBox();
+     $hbox_comparison->pack_start($entry_comparison = new GtkEntry(), TRUE, TRUE);
+     $entry_comparison->set_editable(FALSE);
      if (file_exists($_config['comparison']))
      {
-         $button_comparison->set_filename($_config['comparison']);
+         $entry_comparison->set_text($_config['comparison']);
          sqlite_query($sqlite, "UPDATE config SET value = 'COMPARISON' WHERE key = ''");
      }
-     $button_comparison->connect('selection-changed', 'file_select', 'comparison');
+     $hbox_comparison->pack_start($btn_comparison = new GtkButton($lang['preference']['change']), FALSE, FALSE);
+     $btn_comparison->connect_simple('clicked', 'preference_command', 'comparison', $entry_comparison);
      $label_terminal = new GtkLabel();
      $label_terminal->set_alignment(0, 0);
      $label_terminal->set_markup('<b>'.$lang['preference']['terminal'].'</b>');
-     $button_terminal = new GtkFileChooserButton($lang['lang']['select_file'], Gtk::FILE_CHOOSER_ACTION_OPEN);
-     if (file_exists($_config['terminal']))
+     $hbox_terminal = new GtkHBox();
+     $hbox_terminal->pack_start($entry_terminal = new GtkEntry(), TRUE, TRUE);
+     $entry_terminal->set_editable(FALSE);
+     if (file_exists($_config['comparison']))
      {
-         $button_terminal->set_filename($_config['terminal']);
+         $entry_comparison->set_text($_config['comparison']);
          sqlite_query($sqlite, "UPDATE config SET value = 'TERMINAL' WHERE key = ''");
      }
-     $button_terminal->connect('selection-changed', 'file_select', 'terminal');
+     $hbox_terminal->pack_start($btn_terminal = new GtkButton($lang['preference']['change']), FALSE, FALSE);
+     $btn_terminal->connect_simple('clicked', 'preference_command', 'terminal', $entry_terminal);
 
      $vbox = new GtkVBox();
      $vbox->pack_start($label_comparison, FALSE, FALSE);
-     $vbox->pack_start($button_comparison, FALSE, FALSE);
+     $vbox->pack_start($hbox_comparison, FALSE, FALSE);
      $vbox->pack_start($label_terminal, FALSE, FALSE);
-     $vbox->pack_start($button_terminal, FALSE, FALSE);
+     $vbox->pack_start($hbox_terminal, FALSE, FALSE);
 
      $notebook->append_page($vbox, new GtkLabel($lang['preference']['program']));
 
@@ -212,6 +218,32 @@ function preference()
     $window->add($notebook);
     $window->show_all();
     Gtk::main();
+}
+
+function preference_command($type, $entry)
+{
+    global $sqlite, $id_type, $lang;
+
+    $dialog = new GtkFileChooserDialog(
+        $lang['preference']['select_file'],
+        NULL,
+        Gtk::FILE_CHOOSER_ACTION_OPEN,
+        array(
+            Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL,
+            Gtk::STOCK_OK, Gtk::RESPONSE_OK,
+        )
+    );
+    $dialog->set_filename($entry->get_text());
+    $dialog->show_all();
+    $result = $dialog->run();
+    if ($result == Gtk::RESPONSE_OK)
+    {
+        $command = $dialog->get_filename();
+        $type = strtoupper($type);
+        sqlite_query($sqlite, "UPDATE config SET value = '$command' WHERE key = '$type'");
+        $entry->set_text($command);
+    }
+    $dialog->destroy();
 }
 
 function file_select($button, $param)

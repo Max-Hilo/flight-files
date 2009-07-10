@@ -261,7 +261,7 @@ $array_menuitem = array(
     array('edit', '', 'cut', $lang['menu']['cut'], Gtk::STOCK_CUT, 'bufer_file', '', 'cut', 'false', '<control>X'),
     array('edit', '', 'paste', $lang['menu']['paste'], Gtk::STOCK_PASTE, 'paste_file', '', '', 'false', '<control>V'),
     array('edit', 'separator'),
-    array('edit', '', 'rename', $lang['menu']['rename'], '', '_rename', '', '', 'false', 'F2'),
+    array('edit', '', 'rename', $lang['menu']['rename'], '', 'rename_window', '', '', 'false', 'F2'),
     array('edit', '', 'mass_rename', $lang['menu']['mass_rename'], '', 'BulkRenameWindow', '', '', 'write', '<control>F2'),
     array('edit', 'separator'),
     array('edit', '', 'files_associations', $lang['menu']['files_ass'], '', 'FilesAssociationsWindow', '', '', '', ''),
@@ -283,7 +283,7 @@ $array_menuitem = array(
     array('go', 'separator'),
     array('go', '', 'refresh', $lang['menu']['refresh'], Gtk::STOCK_REFRESH, 'change_dir', 'none', '', '', '<control>R'),
     array('bookmarks', 'bookmarks'),
-    array('help', '', 'shortcuts', $lang['menu']['shortcuts'], Gtk::STOCK_INFO, 'ShortcutsWindow'),
+    array('help', '', 'shortcuts', $lang['menu']['shortcuts'], Gtk::STOCK_INFO, 'shortcuts_window'),
     array('help', 'separator'),
     array('help', '', 'about', $lang['menu']['about'], Gtk::STOCK_ABOUT, 'about_window')
 );

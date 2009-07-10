@@ -150,7 +150,7 @@ function AddExtWindow($model, $array)
     Gtk::main();
 }
 
-function AddExt($entry, $window, $modelExt, $array)
+function AddExt($entry, $window, $model, $array)
 {
     global $sqlite, $select_type, $id_type;
 
@@ -158,15 +158,15 @@ function AddExt($entry, $window, $modelExt, $array)
     if (!empty($ext))
     {
         sqlite_query($sqlite, "INSERT INTO ext_files(id_type, ext) VALUES('$id_type', '$ext')");
-        $modelExt->clear();
-        FillViewExt($modelExt);
+        $model->clear();
+        FillViewExt($model);
         $array['btn_edit_ext']->set_sensitive(FALSE);
         $array['btn_remove_ext']->set_sensitive(FALSE);
     }
     $window->destroy();
 }
 
-function FillViewExt($modelExt)
+function FillViewExt($model)
 {
     global $sqlite, $select_type, $id_type;
 
@@ -175,7 +175,7 @@ function FillViewExt($modelExt)
         $query = sqlite_query($sqlite, "SELECT ext FROM ext_files WHERE id_type = '$id_type'");
         while ($sfa = sqlite_fetch_array($query))
         {
-            $modelExt->append(array($sfa['ext']));
+            $model->append(array($sfa['ext']));
         }
     }
 }
@@ -281,15 +281,15 @@ function RemoveType($model, $array)
     $array['entry_command']->set_text('');
 }
 
-function OnSelectionType($modelExt, $array)
+function OnSelectionType($model, $array)
 {
     global $sqlite, $select_type, $id_type;
 
-    @list($model, $iter) = $select_type->get_selected();
-    @$id_type = $model->get_value($iter, 0);
-    @$command = $model->get_value($iter, 2);
-    $modelExt->clear();
-    FillViewExt($modelExt);
+    @list($model_type, $iter) = $select_type->get_selected();
+    @$id_type = $model_type->get_value($iter, 0);
+    @$command = $model_type->get_value($iter, 2);
+    $model->clear();
+    FillViewExt($model);
     $array['btn_remove_type']->set_sensitive(TRUE);
     $array['btn_edit_type']->set_sensitive(TRUE);
     $array['btn_add_ext']->set_sensitive(TRUE);
