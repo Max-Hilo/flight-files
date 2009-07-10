@@ -148,7 +148,7 @@ $lang['preference']['maximize']         = 'Разворачивать на весь экран при запус
 $lang['preference']['maximize_hint']    = 'При запуске главное окно FlightFiles будет развёрнуто на весь экран';
 $lang['preference']['program']          = 'Внешние программы';
 $lang['preference']['comparison']       = 'Сравнение файлов:';
-$lang['preference']['select_file']      = 'Выбрать файл';
+$lang['preference']['select_file']      = 'Выбрать программу';
 $lang['preference']['terminal']         = 'Терминал:';
 $lang['preference']['partbar_refresh']  = 'Автообновление списка разделов';
 $lang['preference']['partbar_refresh_hint'] = 'Список разделов будет автоматически обновляться каждую секунду';
@@ -241,6 +241,8 @@ $lang['bulk_rename']['upper']           = '_Верхний регистр';
 $lang['bulk_rename']['upper_hint']      = 'Все буквы в именах файлов будут преобразованы в верхний регистр';
 $lang['bulk_rename']['lower']           = '_Нижний регистр';
 $lang['bulk_rename']['lower_hint']      = 'Все буквы в именах файлов будут преобразованы в нижний регистр';
+$lang['bulk_rename']['ucfirst']         = 'Первая буква - заглавная';
+$lang['bulk_rename']['ucfirst_hint']    = 'Первая буква в именах файлов будет заглавной, остальные - прописные';
 $lang['bulk_rename']['order']           = 'По пор_ядку';
 $lang['bulk_rename']['order_hint']      = "Имена файлов будут иметь на конце цифровой индекс, ".
                                           "увеличивающийся на один для каждого следующего файла.\n".

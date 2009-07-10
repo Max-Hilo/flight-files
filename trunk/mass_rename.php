@@ -38,6 +38,10 @@ function BulkRenameWindow()
     $lower_radio->set_tooltip_text($lang['bulk_rename']['lower_hint']);
     $vbox->pack_start($lower_radio);
 
+    $ucfirst_radio = new GtkRadioButton($upper_radio, $lang['bulk_rename']['ucfirst']);
+    $ucfirst_radio->set_tooltip_text($lang['bulk_rename']['ucfirst_hint']);
+    $vbox->pack_start($ucfirst_radio);
+
     $order_radio = new GtkRadioButton($upper_radio, $lang['bulk_rename']['order']);
     $order_radio->set_tooltip_text($lang['bulk_rename']['order_hint']);
     $order_name_label = new GtkLabel($lang['bulk_rename']['order_label']);
@@ -99,6 +103,7 @@ function BulkRenameWindow()
     
     $upper_radio->connect_simple('toggled', 'ActiveTypeRename', 'upper', $order_hbox, $replace_table, $ext_check);
     $lower_radio->connect_simple('toggled', 'ActiveTypeRename', 'lower', $order_hbox, $replace_table, $ext_check);
+    $ucfirst_radio->connect_simple('toggled', 'ActiveTypeRename', 'ucfirst', $order_hbox, $replace_table, $ext_check);
     $order_radio->connect_simple('toggled', 'ActiveTypeRename', 'order', $order_hbox, $replace_table, $ext_check);
     $replace_radio->connect_simple('toggled', 'ActiveTypeRename', 'replace', $order_hbox, $replace_table, $ext_check);
     $button_cancel->connect_simple('clicked', 'BulkRenameWindowClose', $wnd);
@@ -195,14 +200,14 @@ function BulkRenameAction($renameWindow, $extCheckButton, $hiddenCheckButton, $o
                 // Если у файла нет расширения
                 if ($count == 1)
                 {
-                    rename($filename, $start[$panel].'/'.MyStrTo('upper', $file));
+                    rename($filename, $start[$panel].'/'.my_strto('upper', $file));
                     continue;
                 }
                 $new_file = '';
                 for ($i = 0; $i < $count; $i++)
                 {
                     if ($i < $count - 1)
-                        $new_file .= MyStrTo('upper', $explode[$i]).'.';
+                        $new_file .= my_strto('upper', $explode[$i]).'.';
                     else
                         $new_file .= $explode[$i];
                 }
@@ -211,7 +216,7 @@ function BulkRenameAction($renameWindow, $extCheckButton, $hiddenCheckButton, $o
             // Переименовываем вместе с расширениями
             else
             {
-                rename($filename, $start[$panel].'/'.MyStrTo('upper', $file));
+                rename($filename, $start[$panel].'/'.my_strto('upper', $file));
             }
         }
         // Нижний регистр
@@ -225,14 +230,14 @@ function BulkRenameAction($renameWindow, $extCheckButton, $hiddenCheckButton, $o
                 // Если у файла нет расширения
                 if ($count == 1)
                 {
-                    rename($filename, $start[$panel].'/'.MyStrTo('lower', $file));
+                    rename($filename, $start[$panel].'/'.my_strto('lower', $file));
                     continue;
                 }
                 $new_file = '';
                 for ($i = 0; $i < $count; $i++)
                 {
                     if ($i < $count - 1)
-                        $new_file .= MyStrTo('lower', $explode[$i]).'.';
+                        $new_file .= my_strto('lower', $explode[$i]).'.';
                     else
                         $new_file .= $explode[$i];
                 }
@@ -241,8 +246,12 @@ function BulkRenameAction($renameWindow, $extCheckButton, $hiddenCheckButton, $o
             // Переименовываем вместе с расширениями
             else
             {
-                rename($filename, $start[$panel].'/'.MyStrTo('lower', $file));
+                rename($filename, $start[$panel].'/'.my_strto('lower', $file));
             }
+        }
+        elseif ($active_type_rename == 'ucfirst')
+        {
+            rename($filename, $start[$panel].'/'.my_strto('ucfirst', my_strto('lower', $file)));
         }
         // По порядку
         elseif ($active_type_rename == 'order')
@@ -291,11 +300,11 @@ function BulkRenameAction($renameWindow, $extCheckButton, $hiddenCheckButton, $o
 
 /**
  * Правильное изменение регистра файлов с кириллическими символами в имени.
- * @param string $type Направление изменения регистра - lower|upper
+ * @param string $type Направление изменения регистра
  * @param string $str Старое имя файла
  * @return string Новое имя файла
  */
-function MyStrTo($type, $str)
+function my_strto($type, $str)
 {
     $lower = array(
         'ё','й','ц','у','к','е','н','г', 'ш','щ',
@@ -308,9 +317,17 @@ function MyStrTo($type, $str)
         'Л','Д','Ж','Э', 'Я','Ч','С','М','И','Т',
         'Ь','Б','Ю');
     if ($type == 'lower')
+    {
         $str = str_replace($upper, $lower, strtolower($str));
+    }
     elseif ($type == 'upper')
+    {
         $str = str_replace($lower, $upper, strtoupper($str));
+    }
+    elseif ($type == 'ucfirst')
+    {
+        $str = ucfirst($str);
+    }
     return $str;
 }
 

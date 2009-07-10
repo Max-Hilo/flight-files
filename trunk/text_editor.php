@@ -13,7 +13,7 @@
  * @global array $lang
  * @param string $fileName Адрес файла, для которого необходимо произвести операцию
  */
-function TextEditorWindow($fileName)
+function text_editor_window($fileName)
 {
     global $start, $panel, $lang;
 
@@ -53,7 +53,7 @@ function TextEditorWindow($fileName)
     $menu->append($file);
 
     $action = new GtkAction('save', 'Сохранить', '', Gtk::STOCK_SAVE);
-    $action->connect_simple('activate', 'SaveFile', $buffer, $fileName);
+    $action->connect_simple('activate', 'save_file', $buffer, $fileName);
     $action_group->add_action_with_accel($action, '<control>s');
     $action->set_accel_group($accel_group);
     $action->connect_accelerator();
@@ -62,7 +62,7 @@ function TextEditorWindow($fileName)
     $sub_file->append(new GtkSeparatorMenuItem());
 
     $action = new GtkAction('close', 'Закрыть', '', Gtk::STOCK_CLOSE);
-    $action->connect_simple('activate', 'TextEditorWindowClose', $buffer, $fileName, $window);
+    $action->connect_simple('activate', 'text_editor_window_close', $buffer, $fileName, $window);
     $action_group->add_action_with_accel($action, '<control>q');
     $action->set_accel_group($accel_group);
     $action->connect_accelerator();
@@ -83,7 +83,7 @@ function TextEditorWindow($fileName)
     $vbox->pack_start($status_bar, FALSE, FALSE);
 
     $window->add($vbox);
-    $window->connect_simple('delete-event', 'TextEditorWindowClose', $buffer, $fileName, $window);
+    $window->connect_simple('delete-event', 'text_editor_window_close', $buffer, $fileName, $window);
     $window->show_all();
     Gtk::main();
 }
@@ -93,7 +93,7 @@ function TextEditorWindow($fileName)
  * @param GtkSourceBuffer $buffer Текстовый буфер
  * @param string $filename Адрес файла, для которого необходимо произвести операцию
  */
-function SaveFile($buffer, $filename)
+function save_file($buffer, $filename)
 {
     $text = $buffer->get_text($buffer->get_start_iter(), $buffer->get_end_iter());
     $fopen = fopen($filename, 'w+');
@@ -108,7 +108,7 @@ function SaveFile($buffer, $filename)
  * @param string $fileName
  * @param GtkWindow $textEditorWindow
  */
-function TextEditorWindowClose($buffer, $fileName, $textEditorWindow)
+function text_editor_window_close($buffer, $fileName, $textEditorWindow)
 {
     global $lang;
     

@@ -9,12 +9,14 @@
 /**
  * Функция выводит диалоговое окно, в котором
  * содержатся все "горячие клавиши" программы.
+ * @global array $lang
  */
-function ShortcutsWindow()
+function shortcuts_window()
 {
     global $lang;
     
     $window = new GtkWindow;
+    $window->set_position(Gtk::WIN_POS_CENTER);
     $window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
     $window->set_size_request(400, -1);
     $window->set_title($lang['shortcuts']['title']);
