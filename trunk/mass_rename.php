@@ -38,10 +38,6 @@ function BulkRenameWindow()
     $lower_radio->set_tooltip_text($lang['bulk_rename']['lower_hint']);
     $vbox->pack_start($lower_radio);
 
-    $ucfirst_radio = new GtkRadioButton($upper_radio, $lang['bulk_rename']['ucfirst']);
-    $ucfirst_radio->set_tooltip_text($lang['bulk_rename']['ucfirst_hint']);
-    $vbox->pack_start($ucfirst_radio);
-
     $order_radio = new GtkRadioButton($upper_radio, $lang['bulk_rename']['order']);
     $order_radio->set_tooltip_text($lang['bulk_rename']['order_hint']);
     $order_name_label = new GtkLabel($lang['bulk_rename']['order_label']);
@@ -103,7 +99,6 @@ function BulkRenameWindow()
     
     $upper_radio->connect_simple('toggled', 'ActiveTypeRename', 'upper', $order_hbox, $replace_table, $ext_check);
     $lower_radio->connect_simple('toggled', 'ActiveTypeRename', 'lower', $order_hbox, $replace_table, $ext_check);
-    $ucfirst_radio->connect_simple('toggled', 'ActiveTypeRename', 'ucfirst', $order_hbox, $replace_table, $ext_check);
     $order_radio->connect_simple('toggled', 'ActiveTypeRename', 'order', $order_hbox, $replace_table, $ext_check);
     $replace_radio->connect_simple('toggled', 'ActiveTypeRename', 'replace', $order_hbox, $replace_table, $ext_check);
     $button_cancel->connect_simple('clicked', 'BulkRenameWindowClose', $wnd);
@@ -306,6 +301,8 @@ function BulkRenameAction($renameWindow, $extCheckButton, $hiddenCheckButton, $o
  */
 function my_strto($type, $str)
 {
+    global $charset;
+
     $lower = array(
         'ё','й','ц','у','к','е','н','г', 'ш','щ',
         'з','х','ъ','ф','ы','в', 'а','п','р','о',
@@ -323,10 +320,6 @@ function my_strto($type, $str)
     elseif ($type == 'upper')
     {
         $str = str_replace($lower, $upper, strtoupper($str));
-    }
-    elseif ($type == 'ucfirst')
-    {
-        $str = ucfirst($str);
     }
     return $str;
 }

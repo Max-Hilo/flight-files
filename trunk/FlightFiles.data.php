@@ -10,23 +10,21 @@
 
 /**
  * Функция достаёт настройки из базы данных и
- * помещает их в глобальную переменную $_config
+ * помещает их в глобальную переменную $_config.
  */
 function config_parser()
 {
-    global $_config, $sqlite;
+    global $_config, $db, $sqlite;
 
-    $array = array('HIDDEN_FILES', 'HOME_DIR_LEFT', 'HOME_DIR_RIGHT',
-                   'ASK_DELETE', 'TOOLBAR_VIEW', 'ADDRESSBAR_VIEW',
-                   'STATUSBAR_VIEW', 'FONT_LIST', 'ASK_CLOSE',
-                   'LANGUAGE', 'MAXIMIZE', 'COMPARISON',
-                   'TERMINAL', 'PARTBAR_VIEW', 'PARTBAR_REFRESH',
-                   'VIEW_LINES_FILES', 'VIEW_LINES_COLUMNS');
+    $array = array('hidden_files', 'home_dir_left', 'home_dir_right',
+                   'ask_delete', 'toolbar_view', 'addressbar_view',
+                   'statusbar_view', 'font_list', 'ask_close',
+                   'language', 'maximize', 'comparison',
+                   'terminal', 'partbar_view', 'partbar_refresh',
+                   'view_lines_files', 'view_lines_columns');
     foreach ($array as $value)
     {
-        $query = sqlite_query($sqlite, "SELECT * FROM config WHERE key = '$value'");
-        $sfa = sqlite_fetch_array($query);
-        $_config[strtolower($value)] = $sfa['value'];
+        $_config[$value] = (string)$db->select('preference', $value);
     }
 }
 
@@ -1063,16 +1061,16 @@ function change_dir($act = '', $dir = '', $all = FALSE)
  */
 function status_bar()
 {
-    global $status, $count_element, $count_dir, $count_file, $lang;
+    global $statusbar, $count_element, $count_dir, $count_file, $lang;
 
-    $context_id = $status->get_context_id('count_elements');
-    $status->push($context_id, '');
+    $context_id = $statusbar->get_context_id('count_elements');
+    $statusbar->push($context_id, '');
 
-    $context_id = $status->get_context_id('count_elements');
-    $status->push($context_id, '   '.$lang['statusbar']['count'].' '.$count_element
+    $context_id = $statusbar->get_context_id('count_elements');
+    $statusbar->push($context_id, '   '.$lang['statusbar']['count'].' '.$count_element
                   .' ( '.$lang['statusbar']['dirs'].' '.$count_dir.', '.$lang['statusbar']['files'].' '.$count_file.' )');
 
-    return $status;
+    return $statusbar;
 }
 
 /**
@@ -1231,41 +1229,20 @@ function selection_bookmarks($selection, $array)
     $array['path_entry']->set_text($row['path']);
 }
 
-function panel_view($widget, $key)
+function panel_view($widget, $param)
 {
-    global $toolbar, $partbar, $addressbar, $status, $sqlite;
+    global $toolbar, $partbar, $addressbar, $statusbar, $db;
 
     $value = $widget->get_active() ? 'on' : 'off';
-    $key = strtoupper($key);
-    sqlite_query($sqlite, "UPDATE config SET value = '$value' WHERE key = '$key'");
+    $db->update('preference', $param . '_view', $value);
 
-    if ($key == 'TOOLBAR_VIEW')
+    if ($value == 'on')
     {
-        if ($value == 'on')
-            $toolbar->show_all();
-        else
-            $toolbar->hide();
+        $$param->show_all();
     }
-    elseif ($key == 'PARTBAR_VIEW')
+    else
     {
-        if ($value == 'on')
-            $partbar->show_all();
-        else
-            $partbar->hide();
-    }
-    elseif ($key == 'ADDRESSBAR_VIEW')
-    {
-        if ($value == 'on')
-            $addressbar->show_all();
-        else
-            $addressbar->hide();
-    }
-    elseif ($key == 'STATUSBAR_VIEW')
-    {
-        if ($value == 'on')
-            $status->show();
-        else
-            $status->hide();
+        $$param->hide();
     }
 }
 
@@ -1373,7 +1350,7 @@ function open_terminal()
     {
         pclose(popen('start', 'r'));
     }
-    elseif (empty($_config['terminal']))
+    elseif ($_config['terminal'] == 'NONE')
     {
         alert_window($lang['command']['terminal_empty']);
     }
@@ -1396,11 +1373,11 @@ function open_terminal()
  * Вызов программы для сравнения файлов.
  * @param string $type Тип сравниваемых объектов - file|dir.
  */
-function comparison($type)
+function open_comparison($type)
 {
     global $active_files, $start, $panel, $lang, $_config;
 
-    if (empty($_config['comparison']))
+    if ($_config['comparison'] == 'NONE')
     {
         alert_window($lang['command']['comparison_empty']);
     }
@@ -1418,16 +1395,24 @@ function comparison($type)
             if ($type == 'file')
             {
                 if (is_file($filename))
+                {
                     $par .= "'$filename' ";
+                }
                 else
+                {
                     continue;
+                }
             }
             elseif ($type == 'dir')
             {
                 if (is_dir($filename))
+                {
                     $par .= "'$filename' ";
+                }
                 else
+                {
                     continue;
+                }
             }
         }
         exec($_config['comparison'].' '.$par.' > /dev/null &');
