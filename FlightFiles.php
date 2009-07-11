@@ -52,6 +52,11 @@ define('SHARE_DIR', dirname(__FILE__));
 define('CONFIG_DIR', SHARE_DIR . DS . 'configuration');
 
 /**
+ * Папка, содержащяя классы.
+ */
+define('CLASSES_DIR', SHARE_DIR . DS . 'classes');
+
+/**
  * Папка, содержащая файлы локализации.
  */
 define('LANG_DIR', CONFIG_DIR . DS . 'languages');
@@ -95,45 +100,34 @@ include SHARE_DIR . DS . 'preference.php';
 include SHARE_DIR . DS . 'properties.php';
 include SHARE_DIR . DS . 'shortcuts.php';
 include SHARE_DIR . DS . 'text_editor.php';
+include CLASSES_DIR . DS . 'ExecRequest.php';
 
 // Удаляем файл буфера обмена, если он по каким-либо причинам ещё не удалён
 @unlink(BUFER_FILE);
 
 // Создаём папку с конфигами
 if (!file_exists(CONFIG_DIR))
+{
     mkdir(CONFIG_DIR);
+}
 
 // Создаём папку с локализациями
 if (!file_exists(LANG_DIR))
+{
     mkdir(LANG_DIR);
+}
+
+$db = new DataBaseQuery(CONFIG_DIR . DS . 'database.xml');
 
 // Подключаемся к базе данных
 if (!file_exists(DATABASE))
 {
     $sqlite = sqlite_open(DATABASE);
     sqlite_query($sqlite, "CREATE TABLE bookmarks(id INTEGER PRIMARY KEY, path, title)");
-    sqlite_query($sqlite, "CREATE TABLE config(key, value)");
     sqlite_query($sqlite, "CREATE TABLE history_left(id INTEGER PRIMARY KEY, path)");
     sqlite_query($sqlite, "CREATE TABLE history_right(id INTEGER PRIMARY KEY, path)");
     sqlite_query($sqlite, "CREATE TABLE type_files(id INTEGER PRIMARY KEY, type, command)");
     sqlite_query($sqlite, "CREATE TABLE ext_files(id_type, ext)");
-    sqlite_query($sqlite, "INSERT INTO config(key, value) VALUES('HIDDEN_FILES', 'off');".
-                          "INSERT INTO config(key, value) VALUES('HOME_DIR_LEFT', '".ROOT_DIR."');".
-                          "INSERT INTO config(key, value) VALUES('HOME_DIR_RIGHT', '".HOME_DIR."');".
-                          "INSERT INTO config(key, value) VALUES('ASK_DELETE', 'on');".
-                          "INSERT INTO config(key, value) VALUES('ASK_CLOSE', 'off');".
-                          "INSERT INTO config(key, value) VALUES('TOOLBAR_VIEW', 'on');".
-                          "INSERT INTO config(key, value) VALUES('ADDRESSBAR_VIEW', 'on');".
-                          "INSERT INTO config(key, value) VALUES('STATUSBAR_VIEW', 'on');".
-                          "INSERT INTO config(key, value) VALUES('PARTBAR_VIEW', 'on');".
-                          "INSERT INTO config(key, value) VALUES('FONT_LIST', '');".
-                          "INSERT INTO config(key, value) VALUES('LANGUAGE', '');".
-                          "INSERT INTO config(key, value) VALUES('MAXIMIZE', 'off');".
-                          "INSERT INTO config(key, value) VALUES('TERMINAL', '');".
-                          "INSERT INTO config(key, value) VALUES('COMPARISON', '');".
-                          "INSERT INTO config(key, value) VALUES('PARTBAR_REFRESH', 'off');".
-                          "INSERT INTO config(key, value) VALUES('VIEW_LINES_FILES', 'off');".
-                          "INSERT INTO config(key, value) VALUES('VIEW_LINES_COLUMNS', 'on');");
 }
 else
 {
@@ -149,26 +143,27 @@ config_parser();
 if (OS == 'Windows')
 {
     ini_set('php-gtk.codepage', 'CP1251');
+    $charset = 'CP1251';
     include SHARE_DIR . DS . 'default_lang.CP1251.php';
 }
 else
 {
     ini_set('php-gtk.codepage', 'UTF8');
+    $charset = 'UTF8';
     include SHARE_DIR . DS . 'default_lang.UTF8.php';
 }
 
 // Пользовательский языковой файл
 // Имеет следующую структуру: <locale>.<CHARSET>.php
 // locale - язык, CHARSET - подходящая для данного языка кодировка
-if (!empty($_config['language']) AND file_exists(LANG_DIR . DS . $_config['language'] . '.php'))
-{
-    $filename = LANG_DIR . DS . $_config['language'] . '.php';
-    $explode = explode('.', $filename);
-    $charset = $explode[1];
-    echo 'CHARSET: '.$charset."\n";
-    ini_set('php-gtk.codepage', $charset);
-    include $filename;
-}
+//if ($_config['language'] != 'NONE' AND file_exists(LANG_DIR . DS . $_config['language'] . '.php'))
+//{
+//    $filename = LANG_DIR . DS . $_config['language'] . '.php';
+//    $explode = explode('.', $filename);
+//    $charset = $explode[1];
+//    ini_set('php-gtk.codepage', $charset);
+//    include $filename;
+//}
 
 /**
  * Панель, активная в текущий момент. По умолчанию активна левая панель.
@@ -198,7 +193,9 @@ $window->set_default_size(1100, 700);
 $window->set_position(Gtk::WIN_POS_CENTER);
 $window->set_title($lang['title_program']);
 if ($_config['maximize'] == 'on')
+{
     $window->maximize();
+}
 $window->connect_simple('delete-event', 'close_window');
 $accel_group = new GtkAccelGroup();
 $window->add_accel_group($accel_group);
@@ -250,8 +247,8 @@ $array_menuitem = array(
     array('file', 'separator'),
     array('file', '', 'clear_bufer', $lang['menu']['clear_bufer'], Gtk::STOCK_CLEAR, 'clear_bufer', '', '', 'false', ''),
     array('file', 'separator'),
-    array('file', '', 'comparison_file', $lang['menu']['comparison_file'], '', 'comparison', 'file', '', 'false', ''),
-    array('file', '', 'comparison_dir', $lang['menu']['comparison_dir'], '', 'comparison', 'dir', '', 'false', ''),
+    array('file', '', 'comparison_file', $lang['menu']['comparison_file'], '', 'open_comparison', 'file', '', 'false', ''),
+    array('file', '', 'comparison_dir', $lang['menu']['comparison_dir'], '', 'open_comparison', 'dir', '', 'false', ''),
     array('file', 'separator'),
     array('file', '', 'active_all', $lang['menu']['active_all'], '', 'active_all', TRUE, '', '', '<control>A'),
     array('file', '', 'active_all_none', $lang['menu']['active_all_none'], '', 'active_all', FALSE, '', '', '<control><shift>A'),
@@ -267,13 +264,13 @@ $array_menuitem = array(
     array('edit', '', 'files_associations', $lang['menu']['files_ass'], '', 'FilesAssociationsWindow', '', '', '', ''),
     array('edit', '', 'preference', $lang['menu']['preference'], Gtk::STOCK_PROPERTIES, 'preference'),
     array('view', 'toggle', 'toolbar_view', $lang['menu']['toolbar_view'], '',
-        'panel_view', 'toolbar_view', '', array($_config['toolbar_view'], 'on'), 'F5'),
+        'panel_view', 'toolbar', '', array($_config['toolbar_view'], 'on'), 'F5'),
     array('view', 'toggle', 'addressbar_view', $lang['menu']['addressbar_view'], '',
-        'panel_view', 'addressbar_view', '', array($_config['addressbar_view'], 'on'), 'F6'),
+        'panel_view', 'addressbar', '', array($_config['addressbar_view'], 'on'), 'F6'),
     array('view', 'toggle', 'statusbar_view', $lang['menu']['statusbar_view'], '',
-        'panel_view', 'statusbar_view', '', array($_config['statusbar_view'], 'on'), 'F7'),
+        'panel_view', 'statusbar', '', array($_config['statusbar_view'], 'on'), 'F7'),
     array('view', 'toggle', 'partbar_view', $lang['menu']['partbar_view'], '',
-        'panel_view', 'partbar_view', '', array($_config['partbar_view'], 'on'), 'F8'),
+        'panel_view', 'partbar', '', array($_config['partbar_view'], 'on'), 'F8'),
     array('view', 'separator'),
     array('view', 'toggle', 'hidden_files', $lang['menu']['hidden_files'], '',
         'check_button_write', 'hidden_files', '', array($_config['hidden_files'], 'on'), '<control>H'),
@@ -495,8 +492,7 @@ elseif ($_config['view_lines_files'] == 'on')
 $selection['left'] = $tree_view['left']->get_selection();
 $tree_view['left']->connect('button-press-event', 'on_button', 'left');
 $cell_renderer['left'] = new GtkCellRendererText();
-if (!empty($_config['font_list']))
-    $cell_renderer['left']->set_property('font',  $_config['font_list']);
+$cell_renderer['left']->set_property('font',  $_config['font_list']);
 
 columns($tree_view['left'], $cell_renderer['left']);
 
@@ -534,8 +530,7 @@ elseif ($_config['view_lines_files'] == 'on')
 $selection['right'] = $tree_view['right']->get_selection();
 $tree_view['right']->connect('button-press-event', 'on_button', 'right');
 $cell_renderer['right'] = new GtkCellRendererText();
-if (!empty($_config['font_list']))
-    $cell_renderer['right']->set_property('font',  $_config['font_list']);
+$cell_renderer['right']->set_property('font',  $_config['font_list']);
 
 columns($tree_view['right'], $cell_renderer['right']);
 
@@ -560,11 +555,11 @@ $vbox->pack_start($hbox);
 
 $store[$panel]->clear();
 current_dir($panel);
-$status = new GtkStatusBar();
+$statusbar = new GtkStatusBar();
 if ($_config['statusbar_view'] == 'on')
-    $status->show();
+    $statusbar->show();
 else
-    $status->hide();
+    $statusbar->hide();
 $vbox->pack_start(status_bar(), FALSE, FALSE);
 
 //////////
