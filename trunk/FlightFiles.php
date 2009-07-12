@@ -117,13 +117,14 @@ if (!file_exists(LANG_DIR))
     mkdir(LANG_DIR);
 }
 
-$db = new DataBaseQuery(CONFIG_DIR . DS . 'database.xml');
+define('NEW_CONFIG', CONFIG_DIR . DS . 'database.xml');
+$db = new DataBaseQuery(NEW_CONFIG);
+$xml = new SimpleXMLElement(file_get_contents(NEW_CONFIG));
 
 // Подключаемся к базе данных
 if (!file_exists(DATABASE))
 {
     $sqlite = sqlite_open(DATABASE);
-    sqlite_query($sqlite, "CREATE TABLE bookmarks(id INTEGER PRIMARY KEY, path, title)");
     sqlite_query($sqlite, "CREATE TABLE history_left(id INTEGER PRIMARY KEY, path)");
     sqlite_query($sqlite, "CREATE TABLE history_right(id INTEGER PRIMARY KEY, path)");
     sqlite_query($sqlite, "CREATE TABLE type_files(id INTEGER PRIMARY KEY, type, command)");
