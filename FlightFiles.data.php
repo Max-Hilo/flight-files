@@ -1205,30 +1205,6 @@ function clear_bufer()
     alert_window($lang['alert']['bufer_clear']);
 }
 
-/**
- *
- * Функция заполняет текстовые поля в окне "Упарвление закладками" при выборе закладки в списке.
- */
-function selection_bookmarks($selection, $array)
-{
-    global $sqlite;
-
-    list($model, $iter) = $selection->get_selected();
-    @$id = $model->get_value($iter, 1);
-
-    $array['name_label']->set_sensitive(TRUE);
-    $array['name_entry']->set_sensitive(TRUE);
-    $array['path_label']->set_sensitive(TRUE);
-    $array['path_entry']->set_sensitive(TRUE);
-    $array['button_ok']->set_sensitive(TRUE);
-    $array['button_delete']->set_sensitive(TRUE);
-
-    $query = sqlite_query($sqlite, "SELECT path, title FROM bookmarks WHERE id = '$id'");
-    $row = sqlite_fetch_array($query);
-    $array['name_entry']->set_text($row['title']);
-    $array['path_entry']->set_text($row['path']);
-}
-
 function panel_view($widget, $param)
 {
     global $toolbar, $partbar, $addressbar, $statusbar, $db;

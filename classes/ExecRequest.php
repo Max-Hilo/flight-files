@@ -10,11 +10,12 @@ class DataBaseQuery
         if (!file_exists($this->filename))
         {
             $fopen = fopen($this->filename, 'a+');
-            fwrite($fopen, "<FlightFiles>\n</FlightFiles>");
+            fwrite($fopen, "<FlightFiles></FlightFiles>");
             fclose($fopen);
             
             $this->xml = new SimpleXMLElement(file_get_contents($this->filename));
             $this->new_database('preference');
+            $this->new_database('bookmarks');
             $array = array(
                 array('hidden_files', 'off'),
                 array('home_dir_left', ROOT_DIR),
@@ -53,7 +54,7 @@ class DataBaseQuery
      */
     function select($database, $parameter)
     {
-        return $this->xml->$database->$parameter;
+        return  $this->xml->$database->$parameter;
     }
 
     /**
