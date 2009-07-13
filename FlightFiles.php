@@ -52,11 +52,6 @@ define('SHARE_DIR', dirname(__FILE__));
 define('CONFIG_DIR', SHARE_DIR . DS . 'configuration');
 
 /**
- * Папка, содержащяя классы.
- */
-define('CLASSES_DIR', SHARE_DIR . DS . 'classes');
-
-/**
  * Папка, содержащая файлы локализации.
  */
 define('LANG_DIR', CONFIG_DIR . DS . 'languages');
@@ -67,9 +62,9 @@ define('LANG_DIR', CONFIG_DIR . DS . 'languages');
 define('BUFER_FILE', CONFIG_DIR . DS . 'bufer');
 
 /**
- * Файл базы данных.
+ * Конфигурационный файл.
  */
-define('DATABASE', CONFIG_DIR . DS . 'database.sqlite');
+define('DATABASE', CONFIG_DIR . DS . 'database.xml');
 
 /**
  * Версия программы.
@@ -100,10 +95,6 @@ include SHARE_DIR . DS . 'preference.php';
 include SHARE_DIR . DS . 'properties.php';
 include SHARE_DIR . DS . 'shortcuts.php';
 include SHARE_DIR . DS . 'text_editor.php';
-include CLASSES_DIR . DS . 'ExecRequest.php';
-
-// Удаляем файл буфера обмена, если он по каким-либо причинам ещё не удалён
-@unlink(BUFER_FILE);
 
 // Создаём папку с конфигами
 if (!file_exists(CONFIG_DIR))
@@ -117,25 +108,57 @@ if (!file_exists(LANG_DIR))
     mkdir(LANG_DIR);
 }
 
-define('NEW_CONFIG', CONFIG_DIR . DS . 'database.xml');
-$db = new DataBaseQuery(NEW_CONFIG);
-$xml = new SimpleXMLElement(file_get_contents(NEW_CONFIG));
-
-// Подключаемся к базе данных
+// Подключение к конфигу
 if (!file_exists(DATABASE))
 {
-    $sqlite = sqlite_open(DATABASE);
-    sqlite_query($sqlite, "CREATE TABLE history_left(id INTEGER PRIMARY KEY, path)");
-    sqlite_query($sqlite, "CREATE TABLE history_right(id INTEGER PRIMARY KEY, path)");
-    sqlite_query($sqlite, "CREATE TABLE type_files(id INTEGER PRIMARY KEY, type, command)");
-    sqlite_query($sqlite, "CREATE TABLE ext_files(id_type, ext)");
+    $fopen = fopen(DATABASE, 'a+');
+    fwrite($fopen, "<FlightFiles></FlightFiles>");
+    fclose($fopen);
+
+    $xml = new SimpleXMLElement(file_get_contents(DATABASE));
+    $xml->addChild('preference');
+    $xml->addChild('bookmarks');
+    $xml->addChild('attach');
+    $xml->addChild('history');
+    $xml->history->addChild('left');
+    $xml->history->addChild('right');
+    $array = array(
+        array('hidden_files', 'off'),
+        array('home_dir_left', ROOT_DIR),
+        array('home_dir_right', HOME_DIR),
+        array('ask_delete', 'on'),
+        array('ask_close', 'on'),
+        array('toolbar_view', 'on'),
+        array('partbar_view', 'on'),
+        array('partbar_refresh', 'off'),
+        array('addressbar_view', 'on'),
+        array('statusbar_view', 'on'),
+        array('font_list', 'NONE'),
+        array('language', 'NONE'),
+        array('maximize', 'off'),
+        array('terminal', 'NONE'),
+        array('comparison', 'NONE'),
+        array('view_lines_files', 'off'),
+        array('view_lines_columns', 'on')
+    );
+    foreach ($array as $value)
+    {
+        $xml->preference->addChild($value[0], $value[1]);
+    }
+    $xml->asXML(DATABASE);
 }
 else
 {
-    $sqlite = sqlite_open(DATABASE);
-    sqlite_query($sqlite, "DELETE FROM history_left");
-    sqlite_query($sqlite, "DELETE FROM history_right");
+    $xml = new SimpleXMLElement(file_get_contents(DATABASE));
+    unset($xml->history);
+    $item = $xml->addChild('history');
+    $item->addChild('left');
+    $item->addChild('right');
+    $xml->asXML(DATABASE);
 }
+
+// Удаляем файл буфера обмена, если он по каким-либо причинам ещё не удалён
+@unlink(BUFER_FILE);
 
 config_parser();
 
@@ -262,7 +285,7 @@ $array_menuitem = array(
     array('edit', '', 'rename', $lang['menu']['rename'], '', 'rename_window', '', '', 'false', 'F2'),
     array('edit', '', 'mass_rename', $lang['menu']['mass_rename'], '', 'BulkRenameWindow', '', '', 'write', '<control>F2'),
     array('edit', 'separator'),
-    array('edit', '', 'files_associations', $lang['menu']['files_ass'], '', 'FilesAssociationsWindow', '', '', '', ''),
+    array('edit', '', 'files_associations', $lang['menu']['files_ass'], '', 'files_associations_window', '', '', '', ''),
     array('edit', '', 'preference', $lang['menu']['preference'], Gtk::STOCK_PROPERTIES, 'preference'),
     array('view', 'toggle', 'toolbar_view', $lang['menu']['toolbar_view'], '',
         'panel_view', 'toolbar', '', array($_config['toolbar_view'], 'on'), 'F5'),
@@ -478,8 +501,14 @@ $hbox = new GtkHBox;
 $left = new GtkFrame;
 $left->set_shadow_type(Gtk::SHADOW_IN);
 
+$history_item = $xml->history->left->addChild('item');
+$history_item->id = 1;
+$history_item->path = $start['left'];
+$xml->asXML(DATABASE);
+
 $store['left'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING,
     GObject::TYPE_STRING, GObject::TYPE_BOOLEAN, GObject::TYPE_STRING, GObject::TYPE_STRING);
+
 $tree_view['left'] = new GtkTreeView($store['left']);
 
 // При необходимости показываем линии между колонками и между файлами
@@ -497,7 +526,6 @@ $cell_renderer['left']->set_property('font',  $_config['font_list']);
 
 columns($tree_view['left'], $cell_renderer['left']);
 
-sqlite_query($sqlite, "INSERT INTO history_left(path) VALUES('$start[left]')");
 current_dir('left');
 
 $scroll_left = new GtkScrolledWindow();
@@ -513,10 +541,13 @@ $left->add($scroll_left);
 $right = new GtkFrame;
 $right->set_shadow_type(Gtk::SHADOW_IN);
 
+$history_item = $xml->history->right->addChild('item');
+$history_item->id = 1;
+$history_item->path = $start['right'];
+$xml->asXML(DATABASE);
+
 $store['right'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING,
     GObject::TYPE_STRING, GObject::TYPE_BOOLEAN, GObject::TYPE_STRING, GObject::TYPE_STRING);
-sqlite_query($sqlite, "INSERT INTO history_right(path) VALUES('$start[right]')");
-current_dir('right');
 
 $tree_view['right'] = new GtkTreeView($store['right']);
 
@@ -534,6 +565,8 @@ $cell_renderer['right'] = new GtkCellRendererText();
 $cell_renderer['right']->set_property('font',  $_config['font_list']);
 
 columns($tree_view['right'], $cell_renderer['right']);
+
+current_dir('right');
 
 $scroll_right = new GtkScrolledWindow();
 $scroll_right->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_ALWAYS);
