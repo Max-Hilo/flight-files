@@ -11,7 +11,7 @@
  */
 function preference()
 {
-    global $_config, $lang, $sqlite;
+    global $_config, $lang;
     
     $window = new GtkWindow();
     $window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
@@ -226,14 +226,14 @@ function preference()
 
 /**
  * Создаёт диалог GtkFontSelectionDialog и производит запись выбранного файла в базу данных.
- * @global object $db
+ * @global object $xml
  * @global array $lang
  * @param string $param Изменяемый параметр
  * @param GtkEntry $entry Поле ввода
  */
 function preference_command($param, $entry)
 {
-    global $db, $lang;
+    global $xml, $lang;
 
     $dialog = new GtkFileChooserDialog(
         $lang['preference']['select_file'],
@@ -250,7 +250,8 @@ function preference_command($param, $entry)
     if ($result == Gtk::RESPONSE_OK)
     {
         $filename = $dialog->get_filename();
-        $db->update('preference', $param, $filename);
+        $xml->preference->$param = $filename;
+        $xml->asXML(DATABASE);
         $entry->set_text($filename);
     }
     $dialog->destroy();
@@ -264,11 +265,12 @@ function preference_command($param, $entry)
  */
 function combo_write($combo, $param)
 {
-    global $lang, $db;
+    global $lang, $xml;
 
     $active = $combo->get_active_text();
     $active = ($active == $lang['preference']['lang_default']) ? 'NONE' : $active;
-    $db->update('preference', $param, $active);
+    $xml->preference->$param = $active;
+    $xml->asXML(DATABASE);
 }
 
 /**
@@ -278,10 +280,11 @@ function combo_write($combo, $param)
  */
 function check_button_write($check, $param, $timeout = '')
 {
-    global $db, $refresh_id;
+    global $xml, $refresh_id;
     
     $value = $check->get_active() ? 'on' : 'off';
-    $db->update('preference', $param, $value);
+    $xml->preference->$param = $value;
+    $xml->asXML(DATABASE);
 
     if ($timeout == 'partbar')
     {
@@ -305,9 +308,10 @@ function check_button_write($check, $param, $timeout = '')
  */
 function radio_button_write($param, $value)
 {
-    global $db;
+    global $xml;
     
-    $db->update('preference', $param, $value);
+    $xml->preference->$param = $value;
+    $xml->asXML(DATABASE);
     change_dir('none');
 }
 
@@ -317,7 +321,7 @@ function radio_button_write($param, $value)
  */
 function font_select($entry)
 {
-    global $cell_renderer, $lang, $_config, $db;
+    global $cell_renderer, $lang, $_config, $xml;
     
     $dialog = new GtkFontSelectionDialog($lang['font']['title']);
     $dialog->set_position(Gtk::WIN_POS_CENTER_ALWAYS);
@@ -328,7 +332,8 @@ function font_select($entry)
     
     $font_name = $dialog->get_font_name();
     $entry->set_text($font_name);
-    $db->update('preference', 'font_list', $font_name);
+    $xml->preference->font_list = $font_name;
+    $xml->asXML(DATABASE);
     $cell_renderer['left']->set_property('font',  $font_name);
     $cell_renderer['right']->set_property('font',  $font_name);
     $dialog->destroy();
@@ -344,7 +349,7 @@ function font_select($entry)
  */
 function check_font($check, $entry, $button)
 {
-    global $cell_renderer, $db;
+    global $cell_renderer, $xml;
     
     if ($check->get_active() === FALSE)
     {
@@ -353,7 +358,8 @@ function check_font($check, $entry, $button)
     }
     else
     {
-        $db->update('preference', 'font_list', 'NONE');
+        $xml->preference->font_list = 'NONE';
+        $xml->asXML(DATABASE);
         $entry->set_text('');
         $entry->set_sensitive(FALSE);
         $button->set_sensitive(FALSE);

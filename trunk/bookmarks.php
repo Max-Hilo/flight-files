@@ -203,7 +203,7 @@ function bookmarks_delete($array, $all = 'FALSE')
     {
         unset($xml->bookmarks);
         $xml->addChild('bookmarks');
-        $xml->asXML(NEW_CONFIG);
+        $xml->asXML(DATABASE);
         $array['button_delete_all']->set_sensitive(FALSE);
     }
     else
@@ -216,7 +216,7 @@ function bookmarks_delete($array, $all = 'FALSE')
             if ($id == (string)$item->id)
             {
                 unset($bkm[$i]);
-                $xml->asXML(NEW_CONFIG);
+                $xml->asXML(DATABASE);
                 break;
             }
             $i++;
@@ -303,7 +303,7 @@ function bookmark_add($array = '', $bool = FALSE)
         $array['button_delete']->set_sensitive(FALSE);
         $array['button_delete_all']->set_sensitive(TRUE);
     }
-    $xml->asXML(NEW_CONFIG);
+    $xml->asXML(DATABASE);
     
     foreach ($sub_menu['bookmarks']->get_children() as $widget)
     {
@@ -334,7 +334,7 @@ function bookmarks_save_change($array)
         {
             $item->title = $title;
             $item->path = $path;
-            $xml->asXML(NEW_CONFIG);
+            $xml->asXML(DATABASE);
             break;
         }
     }

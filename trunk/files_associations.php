@@ -8,12 +8,11 @@
 
 /**
  * Создание окна управления файловыми ассоциациями.
- * @global resource $sqlite
  * @global object $select_type
  */
-function FilesAssociationsWindow()
+function files_associations_window()
 {
-    global $sqlite, $select_type, $select_ext, $lang;
+    global $select_type, $select_ext, $lang;
     
     $window = new GtkWindow();
     $window->set_size_request(400, 350);
@@ -29,12 +28,12 @@ function FilesAssociationsWindow()
     $model_type = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING);
     $view_type = new GtkTreeView($model_type);
     $select_type = $view_type->get_selection();
+    $view_type->append_column($column_type = new GtkTreeViewColumn($lang['file_ass']['types'], new GtkCellRendererText(), 'text', 0));
+    $view_type->append_column($column_command = new GtkTreeViewColumn('', new GtkCellRendererText(), 'text', 1));
+    $column_command->set_visible(FALSE);
     $view_type->append_column($column_id = new GtkTreeViewColumn('', new GtkCellRendererText(), 'text', 2));
     $column_id->set_visible(FALSE);
-    $view_type->append_column($column_type = new GtkTreeViewColumn($lang['file_ass']['types'], new GtkCellRendererText(), 'text', 1));
-    $view_type->append_column($column_command = new GtkTreeViewColumn('', new GtkCellRendererText(), 'text', 2));
-    $column_command->set_visible(FALSE);
-    FillViewType($model_type);
+    list_of_types($model_type);
     $vbox->pack_start($view_type, TRUE, TRUE, 10);
     $vbox->pack_start($btn_add_type = new GtkButton($lang['file_ass']['add_type']), FALSE, FALSE);
     $vbox->pack_start($btn_edit_type = new GtkButton($lang['file_ass']['edit_type']), FALSE, FALSE);
@@ -48,7 +47,7 @@ function FilesAssociationsWindow()
     $view_ext = new GtkTreeView($model_ext);
     $select_ext = $view_ext->get_selection();
     $view_ext->append_column($column_ext = new GtkTreeViewColumn($lang['file_ass']['extensions'], new GtkCellRendererText(), 'text', 0));
-    FillViewExt($model_ext);
+    list_of_extensions($model_ext);
     $vbox->pack_start($view_ext, TRUE, TRUE, 10);
     $vbox->pack_start($btn_add_ext = new GtkButton($lang['file_ass']['add_ext']), FALSE, FALSE);
     $vbox->pack_start($btn_edit_ext = new GtkButton($lang['file_ass']['edit_ext']), FALSE, FALSE);
@@ -76,22 +75,22 @@ function FilesAssociationsWindow()
         'entry_command' => $entry_command,
         'hbox_command' => $hbox_command
     );
-    $btn_remove_type->connect_simple('clicked', 'RemoveType', $model_type, $array);
-    $btn_add_type->connect_simple('clicked', 'AddTypeWindow', $model_type, $array);
-    $select_type->connect_simple('changed', 'OnSelectionType', $model_ext, $array);
-    $select_ext->connect_simple('changed', 'OnSelectionExt', $array);
-    $btn_add_ext->connect_simple('clicked', 'AddExtWindow', $model_ext, $array);
-    $btn_remove_ext->connect_simple('clicked', 'RemoveExt', $model_ext, $array);
-    $btn_command->connect_simple('clicked', 'AddCommandWindow', $model_type, $array);
+    $btn_remove_type->connect_simple('clicked', 'remove_type', $model_type, $array);
+    $btn_add_type->connect_simple('clicked', 'add_type_window', $model_type, $array);
+    $select_type->connect_simple('changed', 'on_selection_types', $model_ext, $array);
+    $select_ext->connect_simple('changed', 'on_selection_extensions', $array);
+    $btn_add_ext->connect_simple('clicked', 'add_extension_window', $model_ext, $array);
+    $btn_remove_ext->connect_simple('clicked', 'remove_extension', $array);
+    $btn_command->connect_simple('clicked', 'add_command_window', $model_type, $array);
 
     $window->add($vbox_main);
     $window->show_all();
     Gtk::main();
 }
 
-function AddCommandWindow($model_type, $array)
+function add_command_window($model, $array)
 {
-    global $sqlite, $id_type, $lang;
+    global $xml, $id_type, $lang;
 
     $dialog = new GtkFileChooserDialog(
         $lang['file_ass']['chooser_command'],
@@ -108,28 +107,52 @@ function AddCommandWindow($model_type, $array)
     if ($result == Gtk::RESPONSE_OK)
     {
         $command = $dialog->get_filename();
-        sqlite_query($sqlite, "UPDATE type_files SET command = '$command' WHERE id = '$id_type'");
-        $array['entry_command']->set_text($command);
+        foreach ($xml->attach->type as $type)
+        {
+            if ($type->id == $id_type)
+            {
+                $type->command = $command;
+                $xml->asXML(DATABASE);
+                break;
+            }
+        }
+        $model->clear();
+        list_of_types($model);
     }
-    $model_type->clear();
-    FillViewType($model_type);
     $dialog->destroy();
 }
 
-function RemoveExt($model, $array)
+function remove_extension( $array)
 {
-    global $sqlite, $select_ext;
+    global $xml, $select_ext, $id_type;
 
     list($model, $iter) = $select_ext->get_selected();
-    $ext = $model->get_value($iter, 0);
-    sqlite_query($sqlite, "DELETE FROM ext_files WHERE ext = '$ext'");
+    $extension = $model->get_value($iter, 0);
+    foreach ($xml->attach->type as $type)
+    {
+        if ($type->id == $id_type)
+        {
+            $i = 0;
+            foreach ($type->extensions->extension as $ext)
+            {
+                if ($ext == $extension)
+                {
+                    unset($type->extensions->extension[$i]);
+                    $xml->asXML(DATABASE);
+                    break;
+                }
+                $i++;
+            }
+            break;
+        }
+    }
     $model->clear();
-    FillViewExt($model);
+    list_of_extensions($model);
     $array['btn_edit_ext']->set_sensitive(FALSE);
     $array['btn_remove_ext']->set_sensitive(FALSE);
 }
 
-function AddExtWindow($model, $array)
+function add_extension_window($model, $array)
 {
     global $lang;
     
@@ -141,58 +164,70 @@ function AddExtWindow($model, $array)
     $vbox->pack_start($entry = new GtkEntry(), FALSE, FALSE);
     $vbox->pack_start($hbox = new GtkHBox(), FALSE, FALSE);
     $hbox->pack_start($btn_cancel = new GtkButton($lang['file_ass']['cancel_add_ext']), FALSE, FALSE);
-    $btn_cancel->connect_simple('clicked', 'AddWindowClose', $window);
+    $btn_cancel->connect_simple('clicked', 'close_add_type_window', $window);
     $hbox->pack_start($btn_ok = new GtkButton($lang['file_ass']['ok_add_ext']), FALSE, FALSE);
-    $btn_ok->connect_simple('clicked', 'AddExt', $entry, $window, $model, $array);
+    $btn_ok->connect_simple('clicked', 'add_extension', $entry, $window, $model, $array);
 
     $window->add($vbox);
     $window->show_all();
     Gtk::main();
 }
 
-function AddExt($entry, $window, $model, $array)
+function add_extension($entry, $window, $model, $array)
 {
-    global $sqlite, $select_type, $id_type;
+    global $xml, $select_type, $id_type;
 
     $ext = $entry->get_text();
     if (!empty($ext))
     {
-        sqlite_query($sqlite, "INSERT INTO ext_files(id_type, ext) VALUES('$id_type', '$ext')");
+        foreach ($xml->attach->type as $type)
+        {
+            if ($type->id == $id_type)
+            {
+                $type->extensions->addChild('extension', $ext);
+                $xml->asXML(DATABASE);
+                break;
+            }
+        }
         $model->clear();
-        FillViewExt($model);
+        list_of_extensions($model);
         $array['btn_edit_ext']->set_sensitive(FALSE);
         $array['btn_remove_ext']->set_sensitive(FALSE);
     }
     $window->destroy();
 }
 
-function FillViewExt($model)
+function list_of_extensions($model)
 {
-    global $sqlite, $select_type, $id_type;
+    global $xml, $select_type, $id_type;
 
     if ($id_type)
     {
-        $query = sqlite_query($sqlite, "SELECT ext FROM ext_files WHERE id_type = '$id_type'");
-        while ($sfa = sqlite_fetch_array($query))
+        foreach ($xml->attach->type as $item)
         {
-            $model->append(array($sfa['ext']));
+            if ($item->id == $id_type)
+            {
+                foreach ($item->extensions->extension as $ext)
+                {
+                    $model->append(array($ext));
+                }
+                break;
+            }
         }
     }
 }
 
 /**
  * Заполнение модели для списка типов файлов.
- * @global resource $sqlite
  * @param GtkListStore $model
  */
-function FillViewType($model)
+function list_of_types($model)
 {
-    global $sqlite;
+    global $xml;
 
-    $query = sqlite_query($sqlite, "SELECT id, type, command FROM type_files");
-    while ($sfa = sqlite_fetch_array($query))
+    foreach ($xml->attach->type as $item)
     {
-        $model->append(array($sfa['id'], $sfa['type'], $sfa['command']));
+        $model->append(array($item->title, $item->command, $item->id));
     }
 }
 
@@ -200,7 +235,7 @@ function FillViewType($model)
  * Создание окна для ввода имени типа файлов.
  * @param GtkListStore $model Модель списка типов файлов
  */
-function AddTypeWindow($model, $array)
+function add_type_window($model, $array)
 {
     global $lang;
 
@@ -212,9 +247,9 @@ function AddTypeWindow($model, $array)
     $vbox->pack_start($entry = new GtkEntry(), FALSE, FALSE);
     $vbox->pack_start($hbox = new GtkHBox(), FALSE, FALSE);
     $hbox->pack_start($btn_cancel = new GtkButton($lang['file_ass']['cancel_add_type']), FALSE, FALSE);
-    $btn_cancel->connect_simple('clicked', 'AddWindowClose', $window);
+    $btn_cancel->connect_simple('clicked', 'close_add_type_window', $window);
     $hbox->pack_start($btn_ok = new GtkButton($lang['file_ass']['ok_add_type']), FALSE, FALSE);
-    $btn_ok->connect_simple('clicked', 'AddType', $entry, $window, $model, $array);
+    $btn_ok->connect_simple('clicked', 'add_type', $entry, $window, $model, $array);
 
     $window->add($vbox);
     $window->show_all();
@@ -225,28 +260,37 @@ function AddTypeWindow($model, $array)
  * Закрытие окна для ввода имени типа файлов.
  * @param GtkWindow $window
  */
-function AddWindowClose($window)
+function close_add_type_window($window)
 {
     $window->destroy();
 }
 
 /**
  * Добавление нового типа файлов в базу данных
- * @global resource $sqlite
  * @param GtkEntry $entry Поле ввода имени типа файла
  * @param GtkWindow $window Окно для ввода имени типа файлов
  * @param GtkListStore $model Модель списка типов файлов
  */
-function AddType($entry, $window, $model, $array)
+function add_type($entry, $window, $model, $array)
 {
-    global $sqlite;
+    global $xml;
 
-    $type = $entry->get_text();
-    if (!empty($type))
+    $title = $entry->get_text();
+    if (!empty($title))
     {
-        sqlite_query($sqlite, "INSERT INTO type_files(type) VALUES('$type')");
+        $att = $xml->attach->type;
+        $count = count($att);
+        $id_last = (int)$att[$count - 1]->id;
+        $new_type = $xml->attach->addChild('type');
+        $new_type->addChild('id', ++$id_last);
+        $new_type->addChild('title', $title);
+        $new_type->addChild('command');
+        $new_type->addChild('extensions');
+        $xml->asXML(DATABASE);
+
         $model->clear();
-        FillViewType($model);
+        list_of_types($model);
+
         $array['btn_remove_type']->set_sensitive(FALSE);
         $array['btn_edit_type']->set_sensitive(FALSE);
         $array['btn_add_ext']->set_sensitive(FALSE);
@@ -260,18 +304,26 @@ function AddType($entry, $window, $model, $array)
 
 /**
  * Удаление типа файлов
- * @global resource $sqlite
  * @global object $select_type
  * @param GtkListStore $model
  */
-function RemoveType($model, $array)
+function remove_type($model, $array)
 {
-    global $sqlite, $select_type, $id_type;
+    global $xml, $select_type, $id_type;
 
-    sqlite_query($sqlite, "DELETE FROM type_files WHERE id = '$id_type'");
-    sqlite_query($sqlite, "DELETE FROM ext_files WHERE id_type = '$id_type'");
+    $i = 0;
+    foreach ($xml->attach->type as $type)
+    {
+        if ($type->id == $id_type)
+        {
+            unset($xml->attach->type[$i]);
+            $xml->asXML(DATABASE);
+            break;
+        }
+        $i++;
+    }
     $model->clear();
-    FillViewType($model);
+    list_of_types($model);
     $array['btn_remove_type']->set_sensitive(FALSE);
     $array['btn_edit_type']->set_sensitive(FALSE);
     $array['btn_add_ext']->set_sensitive(FALSE);
@@ -281,15 +333,15 @@ function RemoveType($model, $array)
     $array['entry_command']->set_text('');
 }
 
-function OnSelectionType($model, $array)
+function on_selection_types($model, $array)
 {
-    global $sqlite, $select_type, $id_type;
+    global $select_type, $id_type;
 
     @list($model_type, $iter) = $select_type->get_selected();
-    @$id_type = $model_type->get_value($iter, 0);
-    @$command = $model_type->get_value($iter, 2);
+    @$id_type = $model_type->get_value($iter, 2);
+    @$command = $model_type->get_value($iter, 1);
     $model->clear();
-    FillViewExt($model);
+    list_of_extensions($model);
     $array['btn_remove_type']->set_sensitive(TRUE);
     $array['btn_edit_type']->set_sensitive(TRUE);
     $array['btn_add_ext']->set_sensitive(TRUE);
@@ -299,7 +351,7 @@ function OnSelectionType($model, $array)
     $array['entry_command']->set_text($command);
 }
 
-function OnSelectionExt($array)
+function on_selection_extensions($array)
 {
     $array['btn_edit_ext']->set_sensitive(TRUE);
     $array['btn_remove_ext']->set_sensitive(TRUE);
