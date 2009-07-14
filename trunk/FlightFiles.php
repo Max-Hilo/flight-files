@@ -62,9 +62,9 @@ define('LANG_DIR', CONFIG_DIR . DS . 'languages');
 define('BUFER_FILE', CONFIG_DIR . DS . 'bufer');
 
 /**
- * Конфигурационный файл.
+ * Файл базы данных.
  */
-define('DATABASE', CONFIG_DIR . DS . 'database.xml');
+define('DATABASE', CONFIG_DIR . DS . 'database.sqlite');
 
 /**
  * Версия программы.
@@ -96,69 +96,51 @@ include SHARE_DIR . DS . 'properties.php';
 include SHARE_DIR . DS . 'shortcuts.php';
 include SHARE_DIR . DS . 'text_editor.php';
 
+// Удаляем файл буфера обмена, если он по каким-либо причинам ещё не удалён
+@unlink(BUFER_FILE);
+
 // Создаём папку с конфигами
 if (!file_exists(CONFIG_DIR))
-{
     mkdir(CONFIG_DIR);
-}
 
 // Создаём папку с локализациями
 if (!file_exists(LANG_DIR))
-{
     mkdir(LANG_DIR);
-}
 
-// Подключение к конфигу
+// Подключаемся к базе данных
 if (!file_exists(DATABASE))
 {
-    $fopen = fopen(DATABASE, 'a+');
-    fwrite($fopen, "<FlightFiles></FlightFiles>");
-    fclose($fopen);
-
-    $xml = new SimpleXMLElement(file_get_contents(DATABASE));
-    $xml->addChild('preference');
-    $xml->addChild('bookmarks');
-    $xml->addChild('attach');
-    $xml->addChild('history');
-    $xml->history->addChild('left');
-    $xml->history->addChild('right');
-    $array = array(
-        array('hidden_files', 'off'),
-        array('home_dir_left', ROOT_DIR),
-        array('home_dir_right', HOME_DIR),
-        array('ask_delete', 'on'),
-        array('ask_close', 'on'),
-        array('toolbar_view', 'on'),
-        array('partbar_view', 'on'),
-        array('partbar_refresh', 'off'),
-        array('addressbar_view', 'on'),
-        array('statusbar_view', 'on'),
-        array('font_list', 'NONE'),
-        array('language', 'NONE'),
-        array('maximize', 'off'),
-        array('terminal', 'NONE'),
-        array('comparison', 'NONE'),
-        array('view_lines_files', 'off'),
-        array('view_lines_columns', 'on')
-    );
-    foreach ($array as $value)
-    {
-        $xml->preference->addChild($value[0], $value[1]);
-    }
-    $xml->asXML(DATABASE);
+    $sqlite = sqlite_open(DATABASE);
+    sqlite_query($sqlite, "CREATE TABLE bookmarks(id INTEGER PRIMARY KEY, path, title)");
+    sqlite_query($sqlite, "CREATE TABLE config(key, value)");
+    sqlite_query($sqlite, "CREATE TABLE history_left(id INTEGER PRIMARY KEY, path)");
+    sqlite_query($sqlite, "CREATE TABLE history_right(id INTEGER PRIMARY KEY, path)");
+    sqlite_query($sqlite, "CREATE TABLE type_files(id INTEGER PRIMARY KEY, type, command)");
+    sqlite_query($sqlite, "CREATE TABLE ext_files(id_type, ext)");
+    sqlite_query($sqlite, "INSERT INTO config(key, value) VALUES('HIDDEN_FILES', 'off');".
+                          "INSERT INTO config(key, value) VALUES('HOME_DIR_LEFT', '".ROOT_DIR."');".
+                          "INSERT INTO config(key, value) VALUES('HOME_DIR_RIGHT', '".HOME_DIR."');".
+                          "INSERT INTO config(key, value) VALUES('ASK_DELETE', 'on');".
+                          "INSERT INTO config(key, value) VALUES('ASK_CLOSE', 'off');".
+                          "INSERT INTO config(key, value) VALUES('TOOLBAR_VIEW', 'on');".
+                          "INSERT INTO config(key, value) VALUES('ADDRESSBAR_VIEW', 'on');".
+                          "INSERT INTO config(key, value) VALUES('STATUSBAR_VIEW', 'on');".
+                          "INSERT INTO config(key, value) VALUES('PARTBAR_VIEW', 'on');".
+                          "INSERT INTO config(key, value) VALUES('FONT_LIST', '');".
+                          "INSERT INTO config(key, value) VALUES('LANGUAGE', '');".
+                          "INSERT INTO config(key, value) VALUES('MAXIMIZE', 'off');".
+                          "INSERT INTO config(key, value) VALUES('TERMINAL', '');".
+                          "INSERT INTO config(key, value) VALUES('COMPARISON', '');".
+                          "INSERT INTO config(key, value) VALUES('PARTBAR_REFRESH', 'off');".
+                          "INSERT INTO config(key, value) VALUES('VIEW_LINES_FILES', 'off');".
+                          "INSERT INTO config(key, value) VALUES('VIEW_LINES_COLUMNS', 'on');");
 }
 else
 {
-    $xml = new SimpleXMLElement(file_get_contents(DATABASE));
-    unset($xml->history);
-    $item = $xml->addChild('history');
-    $item->addChild('left');
-    $item->addChild('right');
-    $xml->asXML(DATABASE);
+    $sqlite = sqlite_open(DATABASE);
+    sqlite_query($sqlite, "DELETE FROM history_left");
+    sqlite_query($sqlite, "DELETE FROM history_right");
 }
-
-// Удаляем файл буфера обмена, если он по каким-либо причинам ещё не удалён
-@unlink(BUFER_FILE);
 
 config_parser();
 
@@ -167,27 +149,26 @@ config_parser();
 if (OS == 'Windows')
 {
     ini_set('php-gtk.codepage', 'CP1251');
-    $charset = 'CP1251';
     include SHARE_DIR . DS . 'default_lang.CP1251.php';
 }
 else
 {
     ini_set('php-gtk.codepage', 'UTF8');
-    $charset = 'UTF8';
     include SHARE_DIR . DS . 'default_lang.UTF8.php';
 }
 
 // Пользовательский языковой файл
 // Имеет следующую структуру: <locale>.<CHARSET>.php
 // locale - язык, CHARSET - подходящая для данного языка кодировка
-//if ($_config['language'] != 'NONE' AND file_exists(LANG_DIR . DS . $_config['language'] . '.php'))
-//{
-//    $filename = LANG_DIR . DS . $_config['language'] . '.php';
-//    $explode = explode('.', $filename);
-//    $charset = $explode[1];
-//    ini_set('php-gtk.codepage', $charset);
-//    include $filename;
-//}
+if (!empty($_config['language']) AND file_exists(LANG_DIR . DS . $_config['language'] . '.php'))
+{
+    $filename = LANG_DIR . DS . $_config['language'] . '.php';
+    $explode = explode('.', $filename);
+    $charset = $explode[1];
+    echo 'CHARSET: '.$charset."\n";
+    ini_set('php-gtk.codepage', $charset);
+    include $filename;
+}
 
 /**
  * Панель, активная в текущий момент. По умолчанию активна левая панель.
@@ -217,9 +198,7 @@ $window->set_default_size(1100, 700);
 $window->set_position(Gtk::WIN_POS_CENTER);
 $window->set_title($lang['title_program']);
 if ($_config['maximize'] == 'on')
-{
     $window->maximize();
-}
 $window->connect_simple('delete-event', 'close_window');
 $accel_group = new GtkAccelGroup();
 $window->add_accel_group($accel_group);
@@ -501,14 +480,8 @@ $hbox = new GtkHBox;
 $left = new GtkFrame;
 $left->set_shadow_type(Gtk::SHADOW_IN);
 
-$history_item = $xml->history->left->addChild('item');
-$history_item->id = 1;
-$history_item->path = $start['left'];
-$xml->asXML(DATABASE);
-
 $store['left'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING,
     GObject::TYPE_STRING, GObject::TYPE_BOOLEAN, GObject::TYPE_STRING, GObject::TYPE_STRING);
-
 $tree_view['left'] = new GtkTreeView($store['left']);
 
 // При необходимости показываем линии между колонками и между файлами
@@ -522,10 +495,14 @@ elseif ($_config['view_lines_files'] == 'on')
 $selection['left'] = $tree_view['left']->get_selection();
 $tree_view['left']->connect('button-press-event', 'on_button', 'left');
 $cell_renderer['left'] = new GtkCellRendererText();
-$cell_renderer['left']->set_property('font',  $_config['font_list']);
+if (!empty($_config['font_list']))
+{
+    $cell_renderer['left']->set_property('font',  $_config['font_list']);
+}
 
 columns($tree_view['left'], $cell_renderer['left']);
 
+sqlite_query($sqlite, "INSERT INTO history_left(path) VALUES('$start[left]')");
 current_dir('left');
 
 $scroll_left = new GtkScrolledWindow();
@@ -541,13 +518,10 @@ $left->add($scroll_left);
 $right = new GtkFrame;
 $right->set_shadow_type(Gtk::SHADOW_IN);
 
-$history_item = $xml->history->right->addChild('item');
-$history_item->id = 1;
-$history_item->path = $start['right'];
-$xml->asXML(DATABASE);
-
 $store['right'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING,
     GObject::TYPE_STRING, GObject::TYPE_BOOLEAN, GObject::TYPE_STRING, GObject::TYPE_STRING);
+sqlite_query($sqlite, "INSERT INTO history_right(path) VALUES('$start[right]')");
+current_dir('right');
 
 $tree_view['right'] = new GtkTreeView($store['right']);
 
@@ -562,11 +536,12 @@ elseif ($_config['view_lines_files'] == 'on')
 $selection['right'] = $tree_view['right']->get_selection();
 $tree_view['right']->connect('button-press-event', 'on_button', 'right');
 $cell_renderer['right'] = new GtkCellRendererText();
-$cell_renderer['right']->set_property('font',  $_config['font_list']);
+if (!empty($_config['font_list']))
+{
+    $cell_renderer['right']->set_property('font',  $_config['font_list']);
+}
 
 columns($tree_view['right'], $cell_renderer['right']);
-
-current_dir('right');
 
 $scroll_right = new GtkScrolledWindow();
 $scroll_right->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_ALWAYS);
@@ -591,9 +566,13 @@ $store[$panel]->clear();
 current_dir($panel);
 $statusbar = new GtkStatusBar();
 if ($_config['statusbar_view'] == 'on')
+{
     $statusbar->show();
+}
 else
+{
     $statusbar->hide();
+}
 $vbox->pack_start(status_bar(), FALSE, FALSE);
 
 //////////

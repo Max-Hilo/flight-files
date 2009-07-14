@@ -10,21 +10,23 @@
 
 /**
  * Функция достаёт настройки из базы данных и
- * помещает их в глобальную переменную $_config.
+ * помещает их в глобальную переменную $_config
  */
 function config_parser()
 {
-    global $_config, $xml;
+    global $_config, $sqlite;
 
-    $array = array('hidden_files', 'home_dir_left', 'home_dir_right',
-                   'ask_delete', 'toolbar_view', 'addressbar_view',
-                   'statusbar_view', 'font_list', 'ask_close',
-                   'language', 'maximize', 'comparison',
-                   'terminal', 'partbar_view', 'partbar_refresh',
-                   'view_lines_files', 'view_lines_columns');
+    $array = array('HIDDEN_FILES', 'HOME_DIR_LEFT', 'HOME_DIR_RIGHT',
+                   'ASK_DELETE', 'TOOLBAR_VIEW', 'ADDRESSBAR_VIEW',
+                   'STATUSBAR_VIEW', 'FONT_LIST', 'ASK_CLOSE',
+                   'LANGUAGE', 'MAXIMIZE', 'COMPARISON',
+                   'TERMINAL', 'PARTBAR_VIEW', 'PARTBAR_REFRESH',
+                   'VIEW_LINES_FILES', 'VIEW_LINES_COLUMNS');
     foreach ($array as $value)
     {
-        $_config[$value] = (string)$xml->preference->$value;
+        $query = sqlite_query($sqlite, "SELECT * FROM config WHERE key = '$value'");
+        $sfa = sqlite_fetch_array($query);
+        $_config[strtolower($value)] = $sfa['value'];
     }
 }
 
@@ -33,7 +35,7 @@ function config_parser()
  */
 function on_button($view, $event, $type)
 {
-    global $panel, $lang, $store, $action_menu, $action, $start, $entry_current_dir, $number, $active_files, $xml;
+    global $panel, $lang, $store, $action_menu, $action, $start, $entry_current_dir, $number, $sqlite, $active_files;
 
     $panel = $type;
 
@@ -58,7 +60,8 @@ function on_button($view, $event, $type)
         $action['back']->set_sensitive(FALSE);
         $action_menu['back']->set_sensitive(FALSE);
     }
-    if (count($xml->history->$panel->item) == $number[$panel])
+    $query = sqlite_query($sqlite, "SELECT id, path FROM history_$panel");
+    if (sqlite_num_rows($query) == $number[$panel])
     {
         $action['forward']->set_sensitive(FALSE);
         $action_menu['forward']->set_sensitive(FALSE);
@@ -136,37 +139,43 @@ function on_button($view, $event, $type)
                 }
                 $explode = explode('.', basename($filename));
                 $ext = '.'.$explode[count($explode) - 1];
-                $items = $xml->attach->type;
-                foreach ($items as $item)
+                $query = sqlite_query($sqlite, "SELECT id_type, ext FROM ext_files WHERE ext = '$ext'");
+                $snr = sqlite_num_rows($query);
+                if ($snr != 0)
                 {
-                    foreach ($item->extensions->extension as $extension)
+                    $sfa = sqlite_fetch_array($query);
+                    $id = $sfa['id_type'];
+                    $query = sqlite_query($sqlite, "SELECT id, type, command FROM type_files WHERE id = '$id'");
+                    $snr = sqlite_num_rows($query);
+                    if ($snr != 0)
                     {
-                        if ($extension == $ext)
+                        $sfa = sqlite_fetch_array($query);
+                        if (empty($sfa['command']))
                         {
-                            $command = $item->command;
-                            $title = $item->title;
-                            if (empty($command))
-                            {
-                                $str = str_replace('%s', $title, $lang['command']['none']);
-                                alert_window($str);
-                            }
-                            elseif (!file_exists($command))
-                            {
-                                $str = str_replace('%s', $title, $lang['command']['not_found']);
-                                alert_window($str);
-                            }
-                            elseif (OS == 'Windows')
-                            {
-                                pclose(popen('start /B "'.$command.'" '.$filename, "r"));
-                            }
-                            else
-                            {
-                                exec('"'.$command.'" "'.$filename.'" > /dev/null &');
-                            }
-                            break 2;
+                            $str = str_replace('%s', $sfa['type'], $lang['command']['none']);
+                            alert_window($str);
+                        }
+                        elseif (!file_exists($sfa['command']))
+                        {
+                            $str = str_replace('%s', $sfa['type'], $lang['command']['not_found']);
+                            alert_window($str);
+                        }
+                        elseif (OS == 'Windows')
+                        {
+                            pclose(popen('start /B "'.$sfa['command'].'" '.$filename, "r"));
+                        }
+                        else
+                        {
+                            exec('"'.$sfa['command'].'" "'.$filename.'" > /dev/null &');
                         }
                     }
                 }
+//                if (OS == 'Unix')
+//                {
+//                    $mime = mime_content_type($start[$panel]. DS .$file);
+//                    if ($mime == 'text/plain' OR $mime == 'text/html')
+//                        text_editor_window($start[$panel].DS.$file);
+//                }
             }
         }
         return FALSE;
@@ -463,9 +472,7 @@ function bufer_file($filename = '', $act)
     {
         fwrite($fopen, $act."\n");
         foreach ($active_files[$panel] as $value)
-        {
             fwrite($fopen, $start[$panel]. DS .$value."\n");
-        }
     }
     fclose($fopen);
     $action_menu['clear_bufer']->set_sensitive(TRUE);
@@ -683,7 +690,9 @@ function delete_window($filename)
         $dialog->show_all();
         $result = $dialog->run();
         if ($result == Gtk::RESPONSE_YES)
+        {
             my_rmdir($filename);
+        }
         $dialog->destroy();
     }
     else
@@ -855,6 +864,10 @@ function convert_size($filename)
         return round($size_byte / 1048576, 2).' '.$lang['size']['mib'];
     elseif ($size_byte >= 1073741824 AND $size_byte < 2147483648)
         return round($size_byte / 1073741824, 2).' '.$lang['size']['gib'];
+    else
+    {
+
+    }
 }
 
 /**
@@ -863,32 +876,26 @@ function convert_size($filename)
  */
 function history($direct)
 {
-    global $number, $panel, $action, $xml;
+    global $sqlite, $number, $panel, $action;
 
     if ($direct == 'back')
     {
         $number[$panel]--;
+        $query = sqlite_query($sqlite, "SELECT id, path FROM history_$panel");
         if ($number[$panel] == 1)
-        {
             $action['back']->set_sensitive(FALSE);
-        }
     }
     elseif ($direct == 'forward')
     {
         $number[$panel]++;
-        if (count($xml->history->$panel->item) == $number[$panel])
-        {
+        $query = sqlite_query($sqlite, "SELECT id, path FROM history_$panel");
+        if (sqlite_num_rows($query) == $number[$panel])
             $action['forward']->set_sensitive(FALSE);
-        }
     }
-    foreach ($xml->history->$panel->item as $item)
-    {
-        if ($item->id == $number[$panel])
-        {
-            $path = $item->path;
-        }
-    }
-    change_dir('history', $path);
+    while ($row = sqlite_fetch_array($query, SQLITE_ASSOC))
+        $last[] = $row;
+    $last = $last[$number[$panel] - 1];
+    change_dir('history', $last['path']);
 }
 
 /**
@@ -900,7 +907,7 @@ function history($direct)
 function change_dir($act = '', $dir = '', $all = FALSE)
 {
     global $vbox, $entry_current_dir, $action, $action_menu, $lang, $panel, $store,
-           $start, $number, $active_files, $tree_view, $_config, $xml;
+           $start, $number, $sqlite, $active_files, $tree_view, $_config;
 
     // Устанавливаем новое значение текущей директории
     switch ($act)
@@ -930,29 +937,20 @@ function change_dir($act = '', $dir = '', $all = FALSE)
 
     if ($act != 'none' AND $act != 'history' OR ($act == 'user' AND $new_dir != $entry_current_dir->get_text() AND file_exists($new_dir)))
     {
-        if ($new_dir != $start[$panel] AND file_exists($new_dir))
+        if ($act == 'user' OR $act == 'bookmarks')
         {
-            $i = 0;
-            $items = $xml->history->$panel->item;
-            $number[$panel]++;
-            foreach ($items as $item)
+            if ($new_dir != $start[$panel] AND file_exists($new_dir))
             {
-                if ($item->id == $number[$panel])
-                {
-                    break;
-                }
-                elseif ($item->id > $number[$panel])
-                {
-
-                    unset($items[$i]);
-                }
-                $i++;
+                sqlite_query($sqlite, "DELETE FROM history_$panel WHERE id > '$number[$panel]'");
+                sqlite_query($sqlite, "INSERT INTO history_$panel(path) VALUES('$new_dir')");
+                $number[$panel] = sqlite_last_insert_rowid($sqlite);
             }
-            $id_last = count($xml->history->$panel->item);
-            $history_item = $xml->history->$panel->addChild('item');
-            $history_item->id = ++$id_last;
-            $history_item->path = $new_dir;
-            $xml->asXML(DATABASE);
+        }
+        else
+        {
+            sqlite_query($sqlite, "DELETE FROM history_$panel WHERE id > '$number[$panel]'");
+            sqlite_query($sqlite, "INSERT INTO history_$panel(path) VALUES('$new_dir')");
+            $number[$panel] = sqlite_last_insert_rowid($sqlite);
         }
     }
 
@@ -993,7 +991,8 @@ function change_dir($act = '', $dir = '', $all = FALSE)
         $action['back']->set_sensitive(FALSE);
         $action_menu['back']->set_sensitive(FALSE);
     }
-    if (count($xml->history->$panel->item) == $number[$panel])
+    $query = sqlite_query($sqlite, "SELECT id, path FROM history_$panel");
+    if (sqlite_num_rows($query) == $number[$panel])
     {
         $action['forward']->set_sensitive(FALSE);
         $action_menu['forward']->set_sensitive(FALSE);
@@ -1067,8 +1066,9 @@ function change_dir($act = '', $dir = '', $all = FALSE)
 }
 
 /**
+ *
  * Функция добавляет на уже существующую статусную панель информацию.
- * @return GtkStatusBar Возвращается статусная строка, готовая к добавлению в окно
+ * Возвращается статусная строка, готовая к добавлению в окно.
  */
 function status_bar()
 {
@@ -1079,12 +1079,13 @@ function status_bar()
 
     $context_id = $statusbar->get_context_id('count_elements');
     $statusbar->push($context_id, '   '.$lang['statusbar']['count'].' '.$count_element
-        .' ( '.$lang['statusbar']['dirs'].' '.$count_dir.', '.$lang['statusbar']['files'].' '.$count_file.' )');
+                  .' ( '.$lang['statusbar']['dirs'].' '.$count_dir.', '.$lang['statusbar']['files'].' '.$count_file.' )');
 
     return $statusbar;
 }
 
 /**
+ *
  * Функция создаёт файллы и папки в текущей директории при достаточных правах.
  * @param string $type Идентификатор файла/папки
  */
@@ -1154,7 +1155,11 @@ function new_element($type)
  */
 function close_window()
 {
-    global $window, $_config, $lang, $xml;
+    global $window, $_config, $lang, $sqlite;
+
+    @unlink(BUFER_FILE);
+    sqlite_query($sqlite, "DELETE FROM history_left");
+    sqlite_query($sqlite, "DELETE FROM history_right");
 
     if ($_config['ask_close'] == 'on')
     {
@@ -1168,7 +1173,6 @@ function close_window()
             )
         );
         $dialog->set_has_separator(FALSE);
-        $dialog->set_position(Gtk::WIN_POS_CENTER);
         $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
         $dialog->set_skip_taskbar_hint(TRUE);
         $dialog->set_resizable(FALSE);
@@ -1181,12 +1185,6 @@ function close_window()
         $result = $dialog->run();
         if ($result == Gtk::RESPONSE_YES)
         {
-            @unlink(BUFER_FILE);
-            unset($xml->history);
-            $item = $xml->addChild('history');
-            $item->addChild('left');
-            $item->addChild('right');
-            $xml->asXML(DATABASE);
             $dialog->destroy();
             Gtk::main_quit();
         }
@@ -1203,7 +1201,8 @@ function close_window()
 }
 
 /**
- * Функция удаляет файл буфера обмена и выводит диалоговое окно,
+ *
+ * Функция удаляет файл буфера обмена и выводит диалоговое окна,
  * сообщающее об успешном завершении операции.
  */
 function clear_bufer()
@@ -1219,12 +1218,11 @@ function clear_bufer()
 
 function panel_view($widget, $param)
 {
-    global $toolbar, $partbar, $addressbar, $statusbar, $xml;
+    global $toolbar, $partbar, $addressbar, $statusbar, $sqlite;
 
     $value = $widget->get_active() ? 'on' : 'off';
-    $par = $param . '_view';
-    $xml->preference->$par = $value;
-    $xml->asXML(DATABASE);
+    $key = strtoupper($param).'_VIEW';
+    sqlite_query($sqlite, "UPDATE config SET value = '$value' WHERE key = '$key'");
 
     if ($value == 'on')
     {
@@ -1264,8 +1262,8 @@ function columns($tree_view, $cell_renderer)
     $column_mtime->set_sort_column_id(3);
 
     $render_boolen = new GtkCellRendererToggle();
-    $render_boolen->connect('toggled', 'active_element');
     $column_boolen = new GtkTreeViewColumn('', $render_boolen, 'active', 4);
+    $render_boolen->connect('toggled', 'active_element');
 
     $column_df = new GtkTreeViewColumn('', $cell_renderer, 'text', 5);
     $column_df->set_visible(FALSE);
@@ -1285,52 +1283,34 @@ function columns($tree_view, $cell_renderer)
 
 function active_element($render, $row)
 {
-    global $store, $start, $panel, $active_files, $action_menu, $general_active_files;
+    global $store, $start, $panel, $active_files, $action_menu;
 
     $iter = $store[$panel]->get_iter($row);
     $file = $store[$panel]->get_value($iter, 0);
     $active = $store[$panel]->get_value($iter, 4);
     $store[$panel]->set($iter, 4, !$active);
-    if ($active === FALSE)
-    {
+    if (!$active)
         $active_files[$panel][$file] = $file;
-        $general_active_files[$file] = $file;
-    }
     else
-    {
         unset($active_files[$panel][$file]);
-        unset($general_active_files[$file]);
-    }
     $files = 0;
     $dirs = 0;
-    foreach ($general_active_files as $file)
+    foreach ($active_files[$panel] as $file)
     {
         $filename = $start[$panel]. DS .$file;
         if (is_file($filename))
-        {
             $files++;
-        }
         elseif (is_dir($filename))
-        {
             $dirs++;
-        }
     }
     if ($files == 2 OR $files == 3)
-    {
         $action_menu['comparison_file']->set_sensitive(TRUE);
-    }
     else
-    {
         $action_menu['comparison_file']->set_sensitive(FALSE);
-    }
     if ($dirs == 2 OR $dirs == 3)
-    {
         $action_menu['comparison_dir']->set_sensitive(TRUE);
-    }
     else
-    {
         $action_menu['comparison_dir']->set_sensitive(FALSE);
-    }
 }
 
 /**
@@ -1342,13 +1322,9 @@ function image_column($column, $render, $model, $iter)
     $type = $model->get_value($iter, 5);
     $file = $model->get_value($iter, 0);
     if ($type == '<DIR>')
-    {
         $render->set_property('stock-id', 'gtk-directory');
-    }
     else
-    {
         $render->set_property('stock-id', 'gtk-file');
-    }
 }
 
 /**
@@ -1362,7 +1338,7 @@ function open_terminal()
     {
         pclose(popen('start', 'r'));
     }
-    elseif ($_config['terminal'] == 'NONE')
+    elseif (empty($_config['terminal']))
     {
         alert_window($lang['command']['terminal_empty']);
     }
@@ -1389,7 +1365,7 @@ function open_comparison($type)
 {
     global $active_files, $start, $panel, $lang, $_config;
 
-    if ($_config['comparison'] == 'NONE')
+    if (empty($_config['comparison']))
     {
         alert_window($lang['command']['comparison_empty']);
     }
@@ -1407,24 +1383,16 @@ function open_comparison($type)
             if ($type == 'file')
             {
                 if (is_file($filename))
-                {
                     $par .= "'$filename' ";
-                }
                 else
-                {
                     continue;
-                }
             }
             elseif ($type == 'dir')
             {
                 if (is_dir($filename))
-                {
                     $par .= "'$filename' ";
-                }
                 else
-                {
                     continue;
-                }
             }
         }
         exec($_config['comparison'].' '.$par.' > /dev/null &');
@@ -1437,17 +1405,16 @@ function open_comparison($type)
  */
 function active_all($active = TRUE)
 {
-    global $store ,$start, $panel, $count_element, $active_files, $general_active_files, $action_menu;
+    global $store, $panel, $count_element, $active_files, $action_menu;
 
     for ($i = 0; $i < $count_element; $i++)
     {
         $iter = $store[$panel]->get_iter($i);
         $store[$panel]->set($iter, 4, FALSE);
+        unset($active_files[$panel]);
     }
-    unset($active_files[$panel]);
-    unset($general_active_files);
 
-    if ($active === TRUE)
+    if ($active)
     {
         for ($i = 0; $i < $count_element; $i++)
         {
@@ -1456,37 +1423,24 @@ function active_all($active = TRUE)
             $active = $store[$panel]->get_value($iter, 4);
             $store[$panel]->set($iter, 4, TRUE);
             $active_files[$panel][$file] = $file;
-            $general_active_files[$file] = $file;
-        }
-        $files = 0;
-        $dirs = 0;
-        foreach ($general_active_files as $file)
-        {
-            $filename = $start[$panel]. DS .$file;
-            if (is_file($filename))
+            $files = 0;
+            $dirs = 0;
+            foreach ($active_files[$panel] as $file)
             {
-                $files++;
+                $filename = $start[$panel]. DS .$file;
+                if (is_file($filename))
+                    $files++;
+                elseif (is_dir($filename))
+                    $dirs++;
             }
-            elseif (is_dir($filename))
-            {
-                $dirs++;
-            }
-        }
-        if ($files == 2 OR $files == 3)
-        {
-            $action_menu['comparison_file']->set_sensitive(TRUE);
-        }
-        else
-        {
-            $action_menu['comparison_file']->set_sensitive(FALSE);
-        }
-        if ($dirs == 2 OR $dirs == 3)
-        {
-            $action_menu['comparison_dir']->set_sensitive(TRUE);
-        }
-        else
-        {
-            $action_menu['comparison_dir']->set_sensitive(FALSE);
+            if ($files == 2 OR $files == 3)
+                $action_menu['comparison_file']->set_sensitive(TRUE);
+            else
+                $action_menu['comparison_file']->set_sensitive(FALSE);
+            if ($dirs == 2 OR $dirs == 3)
+                $action_menu['comparison_dir']->set_sensitive(TRUE);
+            else
+                $action_menu['comparison_dir']->set_sensitive(FALSE);
         }
     }
 }

@@ -10,11 +10,11 @@
  * Функция отображает окно для управления закладками.
  * @global object $selection_bookmarks
  * @global array $lang
- * @global object $xml
+ * @global resource $sqlite
  */
 function bookmarks_window()
 {
-    global $selection_bookmarks, $lang, $xml;
+    global $selection_bookmarks, $lang, $sqlite;
     
     $window = new GtkWindow();
     $window->set_position(Gtk::WIN_POS_CENTER);
@@ -68,10 +68,8 @@ function bookmarks_window()
     $array['button_delete']->set_tooltip_text($lang['bookmarks']['delete_hint']);
     
     $array['button_delete_all']->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_BUTTON));
-    if (count($xml->bookmarks->bookmark) == 0)
-    {
+    if (sqlite_num_rows(sqlite_query($sqlite, "SELECT * FROM bookmarks")) == 0)
         $array['button_delete_all']->set_sensitive(FALSE);
-    }
     $array['button_delete_all']->connect_simple('clicked', 'bookmarks_delete', $array, TRUE);
     $array['button_delete_all']->set_tooltip_text($lang['bookmarks']['delete_all_hint']);
     
@@ -110,7 +108,7 @@ function bookmarks_window()
     bookmarks_list($model);
     
     $selection_bookmarks = $view->get_selection();
-    $selection_bookmarks->connect('changed', 'selection_bookmarks', $array);
+    $selection_bookmarks->connect('changed', 'on_selection_bookmarks', $array);
     
     $table->attach($scrolled, 0, 1, 0, 1);
     
@@ -122,16 +120,16 @@ function bookmarks_window()
 /**
  * Генерация модели для списка закладок.
  * @param GtkListStore $model Модель списка закладкок
- * @global object $xml
+ * @global resource $sqlite
  */
 function bookmarks_list($model)
 {
-    global $xml;
-
-    foreach ($xml->bookmarks->bookmark as $item)
-    {
-        $model->append(array((string)$item->title, (string)$item->id));
-    }
+    global $sqlite;
+    
+    $data = array();
+    $query = sqlite_query($sqlite, "SELECT * FROM bookmarks");
+    while ($row = sqlite_fetch_array($query))
+        $model->append(array($row['title'], $row['id']));
 }
 
 /**
@@ -141,13 +139,14 @@ function bookmarks_list($model)
  * @global GtkMenu $sub_menu
  * @global GtkAction $action_menu
  * @global array $lang
- * @global object $xml
+ * @global resource $sqlite
  */
 function bookmarks_menu()
 {
-    global $accel_group, $action_group, $sub_menu, $action_menu, $lang, $xml;
+    global $accel_group, $action_group, $sub_menu, $action_menu, $lang, $sqlite;
 
-    if (count($xml->bookmarks->bookmark) == 0)
+    $query = sqlite_query($sqlite, "SELECT * FROM bookmarks");
+    if (sqlite_num_rows($query) == 0)
     {
         $sub_menu['bookmarks']->append($item = new GtkMenuItem($lang['menu']['not_bookmarks']));
         $item->set_sensitive(FALSE);
@@ -156,13 +155,11 @@ function bookmarks_menu()
     else
     {
         $i = 0;
-        foreach ($xml->bookmarks->bookmark as $item)
+        while ($row = sqlite_fetch_array($query))
         {
-            $title = (string)$item->title;
-            $path = (string)$item->path;
-            $action_menu['bookmarks'.$i] = new GtkAction('f', $title, '', Gtk::STOCK_DIRECTORY);
+            $action_menu['bookmarks'.$i] = new GtkAction('f', $row['title'], '', Gtk::STOCK_DIRECTORY);
             $menu_item = $action_menu['bookmarks'.$i]->create_menu_item();
-            $action_menu['bookmarks'.$i]->connect_simple('activate', 'change_dir', 'bookmarks', $path);
+            $action_menu['bookmarks'.$i]->connect_simple('activate', 'change_dir', 'bookmarks', $row['path']);
             $sub_menu['bookmarks']->append($menu_item);
             unset($menu_item);
             $i++;
@@ -179,9 +176,7 @@ function bookmarks_menu()
     $action_menu['bookmarks_edit']->connect_simple('activate', 'bookmarks_window');
 
     foreach ($menu_item as $value)
-    {
         $sub_menu['bookmarks']->append($value);
-    }
     $sub_menu['bookmarks']->show_all();
 }
 
@@ -190,42 +185,29 @@ function bookmarks_menu()
  * @global object $selection_bookmarks
  * @global GtkAction $action_menu
  * @global GtkMenu $sub_menu
- * @global object $xml
+ * @global resource $sqlite
  * @param array $array Массив, содержащий элементы интерфейса окна управления закладками
  * @param bool $all Есл TRUE, то будут удалены все закладки
  */
 function bookmarks_delete($array, $all = 'FALSE')
 {
-    global $selection_bookmarks, $action_menu, $sub_menu, $xml;
-
+    global $selection_bookmarks, $action_menu, $sub_menu, $sqlite;
+    
     list($model, $iter) = $selection_bookmarks->get_selected();
+    
     if ($all === TRUE)
     {
-        unset($xml->bookmarks);
-        $xml->addChild('bookmarks');
-        $xml->asXML(DATABASE);
+        sqlite_query($sqlite, "DELETE FROM bookmarks");
         $array['button_delete_all']->set_sensitive(FALSE);
     }
     else
     {
         $id = $model->get_value($iter, 1);
-        $i = 0;
-        $bkm = $xml->bookmarks->bookmark;
-        foreach ($bkm as $item)
-        {
-            if ($id == (string)$item->id)
-            {
-                unset($bkm[$i]);
-                $xml->asXML(DATABASE);
-                break;
-            }
-            $i++;
-        }
-        if (count($bkm) == 0)
-        {
+        sqlite_query($sqlite, "DELETE FROM bookmarks WHERE id = '$id'");
+        if (sqlite_num_rows(sqlite_query($sqlite, "SELECT * FROM bookmarks")) == 0)
             $array['button_delete_all']->set_sensitive(FALSE);
-        }
     }
+    
     $model->clear();
     bookmarks_list($model);
     
@@ -239,9 +221,7 @@ function bookmarks_delete($array, $all = 'FALSE')
     $array['button_delete']->set_sensitive(FALSE);
     
     foreach ($sub_menu['bookmarks']->get_children() as $widget)
-    {
         $sub_menu['bookmarks']->remove($widget);
-    }
     bookmarks_menu();
 }
 
@@ -252,41 +232,28 @@ function bookmarks_delete($array, $all = 'FALSE')
  * @global string $panel
  * @global GtkMenu $sub_menu
  * @global array $lang
- * @global object $xml
+ * @global resource $sqlite
  * @param array $array Массив, содержащий элементы интерфейса окна управления закладками
  * @param bool $bool Если TRUE, то в закладки будет добавлена текущая директория, иначе - корневая.
  */
 function bookmark_add($array = '', $bool = FALSE)
 {
-    global $selection_bookmarks, $start, $panel, $sub_menu, $lang, $xml;
-
-    $bkm = $xml->bookmarks->bookmark;
-    $count = count($bkm);
-    $id_last = (int)$bkm[$count - 1]->id;
-    $item = $xml->bookmarks->addChild('bookmark');
+    global $selection_bookmarks, $start, $panel, $sub_menu, $lang, $sqlite;
+    
     if ($bool === TRUE)
     {
         if ($start[$panel] == ROOT_DIR)
-        {
             $basename = $lang['bookmarks']['root'];
-        }
         else
-        {
             $basename = basename($start[$panel]);
-        }
-        $title = $basename;
-        $path = $start[$panel];
-        $item->addChild('id', ++$id_last);
-        $item->addChild('path', $path);
-        $item->addChild('title', $title);
+        $title = sqlite_escape_string($basename);
+        $path = sqlite_escape_string($start[$panel]);
+        sqlite_query($sqlite, "INSERT INTO bookmarks(path, title) VALUES('$path', '$title')");
     }
     else
     {
-        $title = $lang['bookmarks']['new'];
-        $path = ROOT_DIR;
-        $item->addChild('id', ++$id_last);
-        $item->addChild('path', $path);
-        $item->addChild('title', $title);
+        $title = sqlite_escape_string($lang['bookmarks']['new']);
+        sqlite_query($sqlite, "INSERT INTO bookmarks(path, title) VALUES('".ROOT_DIR."', '$title')");
         
         list($model, $iter) = $selection_bookmarks->get_selected();
         
@@ -303,12 +270,9 @@ function bookmark_add($array = '', $bool = FALSE)
         $array['button_delete']->set_sensitive(FALSE);
         $array['button_delete_all']->set_sensitive(TRUE);
     }
-    $xml->asXML(DATABASE);
     
     foreach ($sub_menu['bookmarks']->get_children() as $widget)
-    {
         $sub_menu['bookmarks']->remove($widget);
-    }
     bookmarks_menu();
 }
 
@@ -316,28 +280,19 @@ function bookmark_add($array = '', $bool = FALSE)
  * Сохранение изменений для выбранной закладки.
  * @global object $selection_bookmarks
  * @global GtkMenu $sub_menu
- * @global object $xml
+ * @global resource $sqlite
  * @param array $array  Массив, содержащий элементы интерфейса окна управления закладками
  */
 function bookmarks_save_change($array)
 {
-    global $selection_bookmarks, $sub_menu, $xml;
+    global $selection_bookmarks, $sub_menu, $sqlite;
     
     list($model, $iter) = $selection_bookmarks->get_selected();
     $id = $model->get_value($iter, 1);
-    $title = $array['name_entry']->get_text();
-    $path = $array['path_entry']->get_text();
-
-    foreach ($xml->bookmarks->bookmark as $item)
-    {
-        if ($id == (string)$item->id)
-        {
-            $item->title = $title;
-            $item->path = $path;
-            $xml->asXML(DATABASE);
-            break;
-        }
-    }
+    $title = sqlite_escape_string($array['name_entry']->get_text());
+    $path = sqlite_escape_string($array['path_entry']->get_text());
+    
+    sqlite_query($sqlite, "UPDATE bookmarks SET title = '$title', path = '$path' WHERE id = '$id'");
     
     $model->clear();
     bookmarks_list($model);
@@ -352,18 +307,16 @@ function bookmarks_save_change($array)
     $array['button_delete']->set_sensitive(FALSE);
     
     foreach ($sub_menu['bookmarks']->get_children() as $widget)
-    {
         $sub_menu['bookmarks']->remove($widget);
-    }
     bookmarks_menu();
 }
 
 /**
- * Функция заполняет текстовые поля в окне "Упарвление закладками" при выборе закладки в списке.
+ * Функция заполняет текстовые поля в окне "Управление закладками" при выборе закладки в списке.
  */
-function selection_bookmarks($selection, $array)
+function on_selection_bookmarks($selection, $array)
 {
-    global $xml;
+    global $sqlite;
 
     list($model, $iter) = $selection->get_selected();
     @$id = $model->get_value($iter, 1);
@@ -375,13 +328,8 @@ function selection_bookmarks($selection, $array)
     $array['button_ok']->set_sensitive(TRUE);
     $array['button_delete']->set_sensitive(TRUE);
 
-    foreach ($xml->bookmarks->bookmark as $item)
-    {
-        if ($id == (string)$item->id)
-        {
-            $array['name_entry']->set_text((string)$item->title);
-            $array['path_entry']->set_text((string)$item->path);
-            break;
-        }
-    }
+    $query = sqlite_query($sqlite, "SELECT path, title FROM bookmarks WHERE id = '$id'");
+    $row = sqlite_fetch_array($query);
+    $array['name_entry']->set_text($row['title']);
+    $array['path_entry']->set_text($row['path']);
 }

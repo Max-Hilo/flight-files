@@ -301,8 +301,6 @@ function BulkRenameAction($renameWindow, $extCheckButton, $hiddenCheckButton, $o
  */
 function my_strto($type, $str)
 {
-    global $charset;
-
     $lower = array(
         'ё','й','ц','у','к','е','н','г', 'ш','щ',
         'з','х','ъ','ф','ы','в', 'а','п','р','о',

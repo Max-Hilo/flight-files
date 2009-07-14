@@ -11,7 +11,7 @@
  */
 function preference()
 {
-    global $_config, $lang;
+    global $_config, $lang, $sqlite;
     
     $window = new GtkWindow();
     $window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
@@ -42,7 +42,7 @@ function preference()
     $combo = GtkComboBox::new_text();
     $opendir = opendir(LANG_DIR);
     $combo->append_text($lang['preference']['lang_default']);
-    if ($_config['language'] == 'NONE')
+    if (empty($_config['language']))
     {
         $combo->set_active(0);
     }
@@ -110,10 +110,10 @@ function preference()
     $label_hidden_files->connect('toggled', 'check_button_write', 'hidden_files');
     $ask_delete->connect('toggled', 'check_button_write', 'ask_delete');
     $ask_close->connect('toggled', 'check_button_write', 'ask_close');
-    $radio_home_left->connect_simple('toggled', 'radio_button_write', 'home_dir_left', HOME_DIR);
-    $radio_root_left->connect_simple('toggled', 'radio_button_write', 'home_dir_left', ROOT_DIR);
-    $radio_home_right->connect_simple('toggled', 'radio_button_write', 'home_dir_right', HOME_DIR);
-    $radio_root_right->connect_simple('toggled', 'radio_button_write', 'home_dir_right', ROOT_DIR);
+    $radio_home_left->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_LEFT', HOME_DIR);
+    $radio_root_left->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_LEFT', ROOT_DIR);
+    $radio_home_right->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_RIGHT', HOME_DIR);
+    $radio_root_right->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_RIGHT', ROOT_DIR);
     $combo->connect('changed', 'combo_write', 'language');
     $maximize->connect('toggled', 'check_button_write', 'maximize');
     $partbar_refresh->connect('toggled', 'check_button_write', 'partbar_refresh', 'partbar');
@@ -158,7 +158,7 @@ function preference()
     $check_text_list = new GtkCheckButton($lang['preference']['system_font']);
     $check_text_list->connect('toggled', 'check_font', $entry_font_select, $button_font_select);
     
-    if ($_config['font_list'] == 'NONE')
+    if (empty($_config['font_list']))
     {
         $check_text_list->set_active(TRUE);
         $entry_font_select->set_sensitive(FALSE);
@@ -190,9 +190,10 @@ function preference()
      $hbox_comparison = new GtkHBox();
      $hbox_comparison->pack_start($entry_comparison = new GtkEntry(), TRUE, TRUE);
      $entry_comparison->set_editable(FALSE);
-     if ($_config['comparison'] != 'NONE')
+     if (file_exists($_config['comparison']))
      {
          $entry_comparison->set_text($_config['comparison']);
+         sqlite_query($sqlite, "UPDATE config SET value = 'COMPARISON' WHERE key = ''");
      }
      $hbox_comparison->pack_start($btn_comparison = new GtkButton($lang['preference']['change']), FALSE, FALSE);
      $btn_comparison->connect_simple('clicked', 'preference_command', 'comparison', $entry_comparison);
@@ -202,9 +203,10 @@ function preference()
      $hbox_terminal = new GtkHBox();
      $hbox_terminal->pack_start($entry_terminal = new GtkEntry(), TRUE, TRUE);
      $entry_terminal->set_editable(FALSE);
-     if ($_config['terminal'] != 'NONE')
+     if (file_exists($_config['comparison']))
      {
          $entry_comparison->set_text($_config['comparison']);
+         sqlite_query($sqlite, "UPDATE config SET value = 'TERMINAL' WHERE key = ''");
      }
      $hbox_terminal->pack_start($btn_terminal = new GtkButton($lang['preference']['change']), FALSE, FALSE);
      $btn_terminal->connect_simple('clicked', 'preference_command', 'terminal', $entry_terminal);
@@ -224,16 +226,9 @@ function preference()
     Gtk::main();
 }
 
-/**
- * Создаёт диалог GtkFontSelectionDialog и производит запись выбранного файла в базу данных.
- * @global object $xml
- * @global array $lang
- * @param string $param Изменяемый параметр
- * @param GtkEntry $entry Поле ввода
- */
 function preference_command($param, $entry)
 {
-    global $xml, $lang;
+    global $sqlite, $id_type, $lang;
 
     $dialog = new GtkFileChooserDialog(
         $lang['preference']['select_file'],
@@ -249,28 +244,30 @@ function preference_command($param, $entry)
     $result = $dialog->run();
     if ($result == Gtk::RESPONSE_OK)
     {
-        $filename = $dialog->get_filename();
-        $xml->preference->$param = $filename;
-        $xml->asXML(DATABASE);
-        $entry->set_text($filename);
+        $command = $dialog->get_filename();
+        $param = strtoupper($param);
+        sqlite_query($sqlite, "UPDATE config SET value = '$command' WHERE key = '$param'");
+        $entry->set_text($command);
     }
     $dialog->destroy();
 }
 
-
 /**
  * Производит запись в базу данных при изменении активного элемента в списке GtkComboBox.
- * @param GtkComboBox $combo Список
+ * @param object $combo Список GtkComboBox
  * @param string $param Изменяемый параметр
  */
 function combo_write($combo, $param)
 {
-    global $lang, $xml;
+    global $sqlite, $lang;
 
     $active = $combo->get_active_text();
-    $active = ($active == $lang['preference']['lang_default']) ? 'NONE' : $active;
-    $xml->preference->$param = $active;
-    $xml->asXML(DATABASE);
+    if ($active == $lang['preference']['lang_default'])
+    {
+        $active = '';
+    }
+    $param = strtoupper($param);
+    sqlite_query($sqlite, "UPDATE config SET value = '$active' WHERE key = '$param'");
 }
 
 /**
@@ -280,11 +277,12 @@ function combo_write($combo, $param)
  */
 function check_button_write($check, $param, $timeout = '')
 {
-    global $xml, $refresh_id;
+    global $sqlite, $refresh_id;
     
     $value = $check->get_active() ? 'on' : 'off';
-    $xml->preference->$param = $value;
-    $xml->asXML(DATABASE);
+    
+    $param = strtoupper($param);
+    sqlite_query($sqlite, "UPDATE config SET value = '$value' WHERE key = '$param'");
 
     if ($timeout == 'partbar')
     {
@@ -308,10 +306,11 @@ function check_button_write($check, $param, $timeout = '')
  */
 function radio_button_write($param, $value)
 {
-    global $xml;
+    global $sqlite;
     
-    $xml->preference->$param = $value;
-    $xml->asXML(DATABASE);
+    $param = strtoupper($param);
+    sqlite_query($sqlite, "UPDATE config SET value = '$value' WHERE key = '$param'");
+    
     change_dir('none');
 }
 
@@ -321,24 +320,28 @@ function radio_button_write($param, $value)
  */
 function font_select($entry)
 {
-    global $cell_renderer, $lang, $_config, $xml;
+    global $cell_renderer, $lang, $_config, $sqlite;
     
     $dialog = new GtkFontSelectionDialog($lang['font']['title']);
     $dialog->set_position(Gtk::WIN_POS_CENTER_ALWAYS);
     $dialog->set_preview_text($lang['font']['preview']);
-    $dialog->set_font_name($_config['font_list']);
+    if ($_config['font_list'])
+    {
+        $dialog->set_font_name($_config['font_list']);
+    }
     $dialog->show_all();
     $dialog->run();
     
     $font_name = $dialog->get_font_name();
     $entry->set_text($font_name);
-    $xml->preference->font_list = $font_name;
-    $xml->asXML(DATABASE);
+    
+    sqlite_query($sqlite, "UPDATE config SET value = '$font_name' WHERE key = 'FONT_LIST'");
+    
     $cell_renderer['left']->set_property('font',  $font_name);
     $cell_renderer['right']->set_property('font',  $font_name);
-    $dialog->destroy();
-
     change_dir('none', '', TRUE);
+    
+    $dialog->destroy();
 }
 
 /**
@@ -349,7 +352,7 @@ function font_select($entry)
  */
 function check_font($check, $entry, $button)
 {
-    global $cell_renderer, $xml;
+    global $cell_renderer, $sqlite;
     
     if ($check->get_active() === FALSE)
     {
@@ -358,11 +361,10 @@ function check_font($check, $entry, $button)
     }
     else
     {
-        $xml->preference->font_list = 'NONE';
-        $xml->asXML(DATABASE);
-        $entry->set_text('');
+        sqlite_query($sqlite, "UPDATE config SET value = '' WHERE key = 'FONT_LIST'");
         $entry->set_sensitive(FALSE);
         $button->set_sensitive(FALSE);
+        $entry->set_text('');
         $cell_renderer['left']->set_property('font',  '');
         $cell_renderer['right']->set_property('font',  '');
         change_dir('none', '', TRUE);

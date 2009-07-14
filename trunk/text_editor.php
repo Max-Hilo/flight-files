@@ -106,14 +106,14 @@ function save_file($buffer, $filename)
  * @global array $lang
  * @param GtkSourceBuffer $buffer
  * @param string $filename
- * @param GtkWindow $text_editor_window
+ * @param GtkWindow $window
  */
-function text_editor_window_close($buffer, $filename, $text_editor_window)
+function text_editor_window_close($buffer, $filename, $window)
 {
     global $lang;
     
     $new_text = $buffer->get_text($buffer->get_start_iter(), $buffer->get_end_iter());
-    $old_text = preg_replace('#(.+?)\n$#is', '$1', trim(file_get_contents($filename)));
+    $old_text = preg_replace('#(.+?)\n$#is', '$1', file_get_contents($filename));
     if ($old_text != $new_text)
     {
         $dialog = new GtkDialog(
@@ -143,7 +143,7 @@ function text_editor_window_close($buffer, $filename, $text_editor_window)
             fwrite($fopen, $new_text);
             fclose($fopen);
             $dialog->destroy();
-            $text_editor_window->destroy();
+            $window->destroy();
             Gtk::main_quit();
             return FALSE;
         }
@@ -151,7 +151,7 @@ function text_editor_window_close($buffer, $filename, $text_editor_window)
         {
             echo "Файл сохранён не будет\n";
             $dialog->destroy();
-            $text_editor_window->destroy();
+            $window->destroy();
             Gtk::main_quit();
             return FALSE;
         }
@@ -164,7 +164,7 @@ function text_editor_window_close($buffer, $filename, $text_editor_window)
     }
     else
     {
-        $text_editor_window->destroy();
+        $window->destroy();
         Gtk::main_quit();
     }
 }
