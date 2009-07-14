@@ -113,7 +113,7 @@ function text_editor_window_close($buffer, $filename, $window)
     global $lang;
     
     $new_text = $buffer->get_text($buffer->get_start_iter(), $buffer->get_end_iter());
-    $old_text = preg_replace('#(.+?)\n$#is', '$1', file_get_contents($filename));
+    $old_text = trim(file_get_contents($filename));
     if ($old_text != $new_text)
     {
         $dialog = new GtkDialog(
@@ -149,7 +149,6 @@ function text_editor_window_close($buffer, $filename, $window)
         }
         elseif ($result == Gtk::RESPONSE_NO)
         {
-            echo "Файл сохранён не будет\n";
             $dialog->destroy();
             $window->destroy();
             Gtk::main_quit();
@@ -157,7 +156,6 @@ function text_editor_window_close($buffer, $filename, $window)
         }
         else
         {
-            echo "Отмена\n";
             $dialog->destroy();
             return TRUE;
         }

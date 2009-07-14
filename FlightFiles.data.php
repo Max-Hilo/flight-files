@@ -107,6 +107,7 @@ function on_button($view, $event, $type)
             $action_menu['rename']->set_sensitive(TRUE);
         }
     }
+    $filename = $start[$panel] . DS . $file;
 
     // Если нажата левая кнопка, то...
     if ($event->button == 1)
@@ -114,7 +115,6 @@ function on_button($view, $event, $type)
         // При двойном клике по папке открываем её
         if ($event->type == Gdk::_2BUTTON_PRESS)
         {
-            $filename = $start[$panel] . DS . $file;
             if (is_dir($filename))
             {
                 // При нехватке прав для просмотра директории
@@ -169,13 +169,23 @@ function on_button($view, $event, $type)
                             exec('"'.$sfa['command'].'" "'.$filename.'" > /dev/null &');
                         }
                     }
+                    elseif (function_exists('mime_content_type'))
+                    {
+                        $mime = mime_content_type($start[$panel]. DS .$file);
+                        if ($mime == 'text/plain' OR $mime == 'text/html')
+                        {
+                            text_editor_window($start[$panel] . DS . $file);
+                        }
+                    }
                 }
-//                if (OS == 'Unix')
-//                {
-//                    $mime = mime_content_type($start[$panel]. DS .$file);
-//                    if ($mime == 'text/plain' OR $mime == 'text/html')
-//                        text_editor_window($start[$panel].DS.$file);
-//                }
+                elseif (function_exists('mime_content_type'))
+                {
+                    $mime = mime_content_type($start[$panel]. DS .$file);
+                    if ($mime == 'text/plain' OR $mime == 'text/html')
+                    {
+                        text_editor_window($start[$panel] . DS . $file);
+                    }
+                }
             }
         }
         return FALSE;
@@ -225,7 +235,24 @@ function on_button($view, $event, $type)
                 $delete->set_sensitive(FALSE);
                 $delete_active->set_sensitive(FALSE);
             }
-            if (OS == 'Unix')
+
+            $query = sqlite_query($sqlite, "SELECT id_type, ext FROM ext_files WHERE ext = '$extension' LIMIT 1");
+            $snr = sqlite_num_rows($query);
+            if ($snr != 0)
+            {
+                $sfa = sqlite_fetch_array($query);
+                $id = $sfa['id_type'];
+                $query = sqlite_query($sqlite, "SELECT id, type, command FROM type_files WHERE id = '$id' LIMIT 1");
+                $sfa = sqlite_fetch_array($query);
+                if (!empty($sfa['command']))
+                {
+                    $command = $sfa['command'];
+                    $open = new GtkMenuItem(str_replace('%s', basename($command), $lang['popup']['open_in']));
+                    $open->connect_simple('activate', 'open_file', $filename, $command);
+                    $menu->append($open);
+                }
+            }
+            if (function_exists('mime_content_type'))
             {
                 $mime = mime_content_type($start[$panel]. DS .$file);
                 if ($mime == 'text/plain' OR $mime == 'text/html')
@@ -260,7 +287,7 @@ function on_button($view, $event, $type)
             $delete_active->connect_simple('activate', 'delete_active');
             $md5->connect_simple('activate', 'CheckSumWindow', $start[$panel]. DS .$file, 'MD5');
             $sha1->connect_simple('activate', 'CheckSumWindow', $start[$panel]. DS .$file, 'SHA1');
-            $properties->connect_simple('activate', 'PropertiesWindow', $start[$panel]. DS .$file);
+            $properties->connect_simple('activate', 'properties_window', $start[$panel]. DS .$file);
             $terminal->connect_simple('activate', 'open_terminal');
         }
         elseif ($dir_file == '<DIR>')
@@ -357,6 +384,16 @@ function on_button($view, $event, $type)
 
         return FALSE;
     }
+}
+
+/**
+ * Открывает файл $filename в программе $command.
+ * @param string $filename Открываемый файл
+ * @param string $command Программа для открытия
+ */
+function open_file($filename, $command)
+{
+    exec("'$command' '$filename' > /dev/null &");
 }
 
 /**
@@ -907,7 +944,7 @@ function history($direct)
 function change_dir($act = '', $dir = '', $all = FALSE)
 {
     global $vbox, $entry_current_dir, $action, $action_menu, $lang, $panel, $store,
-           $start, $number, $sqlite, $active_files, $tree_view, $_config;
+           $start, $number, $sqlite, $active_files, $tree_view, $_config, $combo_partbar;
 
     // Устанавливаем новое значение текущей директории
     switch ($act)
@@ -1061,6 +1098,12 @@ function change_dir($act = '', $dir = '', $all = FALSE)
 
     // Устанавливаем новое значение в адресную строку
     $entry_current_dir->set_text($start[$panel]);
+
+    // Сбрасываем список разделов
+    if (OS == 'Windows')
+    {
+        $combo_partbar->set_active(0);
+    }
 
     unset($active_files[$panel]);
 }
@@ -1453,7 +1496,7 @@ function active_all($active = TRUE)
  */
 function partbar()
 {
-    global $lang, $partbar, $_config;
+    global $lang, $partbar, $_config, $combo_partbar;
 
     foreach ($partbar->get_children() as $widget)
     {
@@ -1499,16 +1542,17 @@ function partbar()
     }
     elseif (OS == 'Windows')
     {
-        $combo = GtkComboBox::new_text();
-        $array = array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
+        $combo_partbar = GtkComboBox::new_text();
+        $array = array('', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
             'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z');
         foreach ($array as $value)
         {
-            $combo->append_text($value.':');
+            $value = (empty($value)) ? '' : $value . ':';
+            $combo_partbar->append_text($value);
         }
-        $combo->set_active(0);
-        $combo->connect('changed', 'change_part');
-        $partbar->pack_start($combo, FALSE, FALSE);
+        $combo_partbar->set_active(0);
+        $combo_partbar->connect('changed', 'change_part');
+        $partbar->pack_start($combo_partbar, FALSE, FALSE);
     }
 
     if ($_config['partbar_view'] == 'on')
@@ -1524,5 +1568,9 @@ function partbar()
 
 function change_part($combo)
 {
-    change_dir('bookmarks', $combo->get_active_text());
+    $active = $combo->get_active_text();
+    if (!empty($active))
+    {
+        change_dir('bookmarks', $active);
+    }
 }

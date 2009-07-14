@@ -165,7 +165,6 @@ if (!empty($_config['language']) AND file_exists(LANG_DIR . DS . $_config['langu
     $filename = LANG_DIR . DS . $_config['language'] . '.php';
     $explode = explode('.', $filename);
     $charset = $explode[1];
-    echo 'CHARSET: '.$charset."\n";
     ini_set('php-gtk.codepage', $charset);
     include $filename;
 }
@@ -198,7 +197,9 @@ $window->set_default_size(1100, 700);
 $window->set_position(Gtk::WIN_POS_CENTER);
 $window->set_title($lang['title_program']);
 if ($_config['maximize'] == 'on')
+{
     $window->maximize();
+}
 $window->connect_simple('delete-event', 'close_window');
 $accel_group = new GtkAccelGroup();
 $window->add_accel_group($accel_group);
@@ -422,9 +423,13 @@ foreach ($array_toolbar as $value)
 }
 
 if ($_config['toolbar_view'] == 'on')
+{
     $toolbar->show_all();
+}
 else
+{
     $toolbar->hide();
+}
 $vbox->pack_start($toolbar, FALSE, FALSE);
 
 ///////////////////////////
@@ -435,7 +440,9 @@ $partbar = new GtkHBox();
 $partbar = partbar();
 $vbox->pack_start($partbar, FALSE, FALSE);
 if ($_config['partbar_refresh'] == 'on')
+{
     $refresh_id = Gtk::timeout_add(1000, 'partbar');
+}
 
 //////////////////////////
 ///// Адреная строка /////
