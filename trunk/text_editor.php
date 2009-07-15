@@ -33,10 +33,21 @@ function text_editor_window($filename)
     /////////////////////////
     ///// Тестовое поле /////
     /////////////////////////
-    $buffer = new GtkTextBuffer;
-    $buffer->set_text(trim(file_get_contents($filename)));
-    $old_text = $buffer;
-    $source = new GtkTextView();
+    if (class_exists('GtkSourceBuffer') AND class_exists('GtkSourceView'))
+    {
+        $buffer = new GtkSourceBuffer();
+        $buffer->set_highlight(TRUE);
+        $buffer->set_text(trim(file_get_contents($filename)));
+        $source = GtkSourceView::new_with_buffer($buffer);
+        $source->set_show_line_numbers(TRUE);
+    }
+    else
+    {
+        $buffer = new GtkTextBuffer;
+        $buffer->set_text(trim(file_get_contents($filename)));
+        $old_text = $buffer;
+        $source = new GtkTextView();
+    }
     $source->set_buffer($buffer);
     $scroll = new GtkScrolledWindow();
     $scroll->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);

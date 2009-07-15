@@ -135,14 +135,34 @@ function add_extension_window($model, $array)
 
     $window = new GtkWindow();
     $window->set_position(Gtk::WIN_POS_CENTER);
+    $window->set_size_request(250, -1);
+    $window->set_resizable(FALSE);
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
 
     $vbox = new GtkVBox();
     $vbox->pack_start($entry = new GtkEntry(), FALSE, FALSE);
-    $vbox->pack_start($hbox = new GtkHBox(), FALSE, FALSE);
-    $hbox->pack_start($btn_cancel = new GtkButton($lang['file_ass']['cancel_add_ext']), FALSE, FALSE);
+    $vbox->pack_start($hbbox = new GtkHButtonBox(), FALSE, FALSE);
+
+    // Кнопка "Отменить"
+    $btn_cancel = new GtkButton();
+    $btn_cancel->set_use_underline(TRUE);
+    $btn_cancel->add($btn_hbox = new GtkHBox());
+    $btn_hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_CANCEL, Gtk::ICON_SIZE_BUTTON), FALSE, FALSE);
+    $btn_hbox->pack_start($label = new GtkLabel($lang['file_ass']['cancel_add_ext']), TRUE, TRUE);
+    $label->set_use_underline(TRUE);
+    $hbbox->add($btn_cancel);
+
+    // Кнопка "Добавить"
+    $btn_ok = new GtkButton();
+    $btn_ok->set_use_underline(TRUE);
+    $btn_ok->add($btn_hbox = new GtkHBox());
+    $btn_hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_OK, Gtk::ICON_SIZE_BUTTON), FALSE, FALSE);
+    $btn_hbox->pack_start($label = new GtkLabel($lang['file_ass']['ok_add_ext']), TRUE, TRUE);
+    $label->set_use_underline(TRUE);
+    $hbbox->add($btn_ok);
+
+    $entry->connect_simple('activate', 'add_extension', $entry, $window, $model, $array);
     $btn_cancel->connect_simple('clicked', 'close_add_type_window', $window);
-    $hbox->pack_start($btn_ok = new GtkButton($lang['file_ass']['ok_add_ext']), FALSE, FALSE);
     $btn_ok->connect_simple('clicked', 'add_extension', $entry, $window, $model, $array);
 
     $window->add($vbox);
@@ -206,14 +226,34 @@ function add_type_window($model, $array)
 
     $window = new GtkWindow();
     $window->set_position(Gtk::WIN_POS_CENTER);
+    $window->set_size_request(250, -1);
+    $window->set_resizable(FALSE);
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
 
     $vbox = new GtkVBox();
     $vbox->pack_start($entry = new GtkEntry(), FALSE, FALSE);
-    $vbox->pack_start($hbox = new GtkHBox(), FALSE, FALSE);
-    $hbox->pack_start($btn_cancel = new GtkButton($lang['file_ass']['cancel_add_type']), FALSE, FALSE);
+    $vbox->pack_start($hbbox = new GtkHButtonBox(), FALSE, FALSE);
+
+    // Кнопка "Отменить"
+    $btn_cancel = new GtkButton();
+    $btn_cancel->set_use_underline(TRUE);
+    $btn_cancel->add($btn_hbox = new GtkHBox());
+    $btn_hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_CANCEL, Gtk::ICON_SIZE_BUTTON), FALSE, FALSE);
+    $btn_hbox->pack_start($label = new GtkLabel($lang['file_ass']['cancel_add_type']), TRUE, TRUE);
+    $label->set_use_underline(TRUE);
+    $hbbox->add($btn_cancel);
+
+    // Кнопка "Добавить"
+    $btn_ok = new GtkButton();
+    $btn_ok->set_use_underline(TRUE);
+    $btn_ok->add($btn_hbox = new GtkHBox());
+    $btn_hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_OK, Gtk::ICON_SIZE_BUTTON), FALSE, FALSE);
+    $btn_hbox->pack_start($label = new GtkLabel($lang['file_ass']['ok_add_type']), TRUE, TRUE);
+    $label->set_use_underline(TRUE);
+    $hbbox->add($btn_ok);
+
+    $entry->connect_simple('activate', 'add_type', $entry, $window, $model, $array);
     $btn_cancel->connect_simple('clicked', 'close_add_type_window', $window);
-    $hbox->pack_start($btn_ok = new GtkButton($lang['file_ass']['ok_add_type']), FALSE, FALSE);
     $btn_ok->connect_simple('clicked', 'add_type', $entry, $window, $model, $array);
 
     $window->add($vbox);

@@ -108,6 +108,7 @@ function on_button($view, $event, $type)
         }
     }
     $filename = $start[$panel] . DS . $file;
+    $image_size = getimagesize($filename);
 
     // Если нажата левая кнопка, то...
     if ($event->button == 1)
@@ -152,8 +153,15 @@ function on_button($view, $event, $type)
                         $sfa = sqlite_fetch_array($query);
                         if (empty($sfa['command']))
                         {
-                            $str = str_replace('%s', $sfa['type'], $lang['command']['none']);
-                            alert_window($str);
+                            if (!empty($image_size[2]))
+                            {
+                                image_view($filename);
+                            }
+                            else
+                            {
+                                $str = str_replace('%s', $sfa['type'], $lang['command']['none']);
+                                alert_window($str);
+                            }
                         }
                         elseif (!file_exists($sfa['command']))
                         {
@@ -169,6 +177,10 @@ function on_button($view, $event, $type)
                             exec('"'.$sfa['command'].'" "'.$filename.'" > /dev/null &');
                         }
                     }
+                    elseif (!empty($image_size[2]))
+                    {
+                        image_view($filename);
+                    }
                     elseif (function_exists('mime_content_type'))
                     {
                         $mime = mime_content_type($start[$panel]. DS .$file);
@@ -177,6 +189,10 @@ function on_button($view, $event, $type)
                             text_editor_window($start[$panel] . DS . $file);
                         }
                     }
+                }
+                elseif (!empty($image_size[2]))
+                {
+                    image_view($filename);
                 }
                 elseif (function_exists('mime_content_type'))
                 {
@@ -252,7 +268,14 @@ function on_button($view, $event, $type)
                     $menu->append($open);
                 }
             }
-            if (function_exists('mime_content_type'))
+            if (!empty($image_size[2]))
+            {
+                $open = new GtkMenuItem('Открыть изображение');
+                $menu->append($open);
+                $menu->append(new GtkSeparatorMenuItem());
+                $open->connect_simple('activate', 'image_view', $filename);
+            }
+            elseif (function_exists('mime_content_type'))
             {
                 $mime = mime_content_type($start[$panel]. DS .$file);
                 if ($mime == 'text/plain' OR $mime == 'text/html')
@@ -260,7 +283,7 @@ function on_button($view, $event, $type)
                     $open = new GtkMenuItem($lang['popup']['open_text_file']);
                     $menu->append($open);
                     $menu->append(new GtkSeparatorMenuItem());
-                    $open->connect_simple('activate', 'text_editor_window', $start[$panel].DS.$file);
+                    $open->connect_simple('activate', 'text_editor_window', $filename);
                 }
             }
             $menu->append($copy);
@@ -543,8 +566,8 @@ function paste_file()
             $dialog = new GtkDialog(
                 $lang['alert']['title'], NULL,
                 Gtk::DIALOG_MODAL);
-            $dialog->add_button(Gtk::STOCK_YES, Gtk::RESPONSE_YES);
             $dialog->add_button(Gtk::STOCK_NO, Gtk::RESPONSE_NO);
+            $dialog->add_button(Gtk::STOCK_YES, Gtk::RESPONSE_YES);
             $dialog->set_position(Gtk::WIN_POS_CENTER_ALWAYS);
             $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
             $dialog->set_skip_taskbar_hint(TRUE);
