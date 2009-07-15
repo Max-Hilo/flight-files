@@ -90,6 +90,7 @@ include SHARE_DIR . DS . 'alert.php';
 include SHARE_DIR . DS . 'bookmarks.php';
 include SHARE_DIR . DS . 'checksum.php';
 include SHARE_DIR . DS . 'files_associations.php';
+include SHARE_DIR . DS . 'image_view.php';
 include SHARE_DIR . DS . 'mass_rename.php';
 include SHARE_DIR . DS . 'preference.php';
 include SHARE_DIR . DS . 'properties.php';
@@ -160,14 +161,14 @@ else
 // Пользовательский языковой файл
 // Имеет следующую структуру: <locale>.<CHARSET>.php
 // locale - язык, CHARSET - подходящая для данного языка кодировка
-if (!empty($_config['language']) AND file_exists(LANG_DIR . DS . $_config['language'] . '.php'))
-{
-    $filename = LANG_DIR . DS . $_config['language'] . '.php';
-    $explode = explode('.', $filename);
-    $charset = $explode[1];
-    ini_set('php-gtk.codepage', $charset);
-    include $filename;
-}
+//if (!empty($_config['language']) AND file_exists(LANG_DIR . DS . $_config['language'] . '.php'))
+//{
+//    $filename = LANG_DIR . DS . $_config['language'] . '.php';
+//    $explode = explode('.', $filename);
+//    $charset = $explode[1];
+//    ini_set('php-gtk.codepage', $charset);
+//    include $filename;
+//}
 
 /**
  * Панель, активная в текущий момент. По умолчанию активна левая панель.
