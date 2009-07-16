@@ -49,12 +49,12 @@ define('SHARE_DIR', dirname(__FILE__));
 /**
  * Папка, содержащая конфигурационные и вспомогательные файлы.
  */
-define('CONFIG_DIR', SHARE_DIR . DS . 'configuration');
+define('CONFIG_DIR', SHARE_DIR . DS . 'config');
 
 /**
  * Папка, содержащая файлы локализации.
  */
-define('LANG_DIR', CONFIG_DIR . DS . 'languages');
+define('LANG_DIR', SHARE_DIR . DS . 'languages');
 
 /**
  * Файл буфера обмена.
@@ -111,30 +111,38 @@ if (!file_exists(LANG_DIR))
 // Подключаемся к базе данных
 if (!file_exists(DATABASE))
 {
-    $sqlite = sqlite_open(DATABASE);
-    sqlite_query($sqlite, "CREATE TABLE bookmarks(id INTEGER PRIMARY KEY, path, title)");
-    sqlite_query($sqlite, "CREATE TABLE config(key, value)");
-    sqlite_query($sqlite, "CREATE TABLE history_left(id INTEGER PRIMARY KEY, path)");
-    sqlite_query($sqlite, "CREATE TABLE history_right(id INTEGER PRIMARY KEY, path)");
-    sqlite_query($sqlite, "CREATE TABLE type_files(id INTEGER PRIMARY KEY, type, command)");
-    sqlite_query($sqlite, "CREATE TABLE ext_files(id_type, ext)");
-    sqlite_query($sqlite, "INSERT INTO config(key, value) VALUES('HIDDEN_FILES', 'off');".
-                          "INSERT INTO config(key, value) VALUES('HOME_DIR_LEFT', '".ROOT_DIR."');".
-                          "INSERT INTO config(key, value) VALUES('HOME_DIR_RIGHT', '".HOME_DIR."');".
-                          "INSERT INTO config(key, value) VALUES('ASK_DELETE', 'on');".
-                          "INSERT INTO config(key, value) VALUES('ASK_CLOSE', 'off');".
-                          "INSERT INTO config(key, value) VALUES('TOOLBAR_VIEW', 'on');".
-                          "INSERT INTO config(key, value) VALUES('ADDRESSBAR_VIEW', 'on');".
-                          "INSERT INTO config(key, value) VALUES('STATUSBAR_VIEW', 'on');".
-                          "INSERT INTO config(key, value) VALUES('PARTBAR_VIEW', 'on');".
-                          "INSERT INTO config(key, value) VALUES('FONT_LIST', '');".
-                          "INSERT INTO config(key, value) VALUES('LANGUAGE', '');".
-                          "INSERT INTO config(key, value) VALUES('MAXIMIZE', 'off');".
-                          "INSERT INTO config(key, value) VALUES('TERMINAL', '');".
-                          "INSERT INTO config(key, value) VALUES('COMPARISON', '');".
-                          "INSERT INTO config(key, value) VALUES('PARTBAR_REFRESH', 'off');".
-                          "INSERT INTO config(key, value) VALUES('VIEW_LINES_FILES', 'off');".
-                          "INSERT INTO config(key, value) VALUES('VIEW_LINES_COLUMNS', 'on');");
+    $window = new GtkWindow();
+    $window->set_position(Gtk::WIN_POS_CENTER);
+    $window->set_title('FlightFiles');
+    $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+    $window->set_resizable(FALSE);
+    $window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
+    $window->set_deletable(FALSE);
+    $window->connect_simple('destroy', 'Gtk::main_quit');
+
+    $hbox = new GtkHBox();
+    $hbox->pack_start(new GtkLabel("Select language:"));
+    $hbox->pack_start($combo = GtkComboBox::new_text());
+    $opendir = opendir(LANG_DIR);
+    while (FALSE !== ($file = readdir($opendir)))
+    {
+        if ($file == '.' OR $file == '..' OR preg_match("#^\.(.+?)#", $file))
+        {
+            continue;
+        }
+        $explode = explode('.', $file);
+        $combo->append_text($explode[0] . ' (' . $explode[1] . ')');
+    }
+    $combo->set_active(0);
+
+    $vbox = new GtkVBox();
+    $vbox->pack_start($hbox, FALSE, FALSE);
+    $vbox->pack_start($btn = new GtkButton('Next'), FALSE, FALSE);
+    $btn->connect_simple('clicked', 'create_database', $combo, $window);
+
+    $window->add($vbox);
+    $window->show_all();
+    Gtk::main();
 }
 else
 {
@@ -145,30 +153,9 @@ else
 
 config_parser();
 
-// Основной языковой файл
-// По умолчанию используется русский язык (хотя должен английский) и кодировка CP1251
-if (OS == 'Windows')
-{
-    ini_set('php-gtk.codepage', 'CP1251');
-    include SHARE_DIR . DS . 'default_lang.CP1251.php';
-}
-else
-{
-    ini_set('php-gtk.codepage', 'UTF8');
-    include SHARE_DIR . DS . 'default_lang.UTF8.php';
-}
-
-// Пользовательский языковой файл
-// Имеет следующую структуру: <locale>.<CHARSET>.php
-// locale - язык, CHARSET - подходящая для данного языка кодировка
-//if (!empty($_config['language']) AND file_exists(LANG_DIR . DS . $_config['language'] . '.php'))
-//{
-//    $filename = LANG_DIR . DS . $_config['language'] . '.php';
-//    $explode = explode('.', $filename);
-//    $charset = $explode[1];
-//    ini_set('php-gtk.codepage', $charset);
-//    include $filename;
-//}
+$explode = explode('.', $_config['language']);
+include LANG_DIR . DS .$_config['language'] . '.php';
+ini_set('php-gtk.codepage', $explode[1]);
 
 /**
  * Панель, активная в текущий момент. По умолчанию активна левая панель.
