@@ -23,7 +23,8 @@ function text_editor_window($filename)
     $window->set_size_request(700, 400);
     $window->set_position(Gtk::WIN_POS_CENTER);
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
-    $window->set_title(basename($filename).' - '.$lang['text_view']['title']);
+    $title = str_replace('%s', basename($filename), $lang['text_view']['title']);
+    $window->set_title($title);
     $accel_group = new GtkAccelGroup();
     $window->add_accel_group($accel_group);
     $action_group = new GtkActionGroup('menu');

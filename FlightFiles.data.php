@@ -8,6 +8,43 @@
  * @link http://code.google.com/p/flight-files/ Домашняя страница проекта
  */
 
+ function create_database($combo, $window)
+ {
+     global $sqlite;
+
+     $language = $combo->get_active_text();
+     $language = str_replace(' ', '.', $language);
+     $language = str_replace('(', '', $language);
+     $language = str_replace(')', '', $language);
+     $explode = explode('.', $language);
+     $language = $explode[0] . '.' . $explode[1];
+     $sqlite = sqlite_open(DATABASE);
+     sqlite_query($sqlite, "CREATE TABLE bookmarks(id INTEGER PRIMARY KEY, path, title)");
+     sqlite_query($sqlite, "CREATE TABLE config(key, value)");
+     sqlite_query($sqlite, "CREATE TABLE history_left(id INTEGER PRIMARY KEY, path)");
+     sqlite_query($sqlite, "CREATE TABLE history_right(id INTEGER PRIMARY KEY, path)");
+     sqlite_query($sqlite, "CREATE TABLE type_files(id INTEGER PRIMARY KEY, type, command)");
+     sqlite_query($sqlite, "CREATE TABLE ext_files(id_type, ext)");
+     sqlite_query($sqlite, "INSERT INTO config(key, value) VALUES('HIDDEN_FILES', 'off');".
+                           "INSERT INTO config(key, value) VALUES('HOME_DIR_LEFT', '".ROOT_DIR."');".
+                           "INSERT INTO config(key, value) VALUES('HOME_DIR_RIGHT', '".HOME_DIR."');".
+                           "INSERT INTO config(key, value) VALUES('ASK_DELETE', 'on');".
+                           "INSERT INTO config(key, value) VALUES('ASK_CLOSE', 'off');".
+                           "INSERT INTO config(key, value) VALUES('TOOLBAR_VIEW', 'on');".
+                           "INSERT INTO config(key, value) VALUES('ADDRESSBAR_VIEW', 'on');".
+                           "INSERT INTO config(key, value) VALUES('STATUSBAR_VIEW', 'on');".
+                           "INSERT INTO config(key, value) VALUES('PARTBAR_VIEW', 'on');".
+                           "INSERT INTO config(key, value) VALUES('FONT_LIST', '');".
+                           "INSERT INTO config(key, value) VALUES('LANGUAGE', '$language');".
+                           "INSERT INTO config(key, value) VALUES('MAXIMIZE', 'off');".
+                           "INSERT INTO config(key, value) VALUES('TERMINAL', '');".
+                           "INSERT INTO config(key, value) VALUES('COMPARISON', '');".
+                           "INSERT INTO config(key, value) VALUES('PARTBAR_REFRESH', 'off');".
+                           "INSERT INTO config(key, value) VALUES('VIEW_LINES_FILES', 'off');".
+                           "INSERT INTO config(key, value) VALUES('VIEW_LINES_COLUMNS', 'on');");
+    $window->destroy();
+ }
+
 /**
  * Функция достаёт настройки из базы данных и
  * помещает их в глобальную переменную $_config
@@ -108,7 +145,7 @@ function on_button($view, $event, $type)
         }
     }
     $filename = $start[$panel] . DS . $file;
-    $image_size = getimagesize($filename);
+    $image_size = @getimagesize($filename);
 
     // Если нажата левая кнопка, то...
     if ($event->button == 1)
@@ -270,7 +307,7 @@ function on_button($view, $event, $type)
             }
             if (!empty($image_size[2]))
             {
-                $open = new GtkMenuItem('Открыть изображение');
+                $open = new GtkMenuItem($lang['popup']['open_image']);
                 $menu->append($open);
                 $menu->append(new GtkSeparatorMenuItem());
                 $open->connect_simple('activate', 'image_view', $filename);

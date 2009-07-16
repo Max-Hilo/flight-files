@@ -195,6 +195,7 @@ $lang['popup']['checksum']              = 'Контрольная сумма';
 $lang['popup']['md5']                   = 'MD5';
 $lang['popup']['sha1']                  = 'SHA1';
 $lang['popup']['open_in']               = "Открыть в '%s'";
+$lang['popup']['open_image']            = 'Открыть изображение';
 $lang['popup']['open_text_file']        = 'Открыть в текстовом редакторе';
 $lang['popup']['open_dir']              = 'Открыть папку';
 $lang['popup']['copy_dir']              = 'Копировать';
@@ -224,7 +225,7 @@ $lang['new']['dir']                     = 'Новая папка';
 $lang['font']['title']                  = 'Выбрать шрифт';
 $lang['font']['preview']                = 'Файловый менеджер FlightFiles';
 
-$lang['text_view']['title']             = 'Текстовый редактор';
+$lang['text_view']['title']             = 'FlightFiles :: Текстовый редактор :: %s';
 $lang['text_view']['statusbar']         = 'Файл:';
 
 $lang['text_editor_close']['title']      = 'Сохранить изменения';
@@ -282,3 +283,17 @@ $lang['file_ass']['cancel_add_ext']     = '_Отменить';
 $lang['file_ass']['ok_add_ext']         = '_Добавить';
 $lang['file_ass']['cancel_add_type']    = '_Отменить';
 $lang['file_ass']['ok_add_type']        = '_Добавить';
+
+$lang['image']['title']                 = 'FlightFiles :: Просмотр изображений :: %s';
+$lang['image']['zoom_in']               = 'Увеличить';
+$lang['image']['zoom_in_hint']          = 'Увеличить изображение на 10%';
+$lang['image']['zoom_out']              = 'Уменьшить';
+$lang['image']['zoom_out_hint']         = 'Уменьшить изображение на 10%';
+$lang['image']['zoom_source']           = 'Исходный';
+$lang['image']['zoom_source_hint']      = 'Вернуть изображение в его исходный размер';
+$lang['image']['rotate_left']           = 'Влево';
+$lang['image']['rotate_left_hint']      = 'Повернуть изображение влево на 90 градусов';
+$lang['image']['rotate_right']          = 'Вправо';
+$lang['image']['rotate_right_hint']     = 'Повернуть изображение вправо на 90 градусов';
+$lang['image']['gd_not_found']          = 'Не найдена библиотека GD.';
+$lang['image']['imagerotate_not_found'] = 'Функция imagerotate() не доступна.';
