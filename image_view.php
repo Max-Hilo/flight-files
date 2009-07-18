@@ -1,8 +1,26 @@
 <?php
 
+/**
+ * Файл локализации, используемый по умолчанию.
+ *
+ * @copyright Copyright (C) 2009, Вавилов Егор (Shecspi)
+ * @license http://www.opensource.org/licenses/mit-license.php MIT License
+ * @link http://code.google.com/p/flight-files/ Домашняя страница проекта
+ */
+
+/**
+ * Создание окна для просмотра изображения.
+ * @global int
+ *  $pixbuf_image
+ * @global int $pixbuf_width
+ * @global int $pixbuf_height
+ * @global array $lang
+ * @global int $scope_image
+ * @param string $filename Адрес изображения
+ */
 function image_view($filename)
 {
-    global $pixbuf_image, $pixbuf_width, $pixbuf_height, $lang;
+    global $pixbuf_image, $pixbuf_width, $pixbuf_height, $lang, $scope_image;
     
     $image_size = getimagesize($filename);
     $pixbuf_width = $image_size[0];
@@ -11,6 +29,7 @@ function image_view($filename)
     $width = 600;
     $height = 500;
     $rotate_image = 0;
+    $scope_image = 100;
 
     $window = new GtkWindow();
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
@@ -61,24 +80,40 @@ function image_view($filename)
     $scroll->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
     $scroll->add_with_viewport($image);
 
-    $zoom_in->connect_simple('clicked', 'change_size_image', 'zoom_in', $filename, $image);
-    $zoom_out->connect_simple('clicked', 'change_size_image', 'zoom_out', $filename, $image);
-    $zoom_source->connect_simple('clicked', 'change_size_image', 'zoom_source', $filename, $image);
+    $statusbar = new GtkStatusBar();
+    $statusbar->push(1, $pixbuf_width . ' x ' . $pixbuf_height . '    '.convert_size($filename) . '    ' . $scope_image . '%');
+
+    $zoom_in->connect_simple('clicked', 'change_size_image', 'zoom_in', $filename, $image, $statusbar);
+    $zoom_out->connect_simple('clicked', 'change_size_image', 'zoom_out', $filename, $image, $statusbar);
+    $zoom_source->connect_simple('clicked', 'change_size_image', 'zoom_source', $filename, $image, $statusbar);
     $rotate_left->connect_simple('clicked', 'rotate_image', 'left', $filename, $image);
     $rotate_right->connect_simple('clicked', 'rotate_image', 'right', $filename, $image);
 
     $vbox = new GtkVBox();
     $vbox->pack_start($toolbar, FALSE, FALSE);
     $vbox->pack_start($scroll, TRUE, TRUE);
+    $vbox->pack_end($statusbar, FALSE, FALSE);
 
     $window->add($vbox);
     $window->show_all();
     Gtk::main();
 }
 
+/**
+ * Изменение положения изображения.
+ * Если библиотека GD или функция imagerotate() не найдены,
+ * то открывается диалог alert_window(), информирующий об этом.
+ * @global int $rotate_image
+ * @global int $pixbuf_width
+ * @global int $pixbuf_height
+ * @global array $lang
+ * @param string $action Направление поворота
+ * @param string $filename Файл, для которого необходимо произвести операцию
+ * @param GtkImage $image Виджет, отображающий изображение
+ */
 function rotate_image($action, $filename, $image)
 {
-    global $rotate_image, $pixbuf_width, $pixbuf_height;
+    global $rotate_image, $pixbuf_width, $pixbuf_height, $lang;
 
     if (!extension_loaded('gd'))
     {
@@ -104,36 +139,92 @@ function rotate_image($action, $filename, $image)
     $pixbuf_height = $pixbuf_width - $pixbuf_height;
     $pixbuf_width = $pixbuf_width - $pixbuf_height;
 
-    $img = imagecreatefromjpeg($filename);
+    $image_size = getimagesize($filename);
+    $type = $image_size[2];
+    switch ($type)
+    {
+        case 1:
+            $img = imagecreatefromgif($filename);
+            break;
+        case 2:
+            $img = imagecreatefromjpeg($filename);
+            break;
+        case 3:
+            $img = imagecreatefrompng($filename);
+            break;
+        default:
+            return FALSE;
+    }
     $img = imagerotate($img, $rotate_image, 0);
-    imagejpeg($img, CONFIG_DIR . DS . 'tmp_image.png');
-    $pixbuf = GdkPixbuf::new_from_file(CONFIG_DIR . DS . 'tmp_image.png');
+    $color = imagecolorallocate($img, 0, 0, 0);
+    imagecolortransparent($img, $color);
+    switch ($type)
+    {
+        case 1:
+            $img_file = CONFIG_DIR . DS . 'tmp_image.gif';
+            $img = imagegif($img, $img_file);
+            break;
+        case 2:
+            $img_file = CONFIG_DIR . DS . 'tmp_image.jpeg';
+            $img = imagejpeg($img, $img_file);
+            break;
+        case 3:
+            $img_file = CONFIG_DIR . DS . 'tmp_image.png';
+            $img = imagepng($img, $img_file);
+            break;
+        default:
+            return FALSE;
+    }
+    $pixbuf = GdkPixbuf::new_from_file($img_file);
     $pixbuf = $pixbuf->scale_simple($pixbuf_width, $pixbuf_height, Gdk::INTERP_HYPER);
     $image->set_from_pixbuf($pixbuf);
-    unlink(CONFIG_DIR . DS . 'tmp_image.png');
+    unlink($img_file);
 }
 
-function change_size_image($action, $filename, $image)
+/**
+ * Масштабирование изображения.
+ * Пределы масштабирования: от 30% до 400%. В большем нет необходимости.
+ * @global int $pixbuf_width
+ * @global int $pixbuf_height
+ * @global int $scope_image
+ * @param string $action Направление масштабирования
+ * @param string $filename Файл, для которого необходимо произвести операцию
+ * @param GtkImage $image Виджет, отображающий изображение
+ * @param GtkStatusBar $statusbar Строка состояния
+ */
+function change_size_image($action, $filename, $image, $statusbar)
 {
-    global $pixbuf_width, $pixbuf_height;
+    global $pixbuf_width, $pixbuf_height, $scope_image;
 
+    $image_size = getimagesize($filename);
     if ($action == 'zoom_in')
     {
-        $pixbuf_width = $pixbuf_width + $pixbuf_width * 0.1;
-        $pixbuf_height = $pixbuf_height + $pixbuf_height * 0.1;
+        $width = $pixbuf_width + $pixbuf_width * 0.1;
+        $height = $pixbuf_height + $pixbuf_height * 0.1;
+        $scope = $scope_image * 1.1;
     }
     elseif ($action == 'zoom_out')
     {
-        $pixbuf_width = $pixbuf_width - $pixbuf_width * 0.1;
-        $pixbuf_height = $pixbuf_height - $pixbuf_height * 0.1;
+        $width = $pixbuf_width - $pixbuf_width * 0.1;
+        $height = $pixbuf_height - $pixbuf_height * 0.1;
+        $scope = $scope_image / 1.1;
     }
     elseif ($action == 'zoom_source')
     {
-        $size = getimagesize($filename);
-        $pixbuf_width = $size[0];
-        $pixbuf_height = $size[1];
+        $width = $image_size[0];
+        $height = $image_size[1];
+        $scope = 100;
     }
+
+    if ($scope <= 30 OR $scope >= 400)
+    {
+        return FALSE;
+    }
+    $pixbuf_width = $width;
+    $pixbuf_height = $height;
+    $scope_image = $scope;
     $pixbuf = GdkPixbuf::new_from_file($filename);
     $pixbuf = $pixbuf->scale_simple($pixbuf_width, $pixbuf_height, Gdk::INTERP_HYPER);
     $image->set_from_pixbuf($pixbuf);
+    $statusbar->push(1, $image_size[0] . ' x ' . $image_size[1] . '    '.convert_size($filename) . '    ' . round($scope_image) . '%');
 }

@@ -15,7 +15,8 @@ if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
     $home_dir = $_ENV['USERPROFILE'];
     $root_dir = 'C:';
 }
-else{
+else
+{
     $os = 'Unix';
     $home_dir = $_ENV['HOME'];
     $root_dir = '/';
@@ -76,13 +77,6 @@ define('VERSION_PROGRAM', trim(file_get_contents(SHARE_DIR . DS . 'VERSION')));
  */
 define('ICON_PROGRAM', SHARE_DIR . DS . 'logo_program.png');
 
-// Выводим версию программы
-if ($argv[1] == '--version' OR $argv[1] == '-v')
-{
-    echo VERSION_PROGRAM."\n";
-    exit();
-}
-
 // Файлы с функциями программы
 include SHARE_DIR . DS . 'FlightFiles.data.php';
 include SHARE_DIR . DS . 'about.php';
@@ -102,18 +96,22 @@ include SHARE_DIR . DS . 'text_editor.php';
 
 // Создаём папку с конфигами
 if (!file_exists(CONFIG_DIR))
+{
     mkdir(CONFIG_DIR);
+}
 
 // Создаём папку с локализациями
 if (!file_exists(LANG_DIR))
+{
     mkdir(LANG_DIR);
+}
 
 // Подключаемся к базе данных
 if (!file_exists(DATABASE))
 {
     $window = new GtkWindow();
     $window->set_position(Gtk::WIN_POS_CENTER);
-    $window->set_title('FlightFiles');
+    $window->set_title('FlightFiles :: Start');
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $window->set_resizable(FALSE);
     $window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
@@ -121,8 +119,8 @@ if (!file_exists(DATABASE))
     $window->connect_simple('destroy', 'Gtk::main_quit');
 
     $hbox = new GtkHBox();
-    $hbox->pack_start(new GtkLabel("Select language:"));
-    $hbox->pack_start($combo = GtkComboBox::new_text());
+    $hbox->pack_start(new GtkLabel("Select language:"), FALSE, FALSE, 5);
+    $hbox->pack_start($combo = GtkComboBox::new_text(), FALSE, FALSE, 5);
     $opendir = opendir(LANG_DIR);
     while (FALSE !== ($file = readdir($opendir)))
     {
@@ -157,6 +155,24 @@ $explode = explode('.', $_config['language']);
 include LANG_DIR . DS .$_config['language'] . '.php';
 ini_set('php-gtk.codepage', $explode[1]);
 
+// Выводим версию программы
+if (in_array('--version', $argv) OR in_array('-v', $argv))
+{
+    echo VERSION_PROGRAM."\r\n";
+    exit();
+}
+
+// Выводим справочную информацию
+if (in_array('-h', $argv) OR in_array('--help', $argv))
+{
+    echo $lang['help']['using']."\r\n";
+    echo "  FlightFiles [".$lang['help']['key']."] [".$lang['help']['dir_left']."] [".$lang['help']['dir_right']."]\r\n\r\n";
+    echo "  -h, --help\t\t".$lang['help']['help']."\r\n";
+    echo "  -v, --version\t\t".$lang['help']['version']."\r\n";
+    echo "  --one\t\t\t".$lang['help']['one']."\r\n";
+    exit();
+}
+
 /**
  * Панель, активная в текущий момент. По умолчанию активна левая панель.
  * @global string $GLOBALS['panel']
@@ -169,8 +185,32 @@ $panel = 'left';
  * @global array $GLOBALS['start']
  * @name $start
  */
-$start = array('left' => (empty($argv[1]) OR !file_exists($argv[1])) ? $_config['home_dir_left'] : $argv[1],
-               'right' => $_config['home_dir_right']);
+$start = array('left' => '', 'right' => '');
+$argv_bool = FALSE;
+for ($i = 1; $i < $argc; $i++)
+{
+    if ($argv_bool === FALSE)
+    {
+        if (is_dir($argv[$i]))
+        {
+            $start['left'] = $argv[$i];
+            $argv_bool = TRUE;
+            continue;
+        }
+    }
+    else
+    {
+        if (is_dir($argv[$i]))
+        {
+            $start['right'] = $argv[$i];
+            unset($argv_bool);
+            break;
+        }
+    }
+}
+$start['left'] = (empty($start['left'])) ? $_config['home_dir_left'] : $start['left'];
+$start['right'] = (empty($start['right'])) ? $_config['home_dir_right'] : $start['right'];
+
 
 /**
  * Используется для навигации по истории посещения директорий.
@@ -548,7 +588,10 @@ $right->add($scroll_right);
 //////////////////////////
 
 $hbox->pack_start($left);
-$hbox->pack_start($right);
+if (!in_array('--one', $argv))
+{
+    $hbox->pack_start($right);
+}
 $hbox->show_all();
 
 $vbox->pack_start($hbox);

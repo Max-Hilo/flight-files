@@ -364,6 +364,7 @@ function on_button($view, $event, $type)
             $delete_active = new GtkImageMenuItem($lang['popup']['delete_active']);
             $delete_active->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_MENU));
             $terminal = new GtkMenuItem($lang['popup']['open_terminal']);
+            $properties = new GtkImageMenuItem(Gtk::STOCK_PROPERTIES);
 
             if (!is_writable($start[$panel]))
             {
@@ -387,6 +388,8 @@ function on_button($view, $event, $type)
             }
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($terminal);
+            $menu->append(new GtkSeparatorMenuItem());
+            $menu->append($properties);
 
             $open->connect_simple('activate', 'change_dir', 'open', $file);
             $copy->connect_simple('activate', 'bufer_file', $start[$panel]. DS .$file, 'copy');
@@ -395,6 +398,7 @@ function on_button($view, $event, $type)
             $delete->connect_simple('activate', 'delete_window', $start[$panel]. DS .$file);
             $delete_active->connect_simple('activate', 'delete_active');
             $terminal->connect_simple('activate', 'open_terminal');
+            $properties->connect_simple('activate', 'properties_window', $start[$panel]. DS .$file);
         }
         else
         {
@@ -1032,18 +1036,10 @@ function change_dir($act = '', $dir = '', $all = FALSE)
             break;
     }
 
+    $opendir = @opendir($new_dir);
     if ($act != 'none' AND $act != 'history' OR ($act == 'user' AND $new_dir != $entry_current_dir->get_text() AND file_exists($new_dir)))
     {
-        if ($act == 'user' OR $act == 'bookmarks')
-        {
-            if ($new_dir != $start[$panel] AND file_exists($new_dir))
-            {
-                sqlite_query($sqlite, "DELETE FROM history_$panel WHERE id > '$number[$panel]'");
-                sqlite_query($sqlite, "INSERT INTO history_$panel(path) VALUES('$new_dir')");
-                $number[$panel] = sqlite_last_insert_rowid($sqlite);
-            }
-        }
-        else
+        if ($new_dir != $start[$panel] AND file_exists($new_dir) AND $opendir !== FALSE)
         {
             sqlite_query($sqlite, "DELETE FROM history_$panel WHERE id > '$number[$panel]'");
             sqlite_query($sqlite, "INSERT INTO history_$panel(path) VALUES('$new_dir')");
@@ -1056,10 +1052,16 @@ function change_dir($act = '', $dir = '', $all = FALSE)
     {
         alert_window($lang['alert']['dir_not_exists']);
     }
+    // Если отказано в доступе
+    elseif ($opendir === FALSE)
+    {
+        alert_window($lang['alert']['access_denied']);
+    }
     else
     {
         $start[$panel] = $new_dir;
     }
+    @closedir($opendir);
 
     $start[$panel] = preg_replace ('#'.DS.'+#', DS, $start[$panel]);
 
