@@ -8,7 +8,7 @@
  * @link http://code.google.com/p/flight-files/ Домашняя страница проекта
  */
 
-$lang['title_program']                  = 'Фаловый менеджер FlightFiles';
+$lang['title_program']                  = 'FlightFiles :: Фаловый менеджер';
 
 $lang['menu']['file']                   = '_Файл';
 $lang['menu']['edit']                   = '_Правка';
@@ -30,7 +30,7 @@ $lang['menu']['paste']                  = 'Вставить';
 $lang['menu']['rename']                 = 'Переименовать';
 $lang['menu']['mass_rename']            = 'Массовое переименование';
 $lang['menu']['files_ass']              = 'Файловые ассоциации';
-$lang['menu']['preference']             = 'Параметры';
+$lang['menu']['preference']             = 'Настройки';
 $lang['menu']['toolbar_view']           = 'Панель инструментов';
 $lang['menu']['partbar_view']           = 'Список разделов';
 $lang['menu']['addressbar_view']        = 'Адресная строка';
@@ -83,7 +83,7 @@ $lang['statusbar']['count']             = 'Количество элементов:';
 $lang['statusbar']['dirs']              = 'папок:';
 $lang['statusbar']['files']             = 'файлов:';
 
-$lang['bookmarks']['title']             = 'Изменить закладки';
+$lang['bookmarks']['title']             = 'FlightFiles :: Изменить закладки';
 $lang['bookmarks']['name']              = 'Название:';
 $lang['bookmarks']['path']              = 'Адрес:';
 $lang['bookmarks']['save']              = '_Сохранить изменения';
@@ -98,7 +98,7 @@ $lang['bookmarks']['bookmarks']         = 'Закладки';
 $lang['bookmarks']['root']              = 'Корень';
 $lang['bookmarks']['new']               = 'Новая закладка';
 
-$lang['about']['title']                 = 'О программе "FlightFiles"';
+$lang['about']['title']                 = 'FlightFiles :: О программе ';
 $lang['about']['about']                 = 'О программе';
 $lang['about']['authors']               = 'О разработчиках';
 $lang['about']['license']               = 'О лицензии';
@@ -109,7 +109,7 @@ $lang['about']['license_text']               = "Программа FlightFiles является с
 "Разработчик не предоставляет каких-либо гарантий\nна программу. Вы используете её на свой страх и риск.\n\n".
 "Ниже приведён оригинальный текст лицензии MIT:\n\n";
 
-$lang['shortcuts']['title']             = 'Сочетания клавиш';
+$lang['shortcuts']['title']             = 'FlightFiles :: Сочетания клавиш';
 $lang['shortcuts']['up']                = 'Вверх';
 $lang['shortcuts']['back']              = 'Назад';
 $lang['shortcuts']['forward']           = 'Вперёд';
@@ -128,7 +128,7 @@ $lang['shortcuts']['toolbar']           = 'Панель инструментов';
 $lang['shortcuts']['addressbar']        = 'Адресная строка';
 $lang['shortcuts']['statusbar']         = 'Статусная панель';
 
-$lang['preference']['title']            = 'Параметры FlightFiles';
+$lang['preference']['title']            = 'FlightFiles :: Настройки';
 $lang['preference']['hidden_files']     = 'Показывать скрытые файлы и папки';
 $lang['preference']['hidden_files_hint'] = 'Скрытыми считаются файлы, имя которых начинается с точки';
 $lang['preference']['ask_delete']       = 'Требовать подтверждение при удаления файлов/папок';
@@ -157,7 +157,7 @@ $lang['preference']['vlf_hint']         = 'Для лучшего визуального восприятия бу
 $lang['preference']['view_lines_columns'] = 'Показывать линии между колонками';
 $lang['preference']['vlc_hint']         = 'Для лучшего визуального восприятия будут отображаться вертикальные линии между колонками';
 
-$lang['properties']['title']            = 'Свойства "%s"';
+$lang['properties']['title']            = 'FlightFiles :: Свойства :: %s';
 $lang['properties']['name']             = 'Имя:';
 $lang['properties']['size']             = 'Размер:';
 $lang['properties']['path']             = 'Местоположение:';
@@ -176,10 +176,11 @@ $lang['properties']['perms_read']       = 'Чтение';
 $lang['properties']['perms_write']      = 'Запись';
 $lang['properties']['perms_run']        = 'Выполнение';
 
-$lang['alert']['title']                 = 'Внимание';
+$lang['alert']['title']                 = 'FlightFiles :: Внимание';
 $lang['alert']['bufer_clear']           = 'Буфер обмена очищен';
 $lang['alert']['chmod_read_dir']        = 'У вас недостаточно прав для просмотра указанной директории!';
 $lang['alert']['chmod_read_file']       = 'У вас недостаточно прав для просмотра указанного файла!';
+$lang['alert']['access_denied']         = 'Отказано в доступе';
 $lang['alert']['empty_name']            = 'Необходимо ввести имя!';
 $lang['alert']['file_exists_rename']    = "Имя '%s' уже используется в текущей директории!";
 $lang['alert']['file_exists_paste']     = "Имя '%s' уже используется в текущей директории. Заменить?";
@@ -195,6 +196,7 @@ $lang['popup']['checksum']              = 'Контрольная сумма';
 $lang['popup']['md5']                   = 'MD5';
 $lang['popup']['sha1']                  = 'SHA1';
 $lang['popup']['open_in']               = "Открыть в '%s'";
+$lang['popup']['open_image']            = 'Открыть изображение';
 $lang['popup']['open_text_file']        = 'Открыть в текстовом редакторе';
 $lang['popup']['open_dir']              = 'Открыть папку';
 $lang['popup']['copy_dir']              = 'Копировать';
@@ -206,9 +208,9 @@ $lang['popup']['new_dir']               = 'Создать папку';
 $lang['popup']['open_terminal']         = 'Открыть терминал здесь';
 $lang['popup']['paste']                 = 'Вставить';
 
-$lang['rename']['title']                = 'Переименовать';
+$lang['rename']['title']                = 'FlightFiles :: Переименовать';
 
-$lang['delete']['title']                = 'Удалить';
+$lang['delete']['title']                = 'FlightFiles :: Удалить';
 $lang['delete']['dir']                  = 'Вы действительно хотите удалить папку "%s" со всем её содержимым?';
 $lang['delete']['file']                 = 'Вы действительно хотите удалить файл "%s"?';
 $lang['delete']['active']               = 'Вы действительно хотите удалить выбранные файлы/папки?';
@@ -221,19 +223,19 @@ $lang['size']['gib']                    = 'ГиБ';
 $lang['new']['file']                    = 'Новый файл';
 $lang['new']['dir']                     = 'Новая папка';
 
-$lang['font']['title']                  = 'Выбрать шрифт';
+$lang['font']['title']                  = 'FlightFiles :: Выбрать шрифт';
 $lang['font']['preview']                = 'Файловый менеджер FlightFiles';
 
-$lang['text_view']['title']             = 'Текстовый редактор';
+$lang['text_view']['title']             = 'FlightFiles :: Текстовый редактор :: %s';
 $lang['text_view']['statusbar']         = 'Файл:';
 
-$lang['text_editor_close']['title']      = 'Сохранить изменения';
+$lang['text_editor_close']['title']      = 'FlightFiles :: Сохранить изменения';
 $lang['text_editor_close']['label']      = "Файл '%s' был изменён.\nСохранить изменения?";
 
-$lang['checksum']['title']              = 'Контрольная сумма - %s';
+$lang['checksum']['title']              = 'FlightFiles :: Контрольная сумма - %s';
 $lang['checksum']['text']               = 'Файл - %s';
 
-$lang['close']['title']                 = 'Закрыть FlightFiles';
+$lang['close']['title']                 = 'FlightFiles :: Закрыть';
 $lang['close']['text']                  = 'Действительно закрыть FlightFiles?';
 
 $lang['command']['comparison_none']     = "Команда '%s' не найдена.";
@@ -243,7 +245,7 @@ $lang['command']['terminal_empty']      = 'Не выбрана программа в качестве терми
 $lang['command']['none']                = "Не выбрана программа для открытия файлов типа '%s'";
 $lang['command']['not_found']           = "Не верно указана программа для открытия файлов типа '%s'";
 
-$lang['bulk_rename']['title']           = 'Массовое переименование';
+$lang['bulk_rename']['title']           = 'FlightFiles :: Массовое переименование';
 $lang['bulk_rename']['upper']           = '_Верхний регистр';
 $lang['bulk_rename']['upper_hint']      = 'Все буквы в именах файлов будут преобразованы в верхний регистр';
 $lang['bulk_rename']['lower']           = '_Нижний регистр';
@@ -267,7 +269,7 @@ $lang['bulk_rename']['hidden_hint']     = 'Скрытыми считаются файлы и папки, име
 $lang['bulk_rename']['cancel']          = '_Отменить';
 $lang['bulk_rename']['rename']          = '_Переименовать';
 
-$lang['file_ass']['title']              = 'Файловые ассоциации';
+$lang['file_ass']['title']              = 'FlightFiles :: Файловые ассоциации';
 $lang['file_ass']['add_type']           = '_Добавить';
 $lang['file_ass']['edit_type']          = '_Изменить';
 $lang['file_ass']['remove_type']        = '_Удалить';
@@ -282,3 +284,25 @@ $lang['file_ass']['cancel_add_ext']     = '_Отменить';
 $lang['file_ass']['ok_add_ext']         = '_Добавить';
 $lang['file_ass']['cancel_add_type']    = '_Отменить';
 $lang['file_ass']['ok_add_type']        = '_Добавить';
+
+$lang['image']['title']                 = 'FlightFiles :: Просмотр изображений :: %s';
+$lang['image']['zoom_in']               = 'Увеличить';
+$lang['image']['zoom_in_hint']          = 'Увеличить изображение на 10%';
+$lang['image']['zoom_out']              = 'Уменьшить';
+$lang['image']['zoom_out_hint']         = 'Уменьшить изображение на 10%';
+$lang['image']['zoom_source']           = 'Исходный';
+$lang['image']['zoom_source_hint']      = 'Вернуть изображение в его исходный размер';
+$lang['image']['rotate_left']           = 'Влево';
+$lang['image']['rotate_left_hint']      = 'Повернуть изображение влево на 90 градусов';
+$lang['image']['rotate_right']          = 'Вправо';
+$lang['image']['rotate_right_hint']     = 'Повернуть изображение вправо на 90 градусов';
+$lang['image']['gd_not_found']          = 'Не найдена библиотека GD.';
+$lang['image']['imagerotate_not_found'] = 'Функция imagerotate() не доступна.';
+
+$lang['help']['using']                  = 'Использование:';
+$lang['help']['key']                    = 'КЛЮЧ';
+$lang['help']['dir_left']               = 'Каталог левой панели';
+$lang['help']['dir_right']              = 'Каталог правой панели';
+$lang['help']['help']                   = 'Показать данную справку и выйти';
+$lang['help']['version']                = 'Показать версию программы и выйти';
+$lang['help']['one']                    = 'Запустить в однопанельном режиме';
