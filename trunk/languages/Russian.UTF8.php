@@ -23,6 +23,7 @@ $lang['menu']['comparison_file']        = 'Сравнить файлы';
 $lang['menu']['comparison_dir']         = 'Сравнить папки';
 $lang['menu']['active_all']             = 'Выделить все';
 $lang['menu']['active_all_none']        = 'Снять выделение';
+$lang['menu']['active_template']         = 'Выделить по шаблону';
 $lang['menu']['close']                  = 'Закрыть';
 $lang['menu']['copy']                   = 'Копировать';
 $lang['menu']['cut']                    = 'Вырезать';
@@ -230,8 +231,20 @@ $lang['new']['dir']                     = 'Новая папка';
 $lang['font']['title']                  = 'FlightFiles :: Выбрать шрифт';
 $lang['font']['preview']                = 'Файловый менеджер FlightFiles';
 
-$lang['text_view']['title']             = 'FlightFiles :: Текстовый редактор :: %s';
+$lang['text_view']['file']              = 'Файл';
+$lang['text_view']['edit']              = 'Правка';
+$lang['text_view']['help']              = 'Справка';
+$lang['text_view']['menu_undo']         = 'Отменить';
+$lang['text_view']['menu_redo']         = 'Вернуть';
+$lang['text_view']['menu_copy']         = 'Копировать';
+$lang['text_view']['menu_cut']          = 'Вырезать';
+$lang['text_view']['menu_paste']        = 'Вставить';
+$lang['text_view']['menu_about']        = 'О программе';
+$lang['text_view']['title']             = '%s';
 $lang['text_view']['statusbar']         = 'Файл:';
+$lang['text_view']['toolbar_save']      = 'Сохранить';
+$lang['text_view']['toolbar_undo']      = 'Отменить';
+$lang['text_view']['toolbar_redo']      = 'Вернуть';
 
 $lang['text_editor_close']['title']      = 'FlightFiles :: Сохранить изменения';
 $lang['text_editor_close']['label']      = "Файл '%s' был изменён.\nСохранить изменения?";
@@ -310,3 +323,5 @@ $lang['help']['dir_right']              = 'Каталог правой пане�
 $lang['help']['help']                   = 'Показать данную справку и выйти';
 $lang['help']['version']                = 'Показать версию программы и выйти';
 $lang['help']['one']                    = 'Запустить в однопанельном режиме';
+
+$lang['tmp_window']['title']            = 'FlightFiles :: Выделение по шаблону';
