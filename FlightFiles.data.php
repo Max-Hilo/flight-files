@@ -91,6 +91,8 @@ function on_button($view, $event, $type)
     $action_menu['mass_rename']->set_sensitive(TRUE);
     $action_menu['back']->set_sensitive(TRUE);
     $action_menu['forward']->set_sensitive(TRUE);
+    $action_menu['comparison_file']->set_sensitive(FALSE);
+    $action_menu['comparison_dir']->set_sensitive(FALSE);
 
     if ($number[$panel] == 1)
     {
@@ -119,6 +121,37 @@ function on_button($view, $event, $type)
         $action['new_file']->set_sensitive(FALSE);
         $action['new_dir']->set_sensitive(FALSE);
         $action_menu['mass_rename']->set_sensitive(FALSE);
+    }
+
+    $files = 0;
+    $dirs = 0;
+    foreach (@$active_files[$panel] as $file)
+    {
+        $filename = $start[$panel]. DS .$file;
+        if (is_file($filename))
+        {
+            $files++;
+        }
+        elseif (is_dir($filename))
+        {
+            $dirs++;
+        }
+    }
+    if ($files == 2 OR $files == 3)
+    {
+        $action_menu['comparison_file']->set_sensitive(TRUE);
+    }
+    else
+    {
+        $action_menu['comparison_file']->set_sensitive(FALSE);
+    }
+    if ($dirs == 2 OR $dirs == 3)
+    {
+        $action_menu['comparison_dir']->set_sensitive(TRUE);
+    }
+    else
+    {
+        $action_menu['comparison_dir']->set_sensitive(FALSE);
     }
 
     $entry_current_dir->set_text($start[$panel]);
@@ -342,7 +375,7 @@ function on_button($view, $event, $type)
 
             $copy->connect_simple('activate', 'bufer_file', $start[$panel]. DS .$file, 'copy');
             $cut->connect_simple('activate', 'bufer_file', $start[$panel]. DS .$file, 'cut');
-            $rename->connect_simple('activate', '_rename', $start[$panel]. DS .$file);
+            $rename->connect_simple('activate', 'rename_window', $start[$panel]. DS .$file);
             $delete->connect_simple('activate', 'delete_window', $start[$panel]. DS .$file);
             $delete_active->connect_simple('activate', 'delete_active');
             $md5->connect_simple('activate', 'CheckSumWindow', $start[$panel]. DS .$file, 'MD5');
@@ -394,7 +427,7 @@ function on_button($view, $event, $type)
             $open->connect_simple('activate', 'change_dir', 'open', $file);
             $copy->connect_simple('activate', 'bufer_file', $start[$panel]. DS .$file, 'copy');
             $cut->connect_simple('activate', 'bufer_file', $start[$panel]. DS .$file, 'cut');
-            $rename->connect_simple('activate', '_rename', $start[$panel]. DS .$file);
+            $rename->connect_simple('activate', 'rename_window', $start[$panel]. DS .$file);
             $delete->connect_simple('activate', 'delete_window', $start[$panel]. DS .$file);
             $delete_active->connect_simple('activate', 'delete_active');
             $terminal->connect_simple('activate', 'open_terminal');
@@ -1386,6 +1419,16 @@ function columns($tree_view, $cell_renderer)
     $tree_view->append_column($column_null);
 }
 
+/**
+ * Выделение/снятие выделения с файла/папки
+ * @global GtkListStore $store
+ * @global array $start
+ * @global string $panel
+ * @global array $active_files
+ * @global object $action_menu
+ * @param GtkCellRenderToggle $render
+ * @param int|string $row Номер строки в списке файлов
+ */
 function active_element($render, $row)
 {
     global $store, $start, $panel, $active_files, $action_menu;
@@ -1395,27 +1438,43 @@ function active_element($render, $row)
     $active = $store[$panel]->get_value($iter, 4);
     $store[$panel]->set($iter, 4, !$active);
     if (!$active)
+    {
         $active_files[$panel][$file] = $file;
+    }
     else
+    {
         unset($active_files[$panel][$file]);
+    }
     $files = 0;
     $dirs = 0;
     foreach ($active_files[$panel] as $file)
     {
         $filename = $start[$panel]. DS .$file;
         if (is_file($filename))
+        {
             $files++;
+        }
         elseif (is_dir($filename))
+        {
             $dirs++;
+        }
     }
     if ($files == 2 OR $files == 3)
+    {
         $action_menu['comparison_file']->set_sensitive(TRUE);
+    }
     else
+    {
         $action_menu['comparison_file']->set_sensitive(FALSE);
+    }
     if ($dirs == 2 OR $dirs == 3)
+    {
         $action_menu['comparison_dir']->set_sensitive(TRUE);
+    }
     else
+    {
         $action_menu['comparison_dir']->set_sensitive(FALSE);
+    }
 }
 
 /**
@@ -1506,12 +1565,17 @@ function open_comparison($type)
 
 /**
  * Выделение/снятие выделения со всех файлов и папок в текущей директории.
- * @param bool $active Если TRUE, то произойдёт выделение, иначе выделение будет снято.
+ * @param string $action Опеределяет выделяемые файлы - none|all|template
+ * @param string Шаблон для выделения (только при $action == 'template')
  */
-function active_all($active = TRUE)
+function active_all($action, $template = '')
 {
     global $store, $panel, $count_element, $active_files, $action_menu;
 
+    $files = 0;
+    $dirs = 0;
+
+    // Снимаем выделение со всех файлов
     for ($i = 0; $i < $count_element; $i++)
     {
         $iter = $store[$panel]->get_iter($i);
@@ -1519,34 +1583,45 @@ function active_all($active = TRUE)
         unset($active_files[$panel]);
     }
 
-    if ($active)
+    // Выделяем файлы
+    if ($action == 'all' OR $action == 'template')
     {
         for ($i = 0; $i < $count_element; $i++)
         {
             $iter = $store[$panel]->get_iter($i);
             $file = $store[$panel]->get_value($iter, 0);
-            $active = $store[$panel]->get_value($iter, 4);
-            $store[$panel]->set($iter, 4, TRUE);
-            $active_files[$panel][$file] = $file;
-            $files = 0;
-            $dirs = 0;
-            foreach ($active_files[$panel] as $file)
+            $type = $store[$panel]->get_value($iter, 5);
+            $template = str_replace('*', '(.+?)', $template);
+            if ($action == 'all' OR ($action == 'template' AND preg_match('#^' . $template . '$#is', $file)))
             {
-                $filename = $start[$panel]. DS .$file;
-                if (is_file($filename))
-                    $files++;
-                elseif (is_dir($filename))
+                $store[$panel]->set($iter, 4, TRUE);
+                if ($type == '<DIR>')
+                {
                     $dirs++;
+                }
+                elseif ($type == '<FILE>')
+                {
+                    $files++;
+                }
+                $active_files[$panel][$file] = $file;
             }
-            if ($files == 2 OR $files == 3)
-                $action_menu['comparison_file']->set_sensitive(TRUE);
-            else
-                $action_menu['comparison_file']->set_sensitive(FALSE);
-            if ($dirs == 2 OR $dirs == 3)
-                $action_menu['comparison_dir']->set_sensitive(TRUE);
-            else
-                $action_menu['comparison_dir']->set_sensitive(FALSE);
         }
+    }
+    if ($files == 2 OR $files == 3)
+    {
+        $action_menu['comparison_file']->set_sensitive(TRUE);
+    }
+    else
+    {
+        $action_menu['comparison_file']->set_sensitive(FALSE);
+    }
+    if ($dirs == 2 OR $dirs == 3)
+    {
+        $action_menu['comparison_dir']->set_sensitive(TRUE);
+    }
+    else
+    {
+        $action_menu['comparison_dir']->set_sensitive(FALSE);
     }
 }
 
@@ -1635,4 +1710,35 @@ function change_part($combo)
     {
         change_dir('bookmarks', $active);
     }
+}
+
+/**
+ * Создаёт окно для ввода шаблона выделения.
+ * @global array $lang
+ */
+function enter_template_window()
+{
+    global $lang;
+    
+    $dialog = new GtkDialog(
+        $lang['tmp_window']['title'],
+        NULL,
+        Gtk::DIALOG_MODAL,
+        array(
+            Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL,
+            Gtk::STOCK_OK, Gtk::RESPONSE_OK
+        )
+    );
+    $dialog->set_has_separator(FALSE);
+    $dialog->set_position(Gtk::WIN_POS_CENTER);
+    $vbox = $dialog->vbox;
+    $vbox->pack_start($hbox = new GtkHBox());
+    $hbox->pack_start($entry = new GtkEntry());
+    $dialog->show_all();
+    $result = $dialog->run();
+    if ($result == Gtk::RESPONSE_OK)
+    {
+        active_all('template', $entry->get_text());
+    }
+    $dialog->destroy();
 }

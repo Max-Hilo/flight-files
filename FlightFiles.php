@@ -219,6 +219,13 @@ $start['right'] = (empty($start['right'])) ? $_config['home_dir_right'] : $start
  */
 $number = array('left' => 1, 'right' => 1);
 
+/**
+ * Используется для подсчёта выделенных файлов.
+ * @global array $GLOBALS['active_files']
+ * @name $active_files
+ */
+$active_files = array('left' => array(), 'right' => array());
+
 $window = new GtkWindow();
 $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
 $window->set_default_size(1100, 700);
@@ -282,8 +289,9 @@ $array_menuitem = array(
     array('file', '', 'comparison_file', $lang['menu']['comparison_file'], '', 'open_comparison', 'file', '', 'false', ''),
     array('file', '', 'comparison_dir', $lang['menu']['comparison_dir'], '', 'open_comparison', 'dir', '', 'false', ''),
     array('file', 'separator'),
-    array('file', '', 'active_all', $lang['menu']['active_all'], '', 'active_all', TRUE, '', '', '<control>A'),
-    array('file', '', 'active_all_none', $lang['menu']['active_all_none'], '', 'active_all', FALSE, '', '', '<control><shift>A'),
+    array('file', '', 'active_all', $lang['menu']['active_all'], '', 'active_all', 'all', '', '', '<control>A'),
+    array('file', '', 'active_template', $lang['menu']['active_template'], '', 'enter_template_window', '', '', '', '<control><alt>A'),
+    array('file', '', 'active_all_none', $lang['menu']['active_all_none'], '', 'active_all', 'none', '', '', '<control><shift>A'),
     array('file', 'separator'),
     array('file', '', 'close', $lang['menu']['close'], Gtk::STOCK_CLOSE, 'close_window', '', '', '', '<control>Q'),
     array('edit', '', 'copy', $lang['menu']['copy'], Gtk::STOCK_COPY, 'bufer_file', '', 'copy', 'false', '<control>C'),
@@ -306,7 +314,7 @@ $array_menuitem = array(
     array('view', 'separator'),
     array('view', 'toggle', 'hidden_files', $lang['menu']['hidden_files'], '',
         'check_button_write', 'hidden_files', '', array($_config['hidden_files'], 'on'), '<control>H'),
-    array('go', '', 'up', $lang['menu']['up'], Gtk::STOCK_GO_UP, 'change_dir', '', '', array($start[$panel], ROOT_DIR), 'BackSpace'),
+    array('go', '', 'up', $lang['menu']['up'], Gtk::STOCK_GO_UP, 'change_dir', '', '', array($start[$panel], ROOT_DIR), '<control>Up'),
     array('go', '', 'back', $lang['menu']['back'], Gtk::STOCK_GO_BACK, 'history', 'back', '', 'false', '<control>Left'),
     array('go', '', 'forward', $lang['menu']['forward'], Gtk::STOCK_GO_FORWARD, 'history', 'forward', '', 'false', '<control>Right'),
     array('go', 'separator'),

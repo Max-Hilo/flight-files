@@ -11,7 +11,7 @@
 /**
  * Создание окна для просмотра изображения.
  * @global int
- *  $pixbuf_image
+ * @global $pixbuf_image
  * @global int $pixbuf_width
  * @global int $pixbuf_height
  * @global array $lang
@@ -23,12 +23,35 @@ function image_view($filename)
     global $pixbuf_image, $pixbuf_width, $pixbuf_height, $lang, $scope_image;
     
     $image_size = getimagesize($filename);
+
+    /**
+     * Ширина изображения
+     */
     $pixbuf_width = $image_size[0];
+
+    /**
+     * Высота изображения
+     */
     $pixbuf_height = $image_size[1];
 
+    /**
+     * Ширина окна
+     */
     $width = 600;
+
+    /**
+     * Высота окна
+     */
     $height = 500;
+
+    /**
+     * Угол поворота
+     */
     $rotate_image = 0;
+
+    /**
+     * Масштаб, в процентах
+     */
     $scope_image = 100;
 
     $window = new GtkWindow();
@@ -63,13 +86,11 @@ function image_view($filename)
     $toolbar->insert(new GtkSeparatorToolItem(), -1);
 
     $rotate_left = new GtkToolButton();
-    $rotate_left->set_icon_name('object-rotate-left');
     $rotate_left->set_label($lang['image']['rotate_left']);
     $rotate_left->set_tooltip_text($lang['image']['rotate_left_hint']);
     $toolbar->insert($rotate_left, -1);
 
-    $rotate_right = new GtkToolButton();
-    $rotate_right->set_icon_name('object-rotate-right');
+    $rotate_right = new GtkToolButton();;
     $rotate_right->set_label($lang['image']['rotate_right']);
     $rotate_right->set_tooltip_text($lang['image']['rotate_right_hint']);
     $toolbar->insert($rotate_right, -1);
