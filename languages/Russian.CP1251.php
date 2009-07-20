@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Файл локализации, используемый по умолчанию.
+ * Файл русской локализации, кодировка UTF-8.
  *
  * @copyright Copyright (C) 2009, Вавилов Егор (Shecspi)
  * @license http://www.opensource.org/licenses/mit-license.php MIT License
@@ -144,7 +144,6 @@ $lang['preference']['change']           = '_Сменить';
 $lang['preference']['system_font']      = 'Использовать системный шрифт';
 $lang['preference']['fonts']            = 'Шрифты';
 $lang['preference']['lang']             = 'Язык программы:';
-$lang['preference']['lang_default']     = 'Язык по умолчанию';
 $lang['preference']['maximize']         = 'Разворачивать на весь экран при запуске';
 $lang['preference']['maximize_hint']    = 'При запуске главное окно FlightFiles будет развёрнуто на весь экран';
 $lang['preference']['program']          = 'Внешние программы';
@@ -234,6 +233,8 @@ $lang['font']['preview']                = 'Файловый менеджер FlightFiles';
 $lang['text_view']['file']              = 'Файл';
 $lang['text_view']['edit']              = 'Правка';
 $lang['text_view']['help']              = 'Справка';
+$lang['text_view']['nenu_save']         = 'Сохранить';
+$lang['text_view']['menu_quit']         = 'Выход';
 $lang['text_view']['menu_undo']         = 'Отменить';
 $lang['text_view']['menu_redo']         = 'Вернуть';
 $lang['text_view']['menu_copy']         = 'Копировать';
@@ -243,8 +244,17 @@ $lang['text_view']['menu_about']        = 'О программе';
 $lang['text_view']['title']             = '%s';
 $lang['text_view']['statusbar']         = 'Файл:';
 $lang['text_view']['toolbar_save']      = 'Сохранить';
+$lang['text_view']['toolbar_save_hint'] = 'Сохранить файл';
 $lang['text_view']['toolbar_undo']      = 'Отменить';
+$lang['text_view']['toolbar_undo_hint'] = 'Отменить последнее действие';
 $lang['text_view']['toolbar_redo']      = 'Вернуть';
+$lang['text_view']['toolbar_redo_hint'] = 'Вернуть отменённое действие';
+$lang['text_view']['toolbar_copy']      = 'Копировать';
+$lang['text_view']['toolbar_copy_hint'] = 'Копировать выделенный текст в буфер обмена';
+$lang['text_view']['toolbar_cut']       = 'Вырезать';
+$lang['text_view']['toolbar_cut_hint']  = 'Вырезать выделенный текст в буфер обмена';
+$lang['text_view']['toolbar_paste']     = 'Вставить';
+$lang['text_view']['toolbar_paste_hint']= 'Вставить текст из буфер обмена в текущую позицию указателя';
 
 $lang['text_editor_close']['title']      = 'FlightFiles :: Сохранить изменения';
 $lang['text_editor_close']['label']      = "Файл '%s' был изменён.\nСохранить изменения?";
@@ -255,12 +265,10 @@ $lang['checksum']['text']               = 'Файл - %s';
 $lang['close']['title']                 = 'FlightFiles :: Закрыть';
 $lang['close']['text']                  = 'Действительно закрыть FlightFiles?';
 
-$lang['command']['comparison_none']     = "Команда '%s' не найдена.";
-$lang['command']['comparison_empty']    = 'Не выбрана программа для сравнения файлов.';
-$lang['command']['terminal_none']       = "Команда '%s' не найдена.";
-$lang['command']['terminal_empty']      = 'Не выбрана программа в качестве терминала.';
 $lang['command']['none']                = "Не выбрана программа для открытия файлов типа '%s'";
 $lang['command']['not_found']           = "Не верно указана программа для открытия файлов типа '%s'";
+$lang['command']['empty']               = 'Не указана программа для выполнения';
+$lang['command']['file_not_found']      = "Программа '%s' не найдена";
 
 $lang['bulk_rename']['title']           = 'FlightFiles :: Массовое переименование';
 $lang['bulk_rename']['upper']           = '_Верхний регистр';

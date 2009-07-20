@@ -58,11 +58,6 @@ define('CONFIG_DIR', SHARE_DIR . DS . 'config');
 define('LANG_DIR', SHARE_DIR . DS . 'languages');
 
 /**
- * Файл буфера обмена.
- */
-define('BUFER_FILE', CONFIG_DIR . DS . 'bufer');
-
-/**
  * Файл базы данных.
  */
 define('DATABASE', CONFIG_DIR . DS . 'database.sqlite');
@@ -90,9 +85,6 @@ include SHARE_DIR . DS . 'preference.php';
 include SHARE_DIR . DS . 'properties.php';
 include SHARE_DIR . DS . 'shortcuts.php';
 include SHARE_DIR . DS . 'text_editor.php';
-
-// Удаляем файл буфера обмена, если он по каким-либо причинам ещё не удалён
-@unlink(BUFER_FILE);
 
 // Создаём папку с конфигами
 if (!file_exists(CONFIG_DIR))
@@ -226,6 +218,13 @@ $number = array('left' => 1, 'right' => 1);
  */
 $active_files = array('left' => array(), 'right' => array());
 
+/**
+ * Буфер обмена для файлов.
+ * @global array $GLOBALS['clp']
+ * @name $clp
+ */
+$clp = array('action' => '', 'files' => array());
+
 $window = new GtkWindow();
 $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
 $window->set_default_size(1100, 700);
@@ -294,8 +293,8 @@ $array_menuitem = array(
     array('file', '', 'active_all_none', $lang['menu']['active_all_none'], '', 'active_all', 'none', '', '', '<control><shift>A'),
     array('file', 'separator'),
     array('file', '', 'close', $lang['menu']['close'], Gtk::STOCK_CLOSE, 'close_window', '', '', '', '<control>Q'),
-    array('edit', '', 'copy', $lang['menu']['copy'], Gtk::STOCK_COPY, 'bufer_file', '', 'copy', 'false', '<control>C'),
-    array('edit', '', 'cut', $lang['menu']['cut'], Gtk::STOCK_CUT, 'bufer_file', '', 'cut', 'false', '<control>X'),
+    array('edit', '', 'copy', $lang['menu']['copy'], Gtk::STOCK_COPY, 'bufer_file', 'copy', '', 'false', '<control>C'),
+    array('edit', '', 'cut', $lang['menu']['cut'], Gtk::STOCK_CUT, 'bufer_file', 'cut', '', 'false', '<control>X'),
     array('edit', '', 'paste', $lang['menu']['paste'], Gtk::STOCK_PASTE, 'paste_file', '', '', 'false', '<control>V'),
     array('edit', 'separator'),
     array('edit', '', 'rename', $lang['menu']['rename'], '', 'rename_window', '', '', 'false', 'F2'),
@@ -529,11 +528,17 @@ $tree_view['left'] = new GtkTreeView($store['left']);
 
 // При необходимости показываем линии между колонками и между файлами
 if ($_config['view_lines_columns'] == 'on' AND $_config['view_lines_files'] == 'on')
+{
     $tree_view['left']->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_BOTH);
+}
 elseif ($_config['view_lines_columns'] == 'on')
+{
     $tree_view['left']->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_VERTICAL);
+}
 elseif ($_config['view_lines_files'] == 'on')
+{
     $tree_view['left']->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_HORIZONTAL);
+}
 
 $selection['left'] = $tree_view['left']->get_selection();
 $tree_view['left']->connect('button-press-event', 'on_button', 'left');
@@ -570,11 +575,17 @@ $tree_view['right'] = new GtkTreeView($store['right']);
 
 // При необходимости показываем линии между колонками и между файлами
 if ($_config['view_lines_columns'] == 'on' AND $_config['view_lines_files'] == 'on')
+{
     $tree_view['right']->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_BOTH);
+}
 elseif ($_config['view_lines_columns'] == 'on')
+{
     $tree_view['right']->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_VERTICAL);
+}
 elseif ($_config['view_lines_files'] == 'on')
+{
     $tree_view['right']->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_HORIZONTAL);
+}
 
 $selection['right'] = $tree_view['right']->get_selection();
 $tree_view['right']->connect('button-press-event', 'on_button', 'right');

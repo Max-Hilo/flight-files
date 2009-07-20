@@ -8,42 +8,42 @@
  * @link http://code.google.com/p/flight-files/ Домашняя страница проекта
  */
 
- function create_database($combo, $window)
- {
-     global $sqlite;
+function create_database($combo, $window)
+{
+    global $sqlite;
 
-     $language = $combo->get_active_text();
-     $language = str_replace(' ', '.', $language);
-     $language = str_replace('(', '', $language);
-     $language = str_replace(')', '', $language);
-     $explode = explode('.', $language);
-     $language = $explode[0] . '.' . $explode[1];
-     $sqlite = sqlite_open(DATABASE);
-     sqlite_query($sqlite, "CREATE TABLE bookmarks(id INTEGER PRIMARY KEY, path, title)");
-     sqlite_query($sqlite, "CREATE TABLE config(key, value)");
-     sqlite_query($sqlite, "CREATE TABLE history_left(id INTEGER PRIMARY KEY, path)");
-     sqlite_query($sqlite, "CREATE TABLE history_right(id INTEGER PRIMARY KEY, path)");
-     sqlite_query($sqlite, "CREATE TABLE type_files(id INTEGER PRIMARY KEY, type, command)");
-     sqlite_query($sqlite, "CREATE TABLE ext_files(id_type, ext)");
-     sqlite_query($sqlite, "INSERT INTO config(key, value) VALUES('HIDDEN_FILES', 'off');".
-                           "INSERT INTO config(key, value) VALUES('HOME_DIR_LEFT', '".ROOT_DIR."');".
-                           "INSERT INTO config(key, value) VALUES('HOME_DIR_RIGHT', '".HOME_DIR."');".
-                           "INSERT INTO config(key, value) VALUES('ASK_DELETE', 'on');".
-                           "INSERT INTO config(key, value) VALUES('ASK_CLOSE', 'off');".
-                           "INSERT INTO config(key, value) VALUES('TOOLBAR_VIEW', 'on');".
-                           "INSERT INTO config(key, value) VALUES('ADDRESSBAR_VIEW', 'on');".
-                           "INSERT INTO config(key, value) VALUES('STATUSBAR_VIEW', 'on');".
-                           "INSERT INTO config(key, value) VALUES('PARTBAR_VIEW', 'on');".
-                           "INSERT INTO config(key, value) VALUES('FONT_LIST', '');".
-                           "INSERT INTO config(key, value) VALUES('LANGUAGE', '$language');".
-                           "INSERT INTO config(key, value) VALUES('MAXIMIZE', 'off');".
-                           "INSERT INTO config(key, value) VALUES('TERMINAL', '');".
-                           "INSERT INTO config(key, value) VALUES('COMPARISON', '');".
-                           "INSERT INTO config(key, value) VALUES('PARTBAR_REFRESH', 'off');".
-                           "INSERT INTO config(key, value) VALUES('VIEW_LINES_FILES', 'off');".
-                           "INSERT INTO config(key, value) VALUES('VIEW_LINES_COLUMNS', 'on');");
-    $window->destroy();
- }
+    $language = $combo->get_active_text();
+    $language = str_replace(' ', '.', $language);
+    $language = str_replace('(', '', $language);
+    $language = str_replace(')', '', $language);
+    $explode = explode('.', $language);
+    $language = $explode[0] . '.' . $explode[1];
+    $sqlite = sqlite_open(DATABASE);
+    sqlite_query($sqlite, "CREATE TABLE bookmarks(id INTEGER PRIMARY KEY, path, title)");
+    sqlite_query($sqlite, "CREATE TABLE config(key, value)");
+    sqlite_query($sqlite, "CREATE TABLE history_left(id INTEGER PRIMARY KEY, path)");
+    sqlite_query($sqlite, "CREATE TABLE history_right(id INTEGER PRIMARY KEY, path)");
+    sqlite_query($sqlite, "CREATE TABLE type_files(id INTEGER PRIMARY KEY, type, command)");
+    sqlite_query($sqlite, "CREATE TABLE ext_files(id_type, ext)");
+    sqlite_query($sqlite, "INSERT INTO config(key, value) VALUES('HIDDEN_FILES', 'off');".
+                          "INSERT INTO config(key, value) VALUES('HOME_DIR_LEFT', '".ROOT_DIR."');".
+                          "INSERT INTO config(key, value) VALUES('HOME_DIR_RIGHT', '".HOME_DIR."');".
+                          "INSERT INTO config(key, value) VALUES('ASK_DELETE', 'on');".
+                          "INSERT INTO config(key, value) VALUES('ASK_CLOSE', 'off');".
+                          "INSERT INTO config(key, value) VALUES('TOOLBAR_VIEW', 'on');".
+                          "INSERT INTO config(key, value) VALUES('ADDRESSBAR_VIEW', 'on');".
+                          "INSERT INTO config(key, value) VALUES('STATUSBAR_VIEW', 'on');".
+                          "INSERT INTO config(key, value) VALUES('PARTBAR_VIEW', 'on');".
+                          "INSERT INTO config(key, value) VALUES('FONT_LIST', '');".
+                          "INSERT INTO config(key, value) VALUES('LANGUAGE', '$language');".
+                          "INSERT INTO config(key, value) VALUES('MAXIMIZE', 'off');".
+                          "INSERT INTO config(key, value) VALUES('TERMINAL', '');".
+                          "INSERT INTO config(key, value) VALUES('COMPARISON', '');".
+                          "INSERT INTO config(key, value) VALUES('PARTBAR_REFRESH', 'off');".
+                          "INSERT INTO config(key, value) VALUES('VIEW_LINES_FILES', 'off');".
+                          "INSERT INTO config(key, value) VALUES('VIEW_LINES_COLUMNS', 'on');");
+   $window->destroy();
+}
 
 /**
  * Функция достаёт настройки из базы данных и
@@ -72,7 +72,7 @@ function config_parser()
  */
 function on_button($view, $event, $type)
 {
-    global $panel, $lang, $store, $action_menu, $action, $start, $entry_current_dir, $number, $sqlite, $active_files;
+    global $panel, $lang, $store, $action_menu, $action, $start, $entry_current_dir, $number, $sqlite, $active_files, $clp;
 
     $panel = $type;
 
@@ -86,6 +86,9 @@ function on_button($view, $event, $type)
     $action['forward']->set_sensitive(TRUE);
     $action['new_file']->set_sensitive(TRUE);
     $action['new_dir']->set_sensitive(TRUE);
+    $action_menu['new_file']->set_sensitive(TRUE);
+    $action_menu['new_dir']->set_sensitive(TRUE);
+    $action_menu['rename']->set_sensitive(TRUE);
     $action_menu['up']->set_sensitive(TRUE);
     $action_menu['cut']->set_sensitive(TRUE);
     $action_menu['mass_rename']->set_sensitive(TRUE);
@@ -105,7 +108,6 @@ function on_button($view, $event, $type)
         $action['forward']->set_sensitive(FALSE);
         $action_menu['forward']->set_sensitive(FALSE);
     }
-
     if ($start[$panel] == ROOT_DIR)
     {
         $action['up']->set_sensitive(FALSE);
@@ -118,23 +120,31 @@ function on_button($view, $event, $type)
     }
     if (!is_writable($start[$panel]))
     {
+        $action_menu['new_file']->set_sensitive(FALSE);
+        $action_menu['new_dir']->set_sensitive(FALSE);
+        $action_menu['mass_rename']->set_sensitive(FALSE);
+        $action_menu['paste']->set_sensitive(FALSE);
+        $action_menu['rename']->set_sensitive(FALSE);
         $action['new_file']->set_sensitive(FALSE);
         $action['new_dir']->set_sensitive(FALSE);
-        $action_menu['mass_rename']->set_sensitive(FALSE);
+        $action['paste']->set_sensitive(FALSE);
     }
 
     $files = 0;
     $dirs = 0;
-    foreach (@$active_files[$panel] as $file)
+    if (!empty($active_files[$panel]))
     {
-        $filename = $start[$panel]. DS .$file;
-        if (is_file($filename))
+        foreach ($active_files[$panel] as $file)
         {
-            $files++;
-        }
-        elseif (is_dir($filename))
-        {
-            $dirs++;
+            $filename = $start[$panel]. DS .$file;
+            if (is_file($filename))
+            {
+                $files++;
+            }
+            elseif (is_dir($filename))
+            {
+                $dirs++;
+            }
         }
     }
     if ($files == 2 OR $files == 3)
@@ -373,8 +383,8 @@ function on_button($view, $event, $type)
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($properties);
 
-            $copy->connect_simple('activate', 'bufer_file', $start[$panel]. DS .$file, 'copy');
-            $cut->connect_simple('activate', 'bufer_file', $start[$panel]. DS .$file, 'cut');
+            $copy->connect_simple('activate', 'bufer_file', 'copy', $start[$panel]. DS .$file);
+            $cut->connect_simple('activate', 'bufer_file', 'cut', $start[$panel]. DS .$file);
             $rename->connect_simple('activate', 'rename_window', $start[$panel]. DS .$file);
             $delete->connect_simple('activate', 'delete_window', $start[$panel]. DS .$file);
             $delete_active->connect_simple('activate', 'delete_active');
@@ -425,8 +435,8 @@ function on_button($view, $event, $type)
             $menu->append($properties);
 
             $open->connect_simple('activate', 'change_dir', 'open', $file);
-            $copy->connect_simple('activate', 'bufer_file', $start[$panel]. DS .$file, 'copy');
-            $cut->connect_simple('activate', 'bufer_file', $start[$panel]. DS .$file, 'cut');
+            $copy->connect_simple('activate', 'bufer_file', 'copy', $start[$panel]. DS .$file);
+            $cut->connect_simple('activate', 'bufer_file', 'cut', $start[$panel]. DS .$file);
             $rename->connect_simple('activate', 'rename_window', $start[$panel]. DS .$file);
             $delete->connect_simple('activate', 'delete_window', $start[$panel]. DS .$file);
             $delete_active->connect_simple('activate', 'delete_active');
@@ -451,7 +461,7 @@ function on_button($view, $event, $type)
                 $new_dir->set_sensitive(FALSE);
                 $delete_active->set_sensitive(FALSE);
             }
-            if (!file_exists(BUFER_FILE) OR !is_writable($start[$panel]))
+            if (empty($clp['files']) OR !is_writable($start[$panel]))
             {
                 $paste->set_sensitive(FALSE);
             }
@@ -584,15 +594,16 @@ function on_rename($entry, $filename, $window)
 }
 
 /**
- * Функция помещает адреса выбранных файла/каталога в файл буфера обмена.
- * @param string $filename Файл, для которого необходимо выполнить операцию.
+ * Функция помещает адреса выбранных файлов/каталогов в буфера обмена.
+ * @param string $filename Адрес файла, для которого необходимо выполнить операцию.
  * @param string $act Идентификатор операции вырезания/копирования.
  */
-function bufer_file($filename = '', $act)
+function bufer_file($act, $filename = '')
 {
-    global $start, $panel, $action, $action_menu, $selection, $active_files;
+    global $start, $panel, $action, $action_menu, $selection, $active_files, $clp;
 
-    $fopen = fopen(BUFER_FILE, 'w+');
+    unset($clp['action'], $clp['files']);
+    $clp['action'] = $act;
     if (empty($active_files[$panel]))
     {
         if (empty($filename))
@@ -600,15 +611,15 @@ function bufer_file($filename = '', $act)
             list($model, $iter) = $selection[$panel]->get_selected();
             $filename = $start[$panel]. DS .$model->get_value($iter, 0);
         }
-        fwrite($fopen, $act."\n".$filename);
+        $clp['files'][] = $filename;
     }
     else
     {
-        fwrite($fopen, $act."\n");
         foreach ($active_files[$panel] as $value)
-            fwrite($fopen, $start[$panel]. DS .$value."\n");
+        {
+            $clp['files'][] = $start[$panel] . DS . $value;
+        }
     }
-    fclose($fopen);
     $action_menu['clear_bufer']->set_sensitive(TRUE);
     if (is_writable($start[$panel]))
     {
@@ -625,14 +636,10 @@ function bufer_file($filename = '', $act)
  */
 function paste_file()
 {
-    global $start, $panel, $lang;
+    global $start, $panel, $lang, $clp;
 
-    $file_array = file(BUFER_FILE);
-    $action = trim($file_array[0]);
-    $count = count($file_array);
-    for ($i = 1; $i < $count; $i++)
+    foreach ($clp['files'] as $filename)
     {
-        $filename = trim($file_array[$i]);
         $dest = $start[$panel]. DS .basename($filename);
         if (file_exists($dest))
         {
@@ -668,11 +675,11 @@ function paste_file()
                 continue;
             }
         }
-        if ($action == 'copy')
+        if ($clp['action'] == 'copy')
         {
             my_copy($filename, $dest);
         }
-        elseif ($action == 'cut')
+        elseif ($clp['action'] == 'cut')
         {
             my_rename($filename, $dest);
         }
@@ -1041,7 +1048,7 @@ function history($direct)
 function change_dir($act = '', $dir = '', $all = FALSE)
 {
     global $vbox, $entry_current_dir, $action, $action_menu, $lang, $panel, $store,
-           $start, $number, $sqlite, $active_files, $tree_view, $_config, $combo_partbar;
+           $start, $number, $sqlite, $active_files, $tree_view, $_config, $combo_partbar, $clp;
 
     // Устанавливаем новое значение текущей директории
     switch ($act)
@@ -1129,7 +1136,7 @@ function change_dir($act = '', $dir = '', $all = FALSE)
         $action['forward']->set_sensitive(FALSE);
         $action_menu['forward']->set_sensitive(FALSE);
     }
-    if (file_exists(BUFER_FILE))
+    if (!empty($clp['files']))
     {
         $action['paste']->set_sensitive(TRUE);
         $action_menu['clear_bufer']->set_sensitive(TRUE);
@@ -1142,7 +1149,9 @@ function change_dir($act = '', $dir = '', $all = FALSE)
         $action['root']->set_sensitive(FALSE);
     }
     if ($start[$panel] == HOME_DIR)
+    {
         $action['home']->set_sensitive(FALSE);
+    }
     if (!is_writable($start[$panel]))
     {
         $action_menu['new_file']->set_sensitive(FALSE);
@@ -1295,7 +1304,6 @@ function close_window()
 {
     global $window, $_config, $lang, $sqlite;
 
-    @unlink(BUFER_FILE);
     sqlite_query($sqlite, "DELETE FROM history_left");
     sqlite_query($sqlite, "DELETE FROM history_right");
 
@@ -1345,9 +1353,9 @@ function close_window()
  */
 function clear_bufer()
 {
-    global $action, $action_menu, $lang;
+    global $action, $action_menu, $lang, $clp;
 
-    @unlink(BUFER_FILE);
+    unset($clp['action'], $clp['files']);
     $action['paste']->set_sensitive(FALSE);
     $action_menu['clear_bufer']->set_sensitive(FALSE);
     $action_menu['paste']->set_sensitive(FALSE);
@@ -1504,19 +1512,23 @@ function open_terminal()
     }
     elseif (empty($_config['terminal']))
     {
-        alert_window($lang['command']['terminal_empty']);
+        alert_window($lang['command']['empty']);
     }
     elseif (!file_exists('/usr/bin/gnome-terminal'))
     {
-        $str = str_replace('%s', basename($_config['terminal']), $lang['command']['terminal_none']);
+        $str = str_replace('%s', basename($_config['terminal']), $lang['command']['file_not_found']);
         alert_window($str);
     }
     else
     {
         if (basename($_config['terminal']) == 'gnome-terminal')
+        {
             $command = $_config['terminal'].' --working-directory "'.$start[$panel].'"';
+        }
         else
+        {
             $command = $_config['terminal'];
+        }
         exec($command.' > /dev/null &');
     }
 }
@@ -1531,11 +1543,11 @@ function open_comparison($type)
 
     if (empty($_config['comparison']))
     {
-        alert_window($lang['command']['comparison_empty']);
+        alert_window($lang['command']['empty']);
     }
     elseif (!file_exists($_config['comparison']))
     {
-        $str = str_replace('%s', basename($_config['comparison']), $lang['command']['comparison_none']);
+        $str = str_replace('%s', basename($_config['comparison']), $lang['command']['file_not_found']);
         alert_window($str);
     }
     else
@@ -1547,16 +1559,24 @@ function open_comparison($type)
             if ($type == 'file')
             {
                 if (is_file($filename))
+                {
                     $par .= "'$filename' ";
+                }
                 else
+                {
                     continue;
+                }
             }
             elseif ($type == 'dir')
             {
                 if (is_dir($filename))
+                {
                     $par .= "'$filename' ";
+                }
                 else
+                {
                     continue;
+                }
             }
         }
         exec($_config['comparison'].' '.$par.' > /dev/null &');

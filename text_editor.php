@@ -41,7 +41,19 @@ function text_editor_window($filename)
     /////////////////////////
     if (class_exists('GtkSourceBuffer') AND class_exists('GtkSourceView'))
     {
-        $source_buffer = new GtkSourceBuffer();
+        $explode = explode('.', basename($text_editor['filename']));
+        $ext = $explode[count($explode) - 1];
+        $mime = my_mime($ext);
+        if ($mime !== FALSE)
+        {
+            $source_lang = new GtkSourceLanguagesManager();
+            $source_lang = $source_lang->get_language_from_mime_type($mime);
+            $source_buffer = GtkSourceBuffer::new_with_language($source_lang);
+        }
+        else
+        {
+            $source_buffer = new GtkSourceBuffer();
+        }
         $source_buffer->set_highlight(TRUE);
         $source_buffer->set_text($text_editor['old_text']);
         $source_buffer->connect('changed', 'on_buffer_changed', $text_editor['window']);
@@ -82,21 +94,19 @@ function text_editor_window($filename)
     $menu->append($edit);
     $menu->append($help);
 
-    $action = new GtkAction('save', 'Сохранить', '', Gtk::STOCK_SAVE);
-    $action->connect_simple('activate', 'save_file', $source_buffer);
-    $action_group->add_action_with_accel($action, '<control>s');
-    $action->set_accel_group($accel_group);
-    $action->connect_accelerator();
-    $sub_file->append($action->create_menu_item());
+    $text_editor['menu']['save'] = new GtkImageMenuItem($lang['text_view']['nenu_save']);
+    $text_editor['menu']['save']->set_image(GtkImage::new_from_stock(Gtk::STOCK_SAVE, Gtk::ICON_SIZE_MENU));
+    $text_editor['menu']['save']->add_accelerator('activate', $text_editor['accel_group'], Gdk::KEY_S, Gdk::CONTROL_MASK, 1);
+    $text_editor['menu']['save']->connect_simple('activate', 'save_file', $source_buffer);
+    $sub_file->append($text_editor['menu']['save']);
 
     $sub_file->append(new GtkSeparatorMenuItem());
 
-    $action = new GtkAction('close', 'Закрыть', '', Gtk::STOCK_CLOSE);
-    $action->connect_simple('activate', 'text_editor_window_close', $source_buffer);
-    $action_group->add_action_with_accel($action, '<control>q');
-    $action->set_accel_group($accel_group);
-    $action->connect_accelerator();
-    $sub_file->append($action->create_menu_item());
+    $text_editor['menu']['quit'] = new GtkImageMenuItem($lang['text_view']['menu_quit']);
+    $text_editor['menu']['quit']->set_image(GtkImage::new_from_stock(Gtk::STOCK_CLOSE, Gtk::ICON_SIZE_MENU));
+    $text_editor['menu']['quit']->add_accelerator('activate', $text_editor['accel_group'], Gdk::KEY_Q, Gdk::CONTROL_MASK, 1);
+    $text_editor['menu']['quit']->connect_simple('activate', 'text_editor_window_close', $source_buffer);
+    $sub_file->append($text_editor['menu']['quit']);
 
     $text_editor['menu']['undo'] = new GtkImageMenuItem($lang['text_view']['menu_undo']);
     $text_editor['menu']['undo']->set_image(GtkImage::new_from_stock(Gtk::STOCK_UNDO, Gtk::ICON_SIZE_MENU));
@@ -146,6 +156,7 @@ function text_editor_window($filename)
 
     $text_editor['toolbar']['save'] = new GtkToolButton();
     $text_editor['toolbar']['save'] ->set_label($lang['text_view']['toolbar_save']);
+    $text_editor['toolbar']['save']->set_tooltip_text($lang['text_view']['toolbar_save_hint']);
     $text_editor['toolbar']['save']->set_stock_id(Gtk::STOCK_SAVE);
     $text_editor['toolbar']['save']->connect_simple('clicked', 'save_file', $source_buffer);
     $toolbar->insert($text_editor['toolbar']['save'], -1);
@@ -154,6 +165,7 @@ function text_editor_window($filename)
 
     $text_editor['toolbar']['undo'] = new GtkToolButton();
     $text_editor['toolbar']['undo']->set_label($lang['text_view']['toolbar_undo']);
+    $text_editor['toolbar']['undo']->set_tooltip_text($lang['text_view']['toolbar_undo_hint']);
     $text_editor['toolbar']['undo']->set_stock_id(Gtk::STOCK_UNDO);
     $text_editor['toolbar']['undo']->set_sensitive(FALSE);
     $text_editor['toolbar']['undo']->connect_simple('clicked', 'undo', $source_buffer);
@@ -161,6 +173,7 @@ function text_editor_window($filename)
 
     $text_editor['toolbar']['redo'] = new GtkToolButton();
     $text_editor['toolbar']['redo']->set_label($lang['text_view']['toolbar_redo']);
+    $text_editor['toolbar']['redo']->set_tooltip_text($lang['text_view']['toolbar_redo_hint']);
     $text_editor['toolbar']['redo']->set_stock_id(Gtk::STOCK_REDO);
     $text_editor['toolbar']['redo']->set_sensitive(FALSE);
     $text_editor['toolbar']['redo']->connect_simple('clicked', 'redo', $source_buffer);
@@ -169,21 +182,24 @@ function text_editor_window($filename)
     $toolbar->insert(new GtkSeparatorToolItem(), -1);
 
     $text_editor['toolbar']['copy'] = new GtkToolButton();
-    $text_editor['toolbar']['copy']->set_label('Копировать');
+    $text_editor['toolbar']['copy']->set_label($lang['text_view']['toolbar_copy']);
+    $text_editor['toolbar']['copy']->set_tooltip_text($lang['text_view']['toolbar_copy_hint']);
     $text_editor['toolbar']['copy']->set_stock_id(Gtk::STOCK_COPY);
     $text_editor['toolbar']['copy']->set_sensitive(FALSE);
     $text_editor['toolbar']['copy']->connect_simple('clicked', array($source_buffer, 'copy_clipboard'), $clipboard);
     $toolbar->insert($text_editor['toolbar']['copy'], -1);
 
     $text_editor['toolbar']['cut'] = new GtkToolButton();
-    $text_editor['toolbar']['cut']->set_label('Вырезать');
+    $text_editor['toolbar']['cut']->set_label($lang['text_view']['toolbar_cut']);
+    $text_editor['toolbar']['cut']->set_tooltip_text($lang['text_view']['toolbar_cut_hint']);
     $text_editor['toolbar']['cut']->set_stock_id(Gtk::STOCK_CUT);
     $text_editor['toolbar']['cut']->set_sensitive(FALSE);
     $text_editor['toolbar']['cut']->connect_simple('clicked', array($source_buffer, 'cut_clipboard'), $clipboard, TRUE);
     $toolbar->insert($text_editor['toolbar']['cut'], -1);
 
     $text_editor['toolbar']['paste'] = new GtkToolButton();
-    $text_editor['toolbar']['paste']->set_label('Вставить');
+    $text_editor['toolbar']['paste']->set_label($lang['text_view']['toolbar_paste']);
+    $text_editor['toolbar']['paste']->set_tooltip_text($lang['text_view']['toolbar_paste_hint']);
     $text_editor['toolbar']['paste']->set_stock_id(Gtk::STOCK_PASTE);
     $text_editor['toolbar']['paste']->connect_simple('clicked', array($source_buffer, 'paste_clipboard'), $clipboard, NULL, TRUE);
     $toolbar->insert($text_editor['toolbar']['paste'], -1);
@@ -207,6 +223,73 @@ function text_editor_window($filename)
     $text_editor['window']->connect_simple('delete-event', 'text_editor_window_close', $source_buffer);
     $text_editor['window']->show_all();
     Gtk::main();
+}
+
+/**
+ * Функция определяет тип файла по расширению.
+ * @param string $ext Расширение файла
+ * @return string Возвращает MIME-тип файла, либо FALSE, если определить тип не удалось
+ */
+function my_mime($ext)
+{
+    switch ($ext)
+    {
+        // PHP
+        case $ext == 'php' OR $ext == 'phpw':
+            $mime = 'application/x-php';
+            break;
+        // C
+        case $ext == 'c':
+            $mime = 'text/x-csrc';
+            break;
+        // C++
+        case $ext == 'cpp':
+            $mime = 'text/x-c++src';
+            break;
+        // Python
+        case $ext == 'py':
+            $mime = 'text/x-python';
+            break;
+        // Ruby
+        case $ext == 'rb':
+            $mime = 'application/x-ruby';
+            break;
+        // XML
+        case $ext == 'xml';
+            $mime = 'application/xml';
+            break;
+        // HTML
+        case $ext == 'html' OR $ext == 'htm':
+            $mime = 'text/html';
+            break;
+        // JavaScript
+        case $ext == 'js':
+            $mime = 'application/x-javascript';
+            break;
+        // SQL
+        case $ext == 'sql':
+            $mime = 'text/x-sql';
+            break;
+        // sh
+        case $ext == 'sh':
+            $mime = 'application/x-shellscript';
+            break;
+        // CSS
+        case $ext == 'css':
+            $mime = 'text/css';
+            break;
+        // .desktop
+        case $ext == 'desktop':
+            $mime = 'application/x-desktop';
+            break;
+        // .ini
+        case $ext == 'ini':
+            $mime = 'text/x-ini-file';
+            break;
+        default:
+            $mime = FALSE;
+    }
+    return $mime;
 }
 
 function has_selection($buffer)
