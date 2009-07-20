@@ -41,12 +41,7 @@ function preference()
     $label_lang = new GtkLabel($lang['preference']['lang']);
     $combo = GtkComboBox::new_text();
     $opendir = opendir(LANG_DIR);
-    $combo->append_text($lang['preference']['lang_default']);
-    if (empty($_config['language']))
-    {
-        $combo->set_active(0);
-    }
-    $i = 1;
+    $i = 0;
     while (FALSE !== ($file = readdir($opendir)))
     {
         if ($file == '.' OR $file == '..')
@@ -56,8 +51,8 @@ function preference()
         $explode = explode('.', $file);
         if ($explode[2] == 'php')
         {
-            $combo->append_text($explode[0].'.'.$explode[1]);
-            if ($explode[0].'.'.$explode[1] == $_config['language'])
+            $combo->append_text($explode[0] .' (' . $explode[1] . ')');
+            if ($explode[0] . '.' . $explode[1] == $_config['language'])
             {
                 $combo->set_active($i);
             }
@@ -262,10 +257,11 @@ function combo_write($combo, $param)
     global $sqlite, $lang;
 
     $active = $combo->get_active_text();
-    if ($active == $lang['preference']['lang_default'])
-    {
-        $active = '';
-    }
+    $active = str_replace(' ', '.', $active);
+    $active = str_replace('(', '', $active);
+    $active = str_replace(')', '', $active);
+    $explode = explode('.', $active);
+    $active = $explode[0] . '.' . $explode[1];
     $param = strtoupper($param);
     sqlite_query($sqlite, "UPDATE config SET value = '$active' WHERE key = '$param'");
 }
