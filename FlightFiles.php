@@ -239,6 +239,20 @@ $accel_group = new GtkAccelGroup();
 $window->add_accel_group($accel_group);
 $action_group = new GtkActionGroup('menubar');
 
+// Создаём иконку в трее
+$tray = GtkStatusIcon::new_from_file(ICON_PROGRAM);
+$tray->set_tooltip($lang['tray']['tooltip']);
+$tray->connect_simple('activate', 'window_hide', $window);
+$tray->connect_simple('popup-menu', 'tray_menu', $window);
+if ($_config['status_icon'] == 'on')
+{
+    $tray->set_visible(TRUE);
+}
+else
+{
+    $tray->set_visible(FALSE);
+}
+
 $vbox = new GtkVBox();
 $vbox->show();
 

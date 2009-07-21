@@ -41,7 +41,9 @@ function create_database($combo, $window)
                           "INSERT INTO config(key, value) VALUES('COMPARISON', '');".
                           "INSERT INTO config(key, value) VALUES('PARTBAR_REFRESH', 'off');".
                           "INSERT INTO config(key, value) VALUES('VIEW_LINES_FILES', 'off');".
-                          "INSERT INTO config(key, value) VALUES('VIEW_LINES_COLUMNS', 'on');");
+                          "INSERT INTO config(key, value) VALUES('VIEW_LINES_COLUMNS', 'on');".
+                          "INSERT INTO config(key, value) VALUES('STATUS_ICON', 'on');".
+                          "INSERT INTO config(key, value) VALUES('SAVE_FOLDERS', 'on');");
    $window->destroy();
 }
 
@@ -58,7 +60,8 @@ function config_parser()
                    'STATUSBAR_VIEW', 'FONT_LIST', 'ASK_CLOSE',
                    'LANGUAGE', 'MAXIMIZE', 'COMPARISON',
                    'TERMINAL', 'PARTBAR_VIEW', 'PARTBAR_REFRESH',
-                   'VIEW_LINES_FILES', 'VIEW_LINES_COLUMNS');
+                   'VIEW_LINES_FILES', 'VIEW_LINES_COLUMNS', 'STATUS_ICON',
+                   'SAVE_FOLDERS');
     foreach ($array as $value)
     {
         $query = sqlite_query($sqlite, "SELECT * FROM config WHERE key = '$value'");
@@ -896,7 +899,7 @@ function my_rmdir($filename)
 }
 
 /**
- * Функция выводит список файлов и папок в текущей директории.
+ * Функция заполняет модель списком файлов и папок в текущей директории.
  */
 function current_dir($panel, $status = '')
 {
@@ -998,16 +1001,20 @@ function convert_size($filename)
         }
     }
     if ($size_byte >= 0 AND $size_byte < 1024)
-        return $size_byte.' '.$lang['size']['b'];
-    elseif ($size_byte >= 1024 AND $size_byte < 1048576)
-        return round($size_byte / 1024, 2).' '.$lang['size']['kib'];
-    elseif ($size_byte >= 1048576 AND $size_byte < 1073741824)
-        return round($size_byte / 1048576, 2).' '.$lang['size']['mib'];
-    elseif ($size_byte >= 1073741824 AND $size_byte < 2147483648)
-        return round($size_byte / 1073741824, 2).' '.$lang['size']['gib'];
-    else
     {
-
+        return $size_byte.' '.$lang['size']['b'];
+    }
+    elseif ($size_byte >= 1024 AND $size_byte < 1048576)
+    {
+        return round($size_byte / 1024, 2).' '.$lang['size']['kib'];
+    }
+    elseif ($size_byte >= 1048576 AND $size_byte < 1073741824)
+    {
+        return round($size_byte / 1048576, 2).' '.$lang['size']['mib'];
+    }
+    elseif ($size_byte >= 1073741824 AND $size_byte < 2147483648)
+    {
+        return round($size_byte / 1073741824, 2).' '.$lang['size']['gib'];
     }
 }
 
@@ -1048,7 +1055,7 @@ function history($direct)
 function change_dir($act = '', $dir = '', $all = FALSE)
 {
     global $vbox, $entry_current_dir, $action, $action_menu, $lang, $panel, $store,
-           $start, $number, $sqlite, $active_files, $tree_view, $_config, $combo_partbar, $clp;
+           $start, $number, $sqlite, $active_files, $tree_view, $_config, $clp;
 
     // Устанавливаем новое значение текущей директории
     switch ($act)
@@ -1203,17 +1210,10 @@ function change_dir($act = '', $dir = '', $all = FALSE)
     // Устанавливаем новое значение в адресную строку
     $entry_current_dir->set_text($start[$panel]);
 
-    // Сбрасываем список разделов
-    if (OS == 'Windows')
-    {
-        $combo_partbar->set_active(0);
-    }
-
     unset($active_files[$panel]);
 }
 
 /**
- *
  * Функция добавляет на уже существующую статусную панель информацию.
  * Возвращается статусная строка, готовая к добавлению в окно.
  */
@@ -1232,7 +1232,6 @@ function status_bar()
 }
 
 /**
- *
  * Функция создаёт файллы и папки в текущей директории при достаточных правах.
  * @param string $type Идентификатор файла/папки
  */
@@ -1302,10 +1301,7 @@ function new_element($type)
  */
 function close_window()
 {
-    global $window, $_config, $lang, $sqlite;
-
-    sqlite_query($sqlite, "DELETE FROM history_left");
-    sqlite_query($sqlite, "DELETE FROM history_right");
+    global $window, $_config, $lang, $sqlite, $start;
 
     if ($_config['ask_close'] == 'on')
     {
@@ -1331,6 +1327,16 @@ function close_window()
         $result = $dialog->run();
         if ($result == Gtk::RESPONSE_YES)
         {
+            sqlite_query($sqlite, "DELETE FROM history_left");
+            sqlite_query($sqlite, "DELETE FROM history_right");
+
+            if ($_config['save_folders'] == 'on')
+            {
+                $left = $start['left'];
+                $right = $start['right'];
+                sqlite_query($sqlite, "UPDATE config SET value = '$left' WHERE key = 'HOME_DIR_LEFT'");
+                sqlite_query($sqlite, "UPDATE config SET value = '$right' WHERE key = 'HOME_DIR_RIGHT'");
+            }
             $dialog->destroy();
             Gtk::main_quit();
         }
@@ -1342,13 +1348,22 @@ function close_window()
     }
     else
     {
+        sqlite_query($sqlite, "DELETE FROM history_left");
+        sqlite_query($sqlite, "DELETE FROM history_right");
+
+        if ($_config['save_folders'] == 'on')
+        {
+            $left = $start['left'];
+            $right = $start['right'];
+            sqlite_query($sqlite, "UPDATE config SET value = '$left' WHERE key = 'HOME_DIR_LEFT'");
+            sqlite_query($sqlite, "UPDATE config SET value = '$right' WHERE key = 'HOME_DIR_RIGHT'");
+        }
         Gtk::main_quit();
     }
 }
 
 /**
- *
- * Функция удаляет файл буфера обмена и выводит диалоговое окна,
+ * Функция очищает буфер обмена и выводит диалоговое окна,
  * сообщающее об успешном завершении операции.
  */
 function clear_bufer()
@@ -1362,6 +1377,16 @@ function clear_bufer()
     alert_window($lang['alert']['bufer_clear']);
 }
 
+/**
+ * Изменяет видимость панелей.
+ * @global GtkToolBar $toolbar
+ * @global GtkHBox $partbar
+ * @global GtkHBox $addressbar
+ * @global GtkStatusBar $statusbar
+ * @global resource $sqlite
+ * @param GtkCheckButton $widget Флажок, информирующий о скрытии/показе панели
+ * @param string $param Название панели, для которой необходимо произвести операцию
+ */
 function panel_view($widget, $param)
 {
     global $toolbar, $partbar, $addressbar, $statusbar, $sqlite;
@@ -1380,6 +1405,12 @@ function panel_view($widget, $param)
     }
 }
 
+/**
+ * Созданёт колонки дял списка файлов.
+ * @global array $lang
+ * @param GtkTreeView $tree_view
+ * @param GtkCellRenderer $cell_renderer
+ */
 function columns($tree_view, $cell_renderer)
 {
     global $lang;
@@ -1428,7 +1459,7 @@ function columns($tree_view, $cell_renderer)
 }
 
 /**
- * Выделение/снятие выделения с файла/папки
+ * Выделение/снятие выделения с файла/папки.
  * @global GtkListStore $store
  * @global array $start
  * @global string $panel
@@ -1653,7 +1684,7 @@ function active_all($action, $template = '')
  */
 function partbar()
 {
-    global $lang, $partbar, $_config, $combo_partbar;
+    global $lang, $partbar, $_config;
 
     foreach ($partbar->get_children() as $widget)
     {
@@ -1687,30 +1718,30 @@ function partbar()
             $button->connect_simple('clicked', 'change_dir', 'bookmarks', $mount);
             $partbar->pack_start($button, FALSE, FALSE);
         }
-        $refresh_button = new GtkButton();
-        $button_hbox = new GtkHBox();
-        $button_hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_REFRESH, Gtk::ICON_SIZE_BUTTON), FALSE, FALSE);
-        $button_hbox->pack_start(new GtkLabel());
-        $button_hbox->pack_start(new GtkLabel($lang['partbar']['refresh']));
-        $refresh_button->add($button_hbox);
-        $refresh_button->set_tooltip_text($lang['partbar']['refresh_hint']);
-        $refresh_button->connect_simple('clicked', 'partbar', TRUE);
-        $partbar->pack_end($refresh_button, FALSE, FALSE);
     }
     elseif (OS == 'Windows')
     {
-        $combo_partbar = GtkComboBox::new_text();
-        $array = array('', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
+        $array = array('B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
             'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z');
-        foreach ($array as $value)
+        foreach ($array as $drive)
         {
-            $value = (empty($value)) ? '' : $value . ':';
-            $combo_partbar->append_text($value);
+            if (file_exists($drive . ':'))
+            {
+                $button = new GtkButton($lang['partbar']['drive'] . ' ' .$drive);
+                $button->connect_simple('clicked', 'change_dir', 'bookmarks', $drive . ':');
+                $partbar->pack_start($button, FALSE, FALSE);
+            }
         }
-        $combo_partbar->set_active(0);
-        $combo_partbar->connect('changed', 'change_part');
-        $partbar->pack_start($combo_partbar, FALSE, FALSE);
     }
+    $refresh_button = new GtkButton();
+    $button_hbox = new GtkHBox();
+    $button_hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_REFRESH, Gtk::ICON_SIZE_BUTTON), FALSE, FALSE);
+    $button_hbox->pack_start(new GtkLabel());
+    $button_hbox->pack_start(new GtkLabel($lang['partbar']['refresh']));
+    $refresh_button->add($button_hbox);
+    $refresh_button->set_tooltip_text($lang['partbar']['refresh_hint']);
+    $refresh_button->connect_simple('clicked', 'partbar', TRUE);
+    $partbar->pack_end($refresh_button, FALSE, FALSE);
 
     if ($_config['partbar_view'] == 'on')
     {
@@ -1723,6 +1754,10 @@ function partbar()
     return $partbar;
 }
 
+/**
+ * Производит смену рраздела (только на Windows)
+ * @param GtkComboBox $combo Список разделов
+ */
 function change_part($combo)
 {
     $active = $combo->get_active_text();
@@ -1761,4 +1796,55 @@ function enter_template_window()
         active_all('template', $entry->get_text());
     }
     $dialog->destroy();
+}
+
+function tray_menu($window)
+{
+    global $lang;
+    
+    $menu = new GtkMenu();
+    
+    if ($window->is_visible())
+    {
+        $show = new GtkImageMenuItem($lang['tray']['hide']);
+        $show->set_image(GtkImage::new_from_stock(Gtk::STOCK_NO, Gtk::ICON_SIZE_MENU));
+    }
+    else
+    {
+        $show = new GtkImageMenuItem($lang['tray']['show']);
+        $show->set_image(GtkImage::new_from_stock(Gtk::STOCK_YES, Gtk::ICON_SIZE_MENU));
+    }
+    $show->connect_simple('activate', 'window_hide', $window);
+    $menu->append($show);
+
+    $close = new GtkImageMenuItem($lang['tray']['close']);
+    $close->set_image(GtkImage::new_from_stock(Gtk::STOCK_CLOSE, Gtk::ICON_SIZE_MENU));
+    $close->connect_simple('activate', 'close_window');
+    $menu->append($close);
+    
+    $menu->append(new GtkSeparatorMenuItem());
+    
+    $about = new GtkImageMenuItem($lang['tray']['about']);
+    $about->set_image(GtkImage::new_from_stock(Gtk::STOCK_ABOUT, Gtk::ICON_SIZE_MENU));
+    $about->connect_simple('activate', 'about_window');
+    $menu->append($about);
+
+    $menu->show_all();
+    $menu->popup();
+}
+
+/**
+ * Если окно видимо - скрывает его, если скрыто - показывает.
+ * @param GtkWindow $window Окно
+ */
+function window_hide($window)
+{
+    if ($window->is_visible())
+    {
+        $window->hide();
+    }
+    else
+    {
+        $window->show_all();
+    }
 }
