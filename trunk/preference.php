@@ -26,19 +26,149 @@ function preference()
     /**
      * Вкладка "Основные".
      */
-    $label_hidden_files = new GtkCheckButton($lang['preference']['hidden_files']);
-    $label_hidden_files->set_tooltip_text($lang['preference']['hidden_files_hint']);
+
+    $vbox = new GtkVBox;
+    $notebook->append_page($vbox, new GtkLabel($lang['preference']['general']));
+
+    // Показывать скрытые файлы
+    $hidden_files = new GtkCheckButton($lang['preference']['hidden_files']);
+    $hidden_files->set_tooltip_text($lang['preference']['hidden_files_hint']);
+    $hidden_files->set_alignment(0, 0);
+    $hidden_files->connect('toggled', 'check_button_write', 'hidden_files');
+    if ($_config['hidden_files'] == 'on')
+    {
+        $hidden_files->set_active(TRUE);
+    }
+    $vbox->pack_start($hidden_files, FALSE, FALSE);
+
+    // Подтверждение при удалении
     $ask_delete = new GtkCheckButton($lang['preference']['ask_delete']);
     $ask_delete->set_tooltip_text($lang['preference']['ask_delete_hint']);
-    $label_home_dir_left = new GtkLabel($lang['preference']['home_dir_left']);
-    $radio_home_left = new GtkRadioButton(NULL, HOME_DIR);
-    $radio_root_left = new GtkRadioButton($radio_home_left, ROOT_DIR);
-    $label_home_dir_right = new GtkLabel($lang['preference']['home_dir_right']);
-    $radio_home_right = new GtkRadioButton(NULL, HOME_DIR);
-    $radio_root_right = new GtkRadioButton($radio_home_right, ROOT_DIR);
+    $ask_delete->connect('toggled', 'check_button_write', 'ask_delete');
+    if ($_config['ask_delete'] == 'on')
+    {
+        $ask_delete->set_active(TRUE);
+    }
+    $vbox->pack_start($ask_delete, FALSE, FALSE);
+
+    // Подтверждение при закрытии
     $ask_close = new GtkCheckButton($lang['preference']['ask_close']);
     $ask_close->set_tooltip_text($lang['preference']['ask_close_hint']);
+    $ask_close->connect('toggled', 'check_button_write', 'ask_close');
+    if ($_config['ask_close'] == 'on')
+    {
+        $ask_close->set_active(TRUE);
+    }
+    $vbox->pack_start($ask_close, FALSE, FALSE);
+
+    // Разворачивать на весь экран
+    $maximize = new GtkCheckButton($lang['preference']['maximize']);
+    $maximize->set_tooltip_text($lang['preference']['maximize_hint']);
+    $maximize->connect('toggled', 'check_button_write', 'maximize');
+    if ($_config['maximize'] == 'on')
+    {
+        $maximize->set_active(TRUE);
+    }
+    $vbox->pack_start($maximize, FALSE, FALSE);
+
+    // Автообновление списка разделов
+    $partbar_refresh = new GtkCheckButton($lang['preference']['partbar_refresh']);
+    $partbar_refresh->set_tooltip_text($lang['preference']['partbar_refresh_hint']);
+    $partbar_refresh->connect('toggled', 'check_button_write', 'partbar_refresh', 'partbar');
+    if ($_config['partbar_refresh'] == 'on')
+    {
+        $partbar_refresh->set_active(TRUE);
+    }
+    $vbox->pack_start($partbar_refresh, FALSE, FALSE);
+
+    // Показывать линии между файлами
+    $view_lines_files = new GtkCheckButton($lang['preference']['view_lines_files']);
+    $view_lines_files->set_tooltip_text($lang['preference']['vlf_hint']);
+    $view_lines_files->connect('toggled', 'check_button_write', 'view_lines_files');
+    if ($_config['view_lines_files'] == 'on')
+    {
+        $view_lines_files->set_active(TRUE);
+    }
+    $vbox->pack_start($view_lines_files, FALSE, FALSE);
+
+    // Показывать линии между колонками
+    $view_lines_columns = new GtkCheckButton($lang['preference']['view_lines_columns']);
+    $view_lines_columns->set_tooltip_text($lang['preference']['vlc_hint']);
+    $view_lines_columns->connect('toggled', 'check_button_write', 'view_lines_columns');
+    if ($_config['view_lines_columns'] == 'on')
+    {
+        $view_lines_columns->set_active(TRUE);
+    }
+    $vbox->pack_start($view_lines_columns, FALSE, FALSE);
+
+    // Показывать иконку в трее
+    $status_icon = new GtkCheckButton($lang['preference']['status_icon']);
+    $status_icon->set_tooltip_text($lang['preference']['status_icon_hint']);
+    $status_icon->connect('toggled', 'check_button_write', 'status_icon');
+    if ($_config['status_icon'] == 'on')
+    {
+        $status_icon->set_active(TRUE);
+    }
+    $vbox->pack_start($status_icon, FALSE, FALSE);
+
+    $vbox->pack_start(new GtkHSeparator, FALSE, FALSE);
+
+    // Сохранять открытые директории
+    $save_folders = new GtkCheckButton($lang['preference']['save_folders']);
+    $save_folders->set_tooltip_text($lang['preference']['save_folders_hinr']);
+    $save_folders->connect('toggled', 'check_button_write', 'save_folders');
+    if ($_config['save_folders'] == 'on')
+    {
+        $save_folders->set_active(TRUE);
+    }
+    $vbox->pack_start($save_folders, FALSE, FALSE);
+
+    // Начальная директоря для левой панели
+    $label_home_dir_left = new GtkLabel($lang['preference']['home_dir_left']);
+    $label_home_dir_left->set_alignment(0, 0);
+    $vbox->pack_start($label_home_dir_left, FALSE, FALSE);
+
+    $radio_home_left = new GtkRadioButton(NULL, HOME_DIR);
+    $radio_root_left = new GtkRadioButton($radio_home_left, ROOT_DIR);
+    $radio_home_left->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_LEFT', HOME_DIR);
+    $radio_root_left->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_LEFT', ROOT_DIR);
+    if ($_config['home_dir_left'] == ROOT_DIR)
+    {
+        $radio_root_left->set_active(TRUE);
+    }
+    else
+    {
+        $radio_home_left->set_active(TRUE);
+    }
+    $vbox->pack_start($hbox = new GtkHBox, FALSE, FALSE);
+    $hbox->pack_start($radio_root_left, TRUE, TRUE);
+    $hbox->pack_start($radio_home_left, TRUE, TRUE);
+
+    // Начальная директория для правой панели
+    $label_home_dir_right = new GtkLabel($lang['preference']['home_dir_right']);
+    $label_home_dir_right->set_alignment(0, 0);
+    $vbox->pack_start($label_home_dir_right, FALSE, FALSE);
+
+    $radio_home_right = new GtkRadioButton(NULL, HOME_DIR);
+    $radio_root_right = new GtkRadioButton($radio_home_right, ROOT_DIR);
+    $radio_home_right->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_RIGHT', HOME_DIR);
+    $radio_root_right->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_RIGHT', ROOT_DIR);
+    if ($_config['home_dir_right'] == ROOT_DIR)
+    {
+        $radio_root_right->set_active(TRUE);
+    }
+    else
+    {
+        $radio_home_right->set_active(TRUE);
+    }
+    $vbox->pack_start($hbox = new GtkHBox, FALSE, FALSE);
+    $hbox->pack_start($radio_root_right, TRUE, TRUE);
+    $hbox->pack_start($radio_home_right, TRUE, TRUE);
+
+    // Язык программы
     $label_lang = new GtkLabel($lang['preference']['lang']);
+    $label_lang->set_alignment(0, 0.5);
+
     $combo = GtkComboBox::new_text();
     $opendir = opendir(LANG_DIR);
     $i = 0;
@@ -60,84 +190,11 @@ function preference()
         }
     }
     closedir($opendir);
-    $maximize = new GtkCheckButton($lang['preference']['maximize']);
-    $maximize->set_tooltip_text($lang['preference']['maximize_hint']);
-    $partbar_refresh = new GtkCheckButton($lang['preference']['partbar_refresh']);
-    $partbar_refresh->set_tooltip_text($lang['preference']['partbar_refresh_hint']);
-    $view_lines_files = new GtkCheckButton($lang['preference']['view_lines_files']);
-    $view_lines_files->set_tooltip_text($lang['preference']['vlf_hint']);
-    $view_lines_columns = new GtkCheckButton($lang['preference']['view_lines_columns']);
-    $view_lines_columns->set_tooltip_text($lang['preference']['vlc_hint']);
-    
-    if ($_config['hidden_files'] == 'on')
-        $label_hidden_files->set_active(TRUE);
-    if ($_config['ask_delete'] == 'on')
-        $ask_delete->set_active(TRUE);
-    if ($_config['ask_close'] == 'on')
-        $ask_close->set_active(TRUE);
-    if ($_config['home_dir_left'] == ROOT_DIR)
-        $radio_root_left->set_active(TRUE);
-    else
-        $radio_home_left->set_active(TRUE);
-    if ($_config['home_dir_right'] == ROOT_DIR)
-        $radio_root_right->set_active(TRUE);
-    else
-        $radio_home_right->set_active(TRUE);
-    if ($_config['maximize'] == 'on')
-        $maximize->set_active(TRUE);
-    if ($_config['partbar_refresh'] == 'on')
-        $partbar_refresh->set_active(TRUE);
-    if ($_config['view_lines_files'] == 'on')
-        $view_lines_files->set_active(TRUE);
-    if ($_config['view_lines_columns'] == 'on')
-        $view_lines_columns->set_active(TRUE);
-    
-    $label_hidden_files->set_alignment(0, 0);
-    $label_home_dir_right->set_alignment(0, 0);
-    $ask_delete->set_alignment(0, 0);
-    $label_home_dir_left->set_alignment(0, 0);
-    $ask_close->set_alignment(0, 0);
-    $label_lang->set_alignment(0, 0);
-    $partbar_refresh->set_alignment(0, 0);
-    $view_lines_files->set_alignment(0, 0);
-    $view_lines_columns->set_alignment(0, 0);
-    
-    $label_hidden_files->connect('toggled', 'check_button_write', 'hidden_files');
-    $ask_delete->connect('toggled', 'check_button_write', 'ask_delete');
-    $ask_close->connect('toggled', 'check_button_write', 'ask_close');
-    $radio_home_left->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_LEFT', HOME_DIR);
-    $radio_root_left->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_LEFT', ROOT_DIR);
-    $radio_home_right->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_RIGHT', HOME_DIR);
-    $radio_root_right->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_RIGHT', ROOT_DIR);
     $combo->connect('changed', 'combo_write', 'language');
-    $maximize->connect('toggled', 'check_button_write', 'maximize');
-    $partbar_refresh->connect('toggled', 'check_button_write', 'partbar_refresh', 'partbar');
-    $view_lines_files->connect('toggled', 'check_button_write', 'view_lines_files');
-    $view_lines_columns->connect('toggled', 'check_button_write', 'view_lines_columns');
-    
-    $vbox = new GtkVBox;
-    $vbox->pack_start($label_hidden_files, FALSE, FALSE);
-    $vbox->pack_start($ask_delete, FALSE, FALSE);
-    $vbox->pack_start($ask_close, FALSE, FALSE);
-    $vbox->pack_start($maximize, FALSE, FALSE);
-    $vbox->pack_start($partbar_refresh, FALSE, FALSE);
-    $vbox->pack_start($view_lines_files, FALSE, FALSE);
-    $vbox->pack_start($view_lines_columns, FALSE, FALSE);
-    $vbox->pack_start(new GtkHSeparator, FALSE, FALSE);
-    $vbox->pack_start($label_home_dir_left, FALSE, FALSE);
-    $vbox->pack_start($hbox = new GtkHBox, FALSE, FALSE);
-    $hbox->pack_start($radio_root_left, TRUE, TRUE);
-    $hbox->pack_start($radio_home_left, TRUE, TRUE);
-    $vbox->pack_start($label_home_dir_right, FALSE, FALSE);
-    $vbox->pack_start($hbox = new GtkHBox, FALSE, FALSE);
-    $hbox->pack_start($radio_root_right, TRUE, TRUE);
-    $hbox->pack_start($radio_home_right, TRUE, TRUE);
     $vbox->pack_start(new GtkHSeparator, FALSE, FALSE);
     $vbox->pack_start($hbox = new GtkHBox, FALSE, FALSE);
     $hbox->pack_start($label_lang, TRUE, TRUE);
     $hbox->pack_start($combo, TRUE, TRUE);
-    
-    $notebook->append_page($vbox, new GtkLabel($lang['preference']['general']));
     
     /**
      * Вкладка "Шрифты".
@@ -273,12 +330,29 @@ function combo_write($combo, $param)
  */
 function check_button_write($check, $param, $timeout = '')
 {
-    global $sqlite, $refresh_id;
-    
+    global $sqlite, $refresh_id, $tray;
+
     $value = $check->get_active() ? 'on' : 'off';
     
     $param = strtoupper($param);
     sqlite_query($sqlite, "UPDATE config SET value = '$value' WHERE key = '$param'");
+
+    if ($param == 'STATUS_ICON')
+    {
+        if ($value == 'on')
+        {
+            $tray->set_visible(TRUE);
+        }
+        else
+        {
+            $tray->set_visible(FALSE);
+        }
+    }
+    if ($param == 'SAVE_FOLDERS' AND $value == 'off')
+    {
+        sqlite_query($sqlite, "UPDATE config SET value = '" . ROOT_DIR . "' WHERE key = 'HOME_DIR_LEFT'");
+        sqlite_query($sqlite, "UPDATE config SET value = '" . HOME_DIR . "' WHERE key = 'HOME_DIR_RIGHT'");
+    }
 
     if ($timeout == 'partbar')
     {
