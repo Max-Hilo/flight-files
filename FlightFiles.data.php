@@ -321,10 +321,8 @@ function on_button($view, $event, $type)
             $cut = new GtkImageMenuItem($lang['popup']['cut_file']);
             $cut->set_image(GtkImage::new_from_stock(Gtk::STOCK_COPY, Gtk::ICON_SIZE_MENU));
             $rename = new GtkImageMenuItem($lang['popup']['rename_file']);
-            $delete = new GtkImageMenuItem($lang['popup']['delete_file']);
+            $delete = new GtkImageMenuItem($lang['popup']['delete']);
             $delete->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_MENU));
-            $delete_active = new GtkImageMenuItem($lang['popup']['delete_active']);
-            $delete_active->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_MENU));
             $checksum = new GtkMenuItem($lang['popup']['checksum']);
             $terminal = new GtkMenuItem($lang['popup']['open_terminal']);
             $properties = new GtkImageMenuItem(Gtk::STOCK_PROPERTIES);
@@ -346,7 +344,6 @@ function on_button($view, $event, $type)
                 $cut->set_sensitive(FALSE);
                 $rename->set_sensitive(FALSE);
                 $delete->set_sensitive(FALSE);
-                $delete_active->set_sensitive(FALSE);
             }
 
             $query = sqlite_query($sqlite, "SELECT id_type, ext FROM ext_files WHERE ext = '$extension' LIMIT 1");
@@ -389,10 +386,6 @@ function on_button($view, $event, $type)
             $menu->append($rename);
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($delete);
-            if (!empty($active_files[$panel]))
-            {
-                $menu->append($delete_active);
-            }
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($checksum);
             $menu->append(new GtkSeparatorMenuItem());
@@ -403,8 +396,7 @@ function on_button($view, $event, $type)
             $copy->connect_simple('activate', 'bufer_file', 'copy', $start[$panel]. DS .$file);
             $cut->connect_simple('activate', 'bufer_file', 'cut', $start[$panel]. DS .$file);
             $rename->connect_simple('activate', 'rename_window', $start[$panel]. DS .$file);
-            $delete->connect_simple('activate', 'delete_window', $start[$panel]. DS .$file);
-            $delete_active->connect_simple('activate', 'delete_active');
+            $delete->connect_simple('activate', 'delete_window');
             $md5->connect_simple('activate', 'CheckSumWindow', $start[$panel]. DS .$file, 'MD5');
             $sha1->connect_simple('activate', 'CheckSumWindow', $start[$panel]. DS .$file, 'SHA1');
             $properties->connect_simple('activate', 'properties_window', $start[$panel]. DS .$file);
@@ -419,10 +411,8 @@ function on_button($view, $event, $type)
             $cut = new GtkImageMenuItem($lang['popup']['cut_dir']);
             $cut->set_image(GtkImage::new_from_stock(Gtk::STOCK_CUT, Gtk::ICON_SIZE_MENU));
             $rename = new GtkMenuItem($lang['popup']['rename_dir']);
-            $delete = new GtkImageMenuItem($lang['popup']['delete_dir']);
+            $delete = new GtkImageMenuItem($lang['popup']['delete']);
             $delete->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_MENU));
-            $delete_active = new GtkImageMenuItem($lang['popup']['delete_active']);
-            $delete_active->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_MENU));
             $terminal = new GtkMenuItem($lang['popup']['open_terminal']);
             $properties = new GtkImageMenuItem(Gtk::STOCK_PROPERTIES);
 
@@ -431,7 +421,6 @@ function on_button($view, $event, $type)
                 $cut->set_sensitive(FALSE);
                 $rename->set_sensitive(FALSE);
                 $delete->set_sensitive(FALSE);
-                $delete_active->set_sensitive(FALSE);
             }
 
             $menu->append($open);
@@ -442,10 +431,6 @@ function on_button($view, $event, $type)
             $menu->append($rename);
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($delete);
-            if (!empty($active_files[$panel]))
-            {
-                $menu->append($delete_active);
-            }
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($terminal);
             $menu->append(new GtkSeparatorMenuItem());
@@ -455,8 +440,7 @@ function on_button($view, $event, $type)
             $copy->connect_simple('activate', 'bufer_file', 'copy', $start[$panel]. DS .$file);
             $cut->connect_simple('activate', 'bufer_file', 'cut', $start[$panel]. DS .$file);
             $rename->connect_simple('activate', 'rename_window', $start[$panel]. DS .$file);
-            $delete->connect_simple('activate', 'delete_window', $start[$panel]. DS .$file);
-            $delete_active->connect_simple('activate', 'delete_active');
+            $delete->connect_simple('activate', 'delete_window');
             $terminal->connect_simple('activate', 'open_terminal');
             $properties->connect_simple('activate', 'properties_window', $start[$panel]. DS .$file);
         }
@@ -468,15 +452,14 @@ function on_button($view, $event, $type)
             $new_dir->set_image(GtkImage::new_from_stock(Gtk::STOCK_DIRECTORY, Gtk::ICON_SIZE_MENU));
             $paste = new GtkImageMenuItem($lang['popup']['paste']);
             $paste->set_image(GtkImage::new_from_stock(Gtk::STOCK_PASTE, Gtk::ICON_SIZE_MENU));
-            $delete_active = new GtkImageMenuItem($lang['popup']['delete_active']);
-            $delete_active->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_MENU));
+            $delete = new GtkImageMenuItem($lang['popup']['delete']);
+            $delete->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_MENU));
             $terminal = new GtkMenuItem($lang['popup']['open_terminal']);
 
             if (!is_writable($start[$panel]))
             {
                 $new_file->set_sensitive(FALSE);
                 $new_dir->set_sensitive(FALSE);
-                $delete_active->set_sensitive(FALSE);
             }
             if (empty($clp['files']) OR !is_writable($start[$panel]))
             {
@@ -490,7 +473,7 @@ function on_button($view, $event, $type)
             if (!empty($active_files[$panel]))
             {
                 $menu->append(new GtkSeparatorMenuItem());
-                $menu->append($delete_active);
+                $menu->append($delete);
             }
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($terminal);
@@ -499,7 +482,7 @@ function on_button($view, $event, $type)
             $new_file->connect_simple('activate', 'new_element', 'file');
             $new_dir->connect_simple('activate', 'new_element', 'dir');
             $terminal->connect_simple('activate', 'open_terminal');
-            $delete_active->connect_simple('activate', 'delete_active');
+            $delete->connect_simple('activate', 'delete_window');
         }
 
         // Показываем контекстное меню
@@ -764,106 +747,92 @@ function my_copy($source, $dest)
 }
 
 /**
- * Удаление выбранных файлов/папок.
+ * Функция удаляет выбранные файлы/папки,
+ * предварительно спросив подтверждения у пользователя.
  */
-function delete_active()
+function delete_window()
 {
-    global $active_files, $panel, $start, $_config, $lang;
+    global $_config, $lang, $selection, $panel, $start, $active_files;
+
+    list($model, $iter) = $selection[$panel]->get_selected();
+    @$filename = $start[$panel] . DS . $model->get_value($iter, 0);
 
     if ($_config['ask_delete'] == 'on')
     {
         $dialog = new GtkDialog(
             $lang['delete']['title'],
             NULL,
-            Gtk::DIALOG_MODAL,
-            array(
-                Gtk::STOCK_NO, Gtk::RESPONSE_NO,
-                Gtk::STOCK_YES, Gtk::RESPONSE_YES
-            )
+            Gtk::DIALOG_MODAL
         );
         $dialog->set_has_separator(FALSE);
         $dialog->set_resizable(FALSE);
         $dialog->set_position(Gtk::WIN_POS_CENTER);
+        
         $vbox = $dialog->vbox;
         $vbox->pack_start($hbox = new GtkHBox());
         $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
-        $hbox->pack_start(new GtkLabel($lang['delete']['active']));
-        $dialog->show_all();
-        $result = $dialog->run();
-        if ($result == Gtk::RESPONSE_YES)
+        if (!empty($active_files[$panel]))
         {
-            foreach ($active_files[$panel] as $file)
+            $str = str_replace('%s', basename($filename), $lang['delete']['actives']);
+        }
+        else
+        {
+            if (is_dir($filename))
             {
-                my_rmdir($start[$panel]. DS .$file);
+                $str = str_replace('%s', basename($filename), $lang['delete']['one_dir']);
+            }
+            else
+            {
+                $str = str_replace('%s', basename($filename), $lang['delete']['one_file']);
             }
         }
+        $label = new GtkLabel($str);
+        $label->set_line_wrap(TRUE);
+        $hbox->pack_start($label, TRUE, TRUE, 20);
+
+        $action_area = $dialog->action_area;
+        $btn_yes = new GtkButton($lang['delete']['yes']);
+        $btn_yes->connect_simple('clicked', 'delete_yes', $filename, $dialog);
+        $btn_no = new GtkButton($lang['delete']['no']);
+        $btn_no->connect_simple('clicked', 'delete_no', $dialog);
+        $action_area->add($btn_yes);
+        $action_area->add($btn_no);
+
+        $dialog->show_all();
+        $dialog->run();
         $dialog->destroy();
     }
     else
+    {
+        delete_yes($filename);
+    }
+    change_dir('none', '', 'all');
+}
+
+function delete_yes($filename = '', $dialog = '')
+{
+    global $active_files, $panel, $start;
+
+    if (!empty($active_files[$panel]))
     {
         foreach ($active_files[$panel] as $file)
         {
             my_rmdir($start[$panel]. DS .$file);
         }
     }
-    change_dir('none', '', 'all');
-}
-
-/**
- * Функция удаляет выбранный файл/папку, предварительно спросив подтверждения у пользователя.
- * @param string $filename Адрес файла, для которого необходимо произвести операцию
- */
-function delete_window($filename = '')
-{
-    global $_config, $lang, $selection, $panel, $start;
-
-    if (empty($filename))
-    {
-        list($model, $iter) = $selection[$panel]->get_selected();
-        $filename = $start[$panel] . DS . $model->get_value($iter, 0);
-    }
-
-    if ($_config['ask_delete'] == 'on')
-    {
-        $dialog = new GtkDialog(
-            $lang['delete']['title'],
-            NULL,
-            Gtk::DIALOG_MODAL,
-            array(
-                Gtk::STOCK_NO, Gtk::RESPONSE_NO,
-                Gtk::STOCK_YES, Gtk::RESPONSE_YES
-            )
-        );
-        $dialog->set_has_separator(FALSE);
-        $dialog->set_resizable(FALSE);
-        $dialog->set_position(Gtk::WIN_POS_CENTER);
-        $vbox = $dialog->vbox;
-        $vbox->pack_start($hbox = new GtkHBox());
-        $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
-        if (is_dir($filename))
-        {
-            $str = str_replace('%s', basename($filename), $lang['delete']['dir']);
-        }
-        else
-        {
-            $str = str_replace('%s', basename($filename), $lang['delete']['file']);
-        }
-        $label = new GtkLabel($str);
-        $label->set_line_wrap(TRUE);
-        $hbox->pack_start($label, TRUE, TRUE, 20);
-        $dialog->show_all();
-        $result = $dialog->run();
-        if ($result == Gtk::RESPONSE_YES)
-        {
-            my_rmdir($filename);
-        }
-        $dialog->destroy();
-    }
     else
     {
         my_rmdir($filename);
     }
-    change_dir('none', '', 'all');
+    if (!empty($dialog))
+    {
+        $dialog->destroy();
+    }
+}
+
+function delete_no($dialog)
+{
+    $dialog->destroy();
 }
 
 /**
@@ -1667,6 +1636,7 @@ function active_all($action, $template = '')
         $iter = $store[$panel]->get_iter($i);
         $store[$panel]->set($iter, 4, FALSE);
         unset($active_files[$panel]);
+        $action_menu['delete']->set_sensitive(FALSE);
     }
 
     // Выделяем файлы
@@ -1692,6 +1662,7 @@ function active_all($action, $template = '')
                 $active_files[$panel][$file] = $file;
             }
         }
+        $action_menu['delete']->set_sensitive(TRUE);
     }
     if ($files == 2 OR $files == 3)
     {

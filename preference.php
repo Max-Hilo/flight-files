@@ -199,17 +199,23 @@ function preference()
     /**
      * Вкладка "Шрифты".
      */
+
+    $vbox = new GtkVBox;
+    $notebook->append_page($vbox, new GtkLabel($lang['preference']['fonts']));
+
+    // Шрифт в списке
     $label_text_list = new GtkLabel($lang['preference']['font_list']);
-    
     $label_text_list->modify_font(new PangoFontDescription('Bold'));
     $label_text_list->set_alignment(0, 0);
-        
+    $vbox->pack_start($label_text_list, FALSE, FALSE);
+    
+    $check_text_list = new GtkCheckButton($lang['preference']['system_font']);
+    $vbox->pack_start($check_text_list, FALSE, FALSE);
+
     $entry_font_select = new GtkEntry();
     $button_font_select = new GtkButton($lang['preference']['change']);
     $button_font_select->connect_simple('clicked', 'font_select', $entry_font_select);
-    $check_text_list = new GtkCheckButton($lang['preference']['system_font']);
     $check_text_list->connect('toggled', 'check_font', $entry_font_select, $button_font_select);
-    
     if (empty($_config['font_list']))
     {
         $check_text_list->set_active(TRUE);
@@ -223,53 +229,47 @@ function preference()
         $button_font_select->set_sensitive(TRUE);
         $entry_font_select->set_text($_config['font_list']);
     }
-
-    $vbox = new GtkVBox;
-    $vbox->pack_start($label_text_list, FALSE, FALSE);
-    $vbox->pack_start($check_text_list, FALSE, FALSE);
     $vbox->pack_start($hbox = new GtkHBox, FALSE, FALSE);
     $hbox->pack_start($entry_font_select, TRUE, TRUE);
     $hbox->pack_start($button_font_select, FALSE, FALSE);
-    
-    $notebook->append_page($vbox, new GtkLabel($lang['preference']['fonts']));
 
     /**
      * Вкладка "Внешние программы"
      */
-     $label_comparison = new GtkLabel();
-     $label_comparison->set_alignment(0, 0);
-     $label_comparison->set_markup('<b>'.$lang['preference']['comparison'].'</b>');
-     $hbox_comparison = new GtkHBox();
-     $hbox_comparison->pack_start($entry_comparison = new GtkEntry(), TRUE, TRUE);
-     $entry_comparison->set_editable(FALSE);
-     if (file_exists($_config['comparison']))
-     {
-         $entry_comparison->set_text($_config['comparison']);
-         sqlite_query($sqlite, "UPDATE config SET value = 'COMPARISON' WHERE key = ''");
-     }
-     $hbox_comparison->pack_start($btn_comparison = new GtkButton($lang['preference']['change']), FALSE, FALSE);
-     $btn_comparison->connect_simple('clicked', 'preference_command', 'comparison', $entry_comparison);
-     $label_terminal = new GtkLabel();
-     $label_terminal->set_alignment(0, 0);
-     $label_terminal->set_markup('<b>'.$lang['preference']['terminal'].'</b>');
-     $hbox_terminal = new GtkHBox();
-     $hbox_terminal->pack_start($entry_terminal = new GtkEntry(), TRUE, TRUE);
-     $entry_terminal->set_editable(FALSE);
-     if (file_exists($_config['comparison']))
-     {
-         $entry_comparison->set_text($_config['comparison']);
-         sqlite_query($sqlite, "UPDATE config SET value = 'TERMINAL' WHERE key = ''");
-     }
-     $hbox_terminal->pack_start($btn_terminal = new GtkButton($lang['preference']['change']), FALSE, FALSE);
-     $btn_terminal->connect_simple('clicked', 'preference_command', 'terminal', $entry_terminal);
+    $vbox = new GtkVBox();
+    $notebook->append_page($vbox, new GtkLabel($lang['preference']['program']));
 
-     $vbox = new GtkVBox();
-     $vbox->pack_start($label_comparison, FALSE, FALSE);
-     $vbox->pack_start($hbox_comparison, FALSE, FALSE);
-     $vbox->pack_start($label_terminal, FALSE, FALSE);
-     $vbox->pack_start($hbox_terminal, FALSE, FALSE);
+    // Сравнение файлов
+    $label_comparison = new GtkLabel();
+    $label_comparison->set_alignment(0, 0);
+    $label_comparison->set_markup('<b>'.$lang['preference']['comparison'].'</b>');
+    $vbox->pack_start($label_comparison, FALSE, FALSE);
 
-     $notebook->append_page($vbox, new GtkLabel($lang['preference']['program']));
+    $entry_comparison = new GtkEntry();
+    $entry_comparison->set_editable(FALSE);
+    $entry_comparison->set_text($_config['comparison']);
+    $btn_comparison = new GtkButton($lang['preference']['change']);
+    $btn_comparison->connect_simple('clicked', 'preference_command', 'comparison', $entry_comparison);
+    $hbox_comparison = new GtkHBox();
+    $hbox_comparison->pack_start($entry_comparison, TRUE, TRUE);
+    $hbox_comparison->pack_start($btn_comparison, FALSE, FALSE);
+    $vbox->pack_start($hbox_comparison, FALSE, FALSE);
+
+    // Терминал
+    $label_terminal = new GtkLabel();
+    $label_terminal->set_alignment(0, 0);
+    $label_terminal->set_markup('<b>'.$lang['preference']['terminal'].'</b>');
+    $vbox->pack_start($label_terminal, FALSE, FALSE);
+
+    $entry_terminal = new GtkEntry();
+    $entry_terminal->set_editable(FALSE);
+    $entry_terminal->set_text($_config['terminal']);
+    $btn_terminal = new GtkButton($lang['preference']['change']);
+    $btn_terminal->connect_simple('clicked', 'preference_command', 'terminal', $entry_terminal);
+    $hbox_terminal = new GtkHBox();
+    $hbox_terminal->pack_start($entry_terminal, TRUE, TRUE);
+    $hbox_terminal->pack_start($btn_terminal, FALSE, FALSE);
+    $vbox->pack_start($hbox_terminal, FALSE, FALSE);
 
     ///////////////////////
     

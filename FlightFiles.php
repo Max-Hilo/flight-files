@@ -358,7 +358,9 @@ foreach ($array_menuitem as $value)
     {
         $action_menu[$value[2]] = new GtkToggleAction($value[2], $value[3], '', '');
         if ($value[8][0] == $value[8][1])
+        {
             $action_menu[$value[2]]->set_active(TRUE);
+        }
         $action_menu[$value[2]]->connect('activate', $value[5], $value[6], $value[7]);
     }
     // Обычные пункты меню
