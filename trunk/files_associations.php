@@ -102,7 +102,11 @@ function add_command_window($model, $array)
             Gtk::STOCK_OK, Gtk::RESPONSE_OK,
         )
     );
-    $dialog->set_filename($array['entry_command']->get_text());
+    $filename = $array['entry_command']->get_text();
+    if (file_exists($filename))
+    {
+        $dialog->set_filename();
+    }
     $dialog->show_all();
     $result = $dialog->run();
     if ($result == Gtk::RESPONSE_OK)
