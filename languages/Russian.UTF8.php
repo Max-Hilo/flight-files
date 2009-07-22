@@ -28,6 +28,7 @@ $lang['menu']['close']                  = 'Закрыть';
 $lang['menu']['copy']                   = 'Копировать';
 $lang['menu']['cut']                    = 'Вырезать';
 $lang['menu']['paste']                  = 'Вставить';
+$lang['menu']['delete']                 = 'Удалить';
 $lang['menu']['rename']                 = 'Переименовать';
 $lang['menu']['mass_rename']            = 'Массовое переименование';
 $lang['menu']['files_ass']              = 'Файловые ассоциации';

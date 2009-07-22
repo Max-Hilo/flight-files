@@ -82,55 +82,79 @@ function on_button($view, $event, $type)
     current_dir($panel, 'status');
     status_bar();
 
-    $action['up']->set_sensitive(TRUE);
-    $action['root']->set_sensitive(TRUE);
-    $action['home']->set_sensitive(TRUE);
-    $action['back']->set_sensitive(TRUE);
-    $action['forward']->set_sensitive(TRUE);
-    $action['new_file']->set_sensitive(TRUE);
-    $action['new_dir']->set_sensitive(TRUE);
     $action_menu['new_file']->set_sensitive(TRUE);
     $action_menu['new_dir']->set_sensitive(TRUE);
-    $action_menu['rename']->set_sensitive(TRUE);
-    $action_menu['up']->set_sensitive(TRUE);
-    $action_menu['cut']->set_sensitive(TRUE);
-    $action_menu['mass_rename']->set_sensitive(TRUE);
-    $action_menu['back']->set_sensitive(TRUE);
-    $action_menu['forward']->set_sensitive(TRUE);
     $action_menu['comparison_file']->set_sensitive(FALSE);
     $action_menu['comparison_dir']->set_sensitive(FALSE);
 
+    $action_menu['copy']->set_sensitive(TRUE);
+    $action_menu['cut']->set_sensitive(TRUE);
+    $action_menu['delete']->set_sensitive(TRUE);
+    $action_menu['rename']->set_sensitive(TRUE);
+    $action_menu['mass_rename']->set_sensitive(TRUE);
+
+    $action_menu['up']->set_sensitive(TRUE);
+    $action_menu['back']->set_sensitive(TRUE);
+    $action_menu['forward']->set_sensitive(TRUE);
+
+    $action['back']->set_sensitive(TRUE);
+    $action['forward']->set_sensitive(TRUE);
+    $action['up']->set_sensitive(TRUE);
+    $action['root']->set_sensitive(TRUE);
+    $action['home']->set_sensitive(TRUE);
+    $action['new_file']->set_sensitive(TRUE);
+    $action['new_dir']->set_sensitive(TRUE);
+    $action['paste']->set_sensitive(TRUE);
+
+    // Если текущая директория первая в истории
     if ($number[$panel] == 1)
     {
         $action['back']->set_sensitive(FALSE);
         $action_menu['back']->set_sensitive(FALSE);
     }
+    // Если текущая директория последняя в истории
     $query = sqlite_query($sqlite, "SELECT id, path FROM history_$panel");
     if (sqlite_num_rows($query) == $number[$panel])
     {
         $action['forward']->set_sensitive(FALSE);
         $action_menu['forward']->set_sensitive(FALSE);
     }
+
+    // Если текущая директория является корнем
     if ($start[$panel] == ROOT_DIR)
     {
         $action['up']->set_sensitive(FALSE);
         $action_menu['up']->set_sensitive(FALSE);
         $action['root']->set_sensitive(FALSE);
     }
-    elseif ($start[$panel] == HOME_DIR)
+
+    // Если текущая директория является домашней
+    if ($start[$panel] == HOME_DIR)
     {
         $action['home']->set_sensitive(FALSE);
     }
+
+    // Если директория недоступна для записи
     if (!is_writable($start[$panel]))
     {
         $action_menu['new_file']->set_sensitive(FALSE);
         $action_menu['new_dir']->set_sensitive(FALSE);
         $action_menu['mass_rename']->set_sensitive(FALSE);
+        $action_menu['cut']->set_sensitive(FALSE);
         $action_menu['paste']->set_sensitive(FALSE);
+        $action_menu['delete']->set_sensitive(FALSE);
         $action_menu['rename']->set_sensitive(FALSE);
         $action['new_file']->set_sensitive(FALSE);
         $action['new_dir']->set_sensitive(FALSE);
         $action['paste']->set_sensitive(FALSE);
+    }
+
+    // Если в буфере обмена нет файлов
+    if (empty($clp['files']))
+    {
+        $action['paste']->set_sensitive(FALSE);
+        $action_menu['clear_bufer']->set_sensitive(FALSE);
+        $action_menu['paste']->set_sensitive(FALSE);
     }
 
     $files = 0;
@@ -154,19 +178,12 @@ function on_button($view, $event, $type)
     {
         $action_menu['comparison_file']->set_sensitive(TRUE);
     }
-    else
-    {
-        $action_menu['comparison_file']->set_sensitive(FALSE);
-    }
     if ($dirs == 2 OR $dirs == 3)
     {
         $action_menu['comparison_dir']->set_sensitive(TRUE);
     }
-    else
-    {
-        $action_menu['comparison_dir']->set_sensitive(FALSE);
-    }
 
+    // Устанавливаем новое значение в адресную строку
     $entry_current_dir->set_text($start[$panel]);
 
     $path_array = $view->get_path_at_pos($event->x, $event->y);
@@ -178,18 +195,15 @@ function on_button($view, $event, $type)
     @$dir_file = $store[$panel]->get_value($iter, 5);
     @$size = $store[$panel]->get_value($iter, 2);
 
-    if (!empty($file))
+    // Если щелчок был произведён в пустое место списка файлов
+    if (empty($file))
     {
-        $action_menu['copy']->set_sensitive(TRUE);
-        if (!is_writable($start[$panel]))
-        {
-            $action_menu['cut']->set_sensitive(FALSE);
-        }
-        else
-        {
-            $action_menu['rename']->set_sensitive(TRUE);
-        }
+        $action_menu['copy']->set_sensitive(FALSE);
+        $action_menu['cut']->set_sensitive(FALSE);
+        $action_menu['delete']->set_sensitive(FALSE);
+        $action_menu['rename']->set_sensitive(FALSE);
     }
+
     $filename = $start[$panel] . DS . $file;
     $image_size = @getimagesize($filename);
 
@@ -799,9 +813,15 @@ function delete_active()
  * Функция удаляет выбранный файл/папку, предварительно спросив подтверждения у пользователя.
  * @param string $filename Адрес файла, для которого необходимо произвести операцию
  */
-function delete_window($filename)
+function delete_window($filename = '')
 {
-    global $_config, $lang;
+    global $_config, $lang, $selection, $panel, $start;
+
+    if (empty($filename))
+    {
+        list($model, $iter) = $selection[$panel]->get_selected();
+        $filename = $start[$panel] . DS . $model->get_value($iter, 0);
+    }
 
     if ($_config['ask_delete'] == 'on')
     {
@@ -1112,6 +1132,22 @@ function change_dir($act = '', $dir = '', $all = FALSE)
 
     $start[$panel] = preg_replace ('#'.DS.'+#', DS, $start[$panel]);
 
+    $action_menu['new_file']->set_sensitive(TRUE);
+    $action_menu['new_dir']->set_sensitive(TRUE);
+    $action_menu['comparison_file']->set_sensitive(FALSE);
+    $action_menu['comparison_dir']->set_sensitive(FALSE);
+
+    $action_menu['copy']->set_sensitive(FALSE);
+    $action_menu['cut']->set_sensitive(FALSE);
+    $action_menu['paste']->set_sensitive(FALSE);
+    $action_menu['delete']->set_sensitive(FALSE);
+    $action_menu['rename']->set_sensitive(FALSE);
+    $action_menu['mass_rename']->set_sensitive(TRUE);
+
+    $action_menu['up']->set_sensitive(TRUE);
+    $action_menu['back']->set_sensitive(TRUE);
+    $action_menu['forward']->set_sensitive(TRUE);
+
     $action['back']->set_sensitive(TRUE);
     $action['forward']->set_sensitive(TRUE);
     $action['up']->set_sensitive(TRUE);
@@ -1119,55 +1155,54 @@ function change_dir($act = '', $dir = '', $all = FALSE)
     $action['home']->set_sensitive(TRUE);
     $action['new_file']->set_sensitive(TRUE);
     $action['new_dir']->set_sensitive(TRUE);
-    $action_menu['comparison_file']->set_sensitive(FALSE);
-    $action_menu['comparison_dir']->set_sensitive(FALSE);
-    $action_menu['back']->set_sensitive(TRUE);
-    $action_menu['forward']->set_sensitive(TRUE);
-    $action_menu['rename']->set_sensitive(FALSE);
-    $action_menu['mass_rename']->set_sensitive(TRUE);
-    $action_menu['paste']->set_sensitive(FALSE);
-    $action_menu['copy']->set_sensitive(FALSE);
-    $action_menu['cut']->set_sensitive(FALSE);
-    $action_menu['new_file']->set_sensitive(TRUE);
-    $action_menu['new_dir']->set_sensitive(TRUE);
-    $action_menu['up']->set_sensitive(TRUE);
+    $action['paste']->set_sensitive(TRUE);
 
+    // Если текущая директория первая в истории
     if ($number[$panel] == 1)
     {
         $action['back']->set_sensitive(FALSE);
         $action_menu['back']->set_sensitive(FALSE);
     }
+    // Если текущая директория последняя в истории
     $query = sqlite_query($sqlite, "SELECT id, path FROM history_$panel");
-    if (sqlite_num_rows($query) == $number[$panel])
+    if ($number[$panel] == sqlite_num_rows($query))
     {
         $action['forward']->set_sensitive(FALSE);
         $action_menu['forward']->set_sensitive(FALSE);
     }
-    if (!empty($clp['files']))
+
+    // Если в буфере обмена нет файлов
+    if (empty($clp['files']))
     {
-        $action['paste']->set_sensitive(TRUE);
-        $action_menu['clear_bufer']->set_sensitive(TRUE);
-        $action_menu['paste']->set_sensitive(TRUE);
+        $action['paste']->set_sensitive(FALSE);
+        $action_menu['clear_bufer']->set_sensitive(FALSE);
+        $action_menu['paste']->set_sensitive(FALSE);
     }
+
+    // Если текущая директория является корнем
     if ($start[$panel] == ROOT_DIR)
     {
         $action_menu['up']->set_sensitive(FALSE);
         $action['up']->set_sensitive(FALSE);
         $action['root']->set_sensitive(FALSE);
     }
+
+    // Если текущая директория является домашней
     if ($start[$panel] == HOME_DIR)
     {
         $action['home']->set_sensitive(FALSE);
     }
+
+    // Если директория недоступна для записи
     if (!is_writable($start[$panel]))
     {
         $action_menu['new_file']->set_sensitive(FALSE);
         $action_menu['new_dir']->set_sensitive(FALSE);
+        $action_menu['paste']->set_sensitive(FALSE);
         $action_menu['mass_rename']->set_sensitive(FALSE);
         $action['new_file']->set_sensitive(FALSE);
         $action['new_dir']->set_sensitive(FALSE);
         $action['paste']->set_sensitive(FALSE);
-        $action_menu['paste']->set_sensitive(FALSE);
     }
 
     // Очищаем список
