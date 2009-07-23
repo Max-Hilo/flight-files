@@ -221,6 +221,7 @@ function text_editor_window($filename)
 
     $text_editor['window']->add($vbox);
     $text_editor['window']->connect_simple('delete-event', 'text_editor_window_close', $source_buffer);
+    $text_editor['window']->set_focus($source);
     $text_editor['window']->show_all();
     Gtk::main();
 }
