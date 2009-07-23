@@ -89,6 +89,7 @@ function on_button($view, $event, $type)
 
     $action_menu['copy']->set_sensitive(TRUE);
     $action_menu['cut']->set_sensitive(TRUE);
+    $action_menu['paste']->set_sensitive(TRUE);
     $action_menu['delete']->set_sensitive(TRUE);
     $action_menu['rename']->set_sensitive(TRUE);
     $action_menu['mass_rename']->set_sensitive(TRUE);
@@ -643,30 +644,7 @@ function paste_file()
         $dest = $start[$panel]. DS .basename($filename);
         if (file_exists($dest))
         {
-            $str = str_replace('%s', basename($filename), $lang['alert']['file_exists_paste']);
-            $dialog = new GtkDialog(
-                $lang['alert']['title'], NULL,
-                Gtk::DIALOG_MODAL);
-            $dialog->add_button(Gtk::STOCK_NO, Gtk::RESPONSE_NO);
-            $dialog->add_button(Gtk::STOCK_YES, Gtk::RESPONSE_YES);
-            $dialog->set_position(Gtk::WIN_POS_CENTER_ALWAYS);
-            $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
-            $dialog->set_skip_taskbar_hint(TRUE);
-            $dialog->set_resizable(FALSE);
-            $top_area = $dialog->vbox;
-            $top_area->pack_start($hbox = new GtkHBox());
-            $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_WARNING, Gtk::ICON_SIZE_DIALOG), FALSE, FALSE);
-            $label = new GtkLabel($str);
-            $label->set_line_wrap(TRUE);
-            $label->set_justify(Gtk::JUSTIFY_CENTER);
-            $hbox->pack_start($label, TRUE, TRUE, 20);
-            $dialog->set_has_separator(FALSE);
-            $dialog->show_all();
-            $result = $dialog->run();
-            $dialog->destroy();
-
-            // Если нажата кнопка "Да", то удаляем существующий файл/папку
-            if ($result == Gtk::RESPONSE_YES)
+            if (file_exists_window($dest))
             {
                 my_rmdir($dest);
             }
@@ -694,13 +672,35 @@ function paste_file()
  */
 function my_rename($oldname, $newname)
 {
+    global $lang;
+    
+    // Если исходного файла/папки не существует
     if (!file_exists($oldname))
     {
+        if (is_dir(source))
+        {
+            alert_window($lang['alert']['rename_dir_not_found']);
+        }
+        else
+        {
+            alert_window($lang['alert']['rename_file_not_found']);
+        }
+        return FALSE;
+    }
+
+    // Если папка перемещается сама в себя
+    if ($oldname == dirname($newname))
+    {
+        alert_window($lang['alert']['rename_into']);
         return FALSE;
     }
 
     if (!is_dir($oldname))
     {
+        if (file_exists($newname))
+        {
+            unlink($newname);
+        }
         rename($oldname, $newname);
         return TRUE;
     }
@@ -719,9 +719,27 @@ function my_rename($oldname, $newname)
  */
 function my_copy($source, $dest)
 {
+    global $lang;
+
+    // Если исходного файла/папки не существует
     if (!file_exists($source))
     {
-        return TRUE;
+        if (is_dir($source))
+        {
+            alert_window($lang['alert']['copy_dir_not_found']);
+        }
+        else
+        {
+            alert_window($lang['alert']['copy_file_not_found']);
+        }
+        return FALSE;
+    }
+    
+    // Если папка копируется сама в себя
+    if ($source == dirname($dest))
+    {
+        alert_window($lang['alert']['copy_into']);
+        return FALSE;
     }
 
     if (!is_dir($source))
@@ -791,11 +809,19 @@ function delete_window()
         $hbox->pack_start($label, TRUE, TRUE, 20);
 
         $action_area = $dialog->action_area;
-        $btn_yes = new GtkButton($lang['delete']['yes']);
+
+        $btn_yes = new GtkButton();
+        $btn_yes->add($hbox = new GtkHBox());
+        $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_YES, Gtk::ICON_SIZE_MENU), FALSE, FALSE);
+        $hbox->pack_start(new GtkLabel($lang['delete']['yes']), TRUE, TRUE);
         $btn_yes->connect_simple('clicked', 'delete_yes', $filename, $dialog);
-        $btn_no = new GtkButton($lang['delete']['no']);
-        $btn_no->connect_simple('clicked', 'delete_no', $dialog);
         $action_area->add($btn_yes);
+
+        $btn_no = new GtkButton();
+        $btn_no->add($hbox = new GtkHBox());
+        $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_NO, Gtk::ICON_SIZE_MENU), FALSE, FALSE);
+        $hbox->pack_start(new GtkLabel($lang['delete']['no']), TRUE, TRUE);
+        $btn_no->connect_simple('clicked', 'dialog_destroy', $dialog);
         $action_area->add($btn_no);
 
         $dialog->show_all();
@@ -830,7 +856,7 @@ function delete_yes($filename = '', $dialog = '')
     }
 }
 
-function delete_no($dialog)
+function dialog_destroy($dialog)
 {
     $dialog->destroy();
 }
@@ -1108,7 +1134,7 @@ function change_dir($act = '', $dir = '', $all = FALSE)
 
     $action_menu['copy']->set_sensitive(FALSE);
     $action_menu['cut']->set_sensitive(FALSE);
-    $action_menu['paste']->set_sensitive(FALSE);
+    $action_menu['paste']->set_sensitive(TRUE);
     $action_menu['delete']->set_sensitive(FALSE);
     $action_menu['rename']->set_sensitive(FALSE);
     $action_menu['mass_rename']->set_sensitive(TRUE);
@@ -1852,5 +1878,140 @@ function window_hide($window)
     else
     {
         $window->show_all();
+    }
+}
+
+function on_drag($widget, $context, $data)
+{
+    global $start, $panel;
+
+    $selection = $widget->get_selection();
+    list($model, $iter) = $selection->get_selected();
+    if (empty($iter))
+    {
+        return FALSE;
+    }
+    $filename = $start[$panel] . DS . $model->get_value($iter, 0);
+    $data->set_text($filename);
+}
+
+/**
+ * Создаёт контекстное меню в момент отпускания перетаскиваемого файла.
+ */
+function on_drop($widget, $context, $x, $y, $data, $info, $time, $panel_source)
+{
+    global $panel, $lang;
+
+    if ($panel_source == $panel)
+    {
+        return FALSE;
+    }
+
+    $filename = $data->data;
+    foreach ($lang['letters'] as $key => $value)
+    {
+        $filename = str_replace($key, $value, $filename);
+    }
+
+    $menu = new GtkMenu();
+
+    $copy = new GtkImageMenuItem($lang['drag-drop']['copy']);
+    $copy->set_image(GtkImage::new_from_stock(Gtk::STOCK_COPY, Gtk::ICON_SIZE_MENU));
+    $copy->connect_simple('activate', 'drag_drop_action', $filename, 'copy');
+    $menu->append($copy);
+
+    $rename = new GtkImageMenuItem($lang['drag-drop']['rename']);
+    $rename->set_image(GtkImage::new_from_stock(Gtk::STOCK_CUT, Gtk::ICON_SIZE_MENU));
+    $rename->connect_simple('activate', 'drag_drop_action', $filename, 'rename');
+    $menu->append($rename);
+
+    $menu->show_all();
+    $menu->popup();
+}
+
+/**
+ * Копирует/перемещает перетаскиваемый файл.
+ * @global array $start
+ * @global string $panel
+ * @param string $filename Адрес файла, для которого необходимо произвести операцию
+ * @param string $action Совершаемое действие - copy|rename
+ */
+function drag_drop_action($filename, $action)
+{
+    global $start, $panel;
+
+    if ($panel == 'left')
+    {
+        $dest = $start['right'] . DS . basename($filename);
+    }
+    else
+    {
+        $dest = $start['left'] . DS . basename($filename);
+    }
+
+    if (file_exists($dest))
+    {
+        if (!file_exists_window($dest))
+        {
+            return FALSE;
+        }
+    }
+    
+    if ($action == 'copy')
+    {
+        my_copy($filename, $dest);
+    }
+    elseif ($action == 'rename')
+    {
+        my_rename($filename, $dest);
+    }
+
+    change_dir('none', '', TRUE);
+}
+
+/**
+ * Создаёт диалоговое окно, информирующее пользователя о том,
+ * что файл/папка с таким именем уже существует в данной директории
+ * и предлагает его заменить.
+ * @global array $lang
+ * @param string $filename Адрес файла
+ * @return bool Возвращает TRUE, если пользователь попросил заменить файл, иначе FALSE
+ */
+function file_exists_window($filename)
+{
+    global $lang;
+
+    $dialog = new GtkDialog($lang['alert']['title'], NULL, Gtk::DIALOG_MODAL);
+    $dialog->set_position(Gtk::WIN_POS_CENTER);
+    $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+    $dialog->set_skip_taskbar_hint(TRUE);
+    $dialog->set_resizable(FALSE);
+    $dialog->set_has_separator(FALSE);
+    $dialog->add_button($lang['alert']['replace_yes'], Gtk::RESPONSE_YES);
+    $dialog->add_button($lang['alert']['replace_no'], Gtk::RESPONSE_NO);
+
+    $vbox = $dialog->vbox;
+
+    $vbox->pack_start($hbox = new GtkHBox());
+    $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG), FALSE, FALSE, 10);
+    $str = str_replace('%s', basename($filename), $lang['alert']['file_exists_paste']);
+    $label = new GtkLabel($str);
+    $label->set_line_wrap(TRUE);
+    $label->set_justify(Gtk::JUSTIFY_CENTER);
+    $hbox->pack_start($label, TRUE, TRUE, 10);
+
+    $dialog->show_all();
+    $result = $dialog->run();
+    $dialog->destroy();
+
+    // Если нажата кнопка "Да", то удаляем существующий файл/папку
+    if ($result == Gtk::RESPONSE_YES)
+    {
+        my_rmdir($dest);
+        return TRUE;
+    }
+    else
+    {
+        return FALSE;
     }
 }

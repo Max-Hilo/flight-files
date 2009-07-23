@@ -524,9 +524,13 @@ $addressbar->pack_start($entry_current_dir);
 $addressbar->pack_start($button_change_dir, FALSE, FALSE);
 
 if ($_config['addressbar_view'] == 'on')
+{
     $addressbar->show_all();
+}
 else
+{
     $addressbar->hide();
+}
 $vbox->pack_start($addressbar, FALSE, FALSE);
 
 /////////////////////////////
@@ -543,6 +547,10 @@ $left->set_shadow_type(Gtk::SHADOW_IN);
 $store['left'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING,
     GObject::TYPE_STRING, GObject::TYPE_BOOLEAN, GObject::TYPE_STRING, GObject::TYPE_STRING);
 $tree_view['left'] = new GtkTreeView($store['left']);
+$tree_view['left']->drag_dest_set(Gtk::DEST_DEFAULT_ALL, array(array('text/plain', 0, 0)), Gdk::ACTION_COPY);
+$tree_view['left']->drag_source_set(Gdk::BUTTON1_MASK, array(array('text/plain', 0, 0)), Gdk::ACTION_COPY);
+$tree_view['left']->connect('drag-data-get', 'on_drag');
+$tree_view['left']->connect('drag-data-received', 'on_drop', 'left');
 
 // При необходимости показываем линии между колонками и между файлами
 if ($_config['view_lines_columns'] == 'on' AND $_config['view_lines_files'] == 'on')
@@ -590,6 +598,10 @@ sqlite_query($sqlite, "INSERT INTO history_right(path) VALUES('$start[right]')")
 current_dir('right');
 
 $tree_view['right'] = new GtkTreeView($store['right']);
+$tree_view['right']->drag_dest_set(Gtk::DEST_DEFAULT_ALL, array(array('text/plain', 0, 0)), Gdk::ACTION_COPY);
+$tree_view['right']->drag_source_set(Gdk::BUTTON1_MASK, array(array('text/plain', 0, 0)), Gdk::ACTION_COPY);
+$tree_view['right']->connect('drag-data-get', 'on_drag');
+$tree_view['right']->connect('drag-data-received', 'on_drop', 'right');
 
 // При необходимости показываем линии между колонками и между файлами
 if ($_config['view_lines_columns'] == 'on' AND $_config['view_lines_files'] == 'on')
