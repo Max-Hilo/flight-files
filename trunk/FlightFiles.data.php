@@ -206,7 +206,11 @@ function on_button($view, $event, $type)
     }
 
     $filename = $start[$panel] . DS . $file;
-    $image_size = @getimagesize($filename);
+//    $image_size = @getimagesize($filename);
+    if (function_exists('mime_content_type'))
+    {
+        $mime = mime_content_type($filename);
+    }
 
     // Если нажата левая кнопка, то...
     if ($event->button == 1)
@@ -251,7 +255,7 @@ function on_button($view, $event, $type)
                         $sfa = sqlite_fetch_array($query);
                         if (empty($sfa['command']))
                         {
-                            if (!empty($image_size[2]))
+                            if ($mime == 'image/jpeg' OR $mime == 'image/png' OR $mime == 'image/gif')
                             {
                                 image_view($filename);
                             }
@@ -275,20 +279,16 @@ function on_button($view, $event, $type)
                             exec('"'.$sfa['command'].'" "'.$filename.'" > /dev/null &');
                         }
                     }
-                    elseif (!empty($image_size[2]))
+                    elseif ($mime == 'image/jpeg' OR $mime == 'image/png' OR $mime == 'image/gif')
                     {
                         image_view($filename);
                     }
-                    elseif (function_exists('mime_content_type'))
+                    elseif ($mime == 'text/plain' OR $mime == 'text/html')
                     {
-                        $mime = mime_content_type($start[$panel]. DS .$file);
-                        if ($mime == 'text/plain' OR $mime == 'text/html')
-                        {
-                            text_editor_window($start[$panel] . DS . $file);
-                        }
+                        text_editor_window($start[$panel] . DS . $file);
                     }
                 }
-                elseif (!empty($image_size[2]))
+                elseif ($mime == 'image/jpeg' OR $mime == 'image/png' OR $mime == 'image/gif')
                 {
                     image_view($filename);
                 }
@@ -363,23 +363,19 @@ function on_button($view, $event, $type)
                     $menu->append($open);
                 }
             }
-            if (!empty($image_size[2]))
+            if ($mime == 'image/jpeg' OR $mime == 'image/png' OR $mime == 'image/gif')
             {
                 $open = new GtkMenuItem($lang['popup']['open_image']);
                 $menu->append($open);
                 $menu->append(new GtkSeparatorMenuItem());
                 $open->connect_simple('activate', 'image_view', $filename);
             }
-            elseif (function_exists('mime_content_type'))
+            elseif ($mime == 'text/plain' OR $mime == 'text/html')
             {
-                $mime = mime_content_type($start[$panel]. DS .$file);
-                if ($mime == 'text/plain' OR $mime == 'text/html')
-                {
-                    $open = new GtkMenuItem($lang['popup']['open_text_file']);
-                    $menu->append($open);
-                    $menu->append(new GtkSeparatorMenuItem());
-                    $open->connect_simple('activate', 'text_editor_window', $filename);
-                }
+                $open = new GtkMenuItem($lang['popup']['open_text_file']);
+                $menu->append($open);
+                $menu->append(new GtkSeparatorMenuItem());
+                $open->connect_simple('activate', 'text_editor_window', $filename);
             }
             $menu->append($copy);
             $menu->append($cut);
@@ -398,8 +394,8 @@ function on_button($view, $event, $type)
             $cut->connect_simple('activate', 'bufer_file', 'cut', $start[$panel]. DS .$file);
             $rename->connect_simple('activate', 'rename_window', $start[$panel]. DS .$file);
             $delete->connect_simple('activate', 'delete_window');
-            $md5->connect_simple('activate', 'CheckSumWindow', $start[$panel]. DS .$file, 'MD5');
-            $sha1->connect_simple('activate', 'CheckSumWindow', $start[$panel]. DS .$file, 'SHA1');
+            $md5->connect_simple('activate', 'checksum_window', $start[$panel]. DS .$file, 'MD5');
+            $sha1->connect_simple('activate', 'checksum_window', $start[$panel]. DS .$file, 'SHA1');
             $properties->connect_simple('activate', 'properties_window', $start[$panel]. DS .$file);
             $terminal->connect_simple('activate', 'open_terminal');
         }
@@ -514,31 +510,32 @@ function open_file($filename, $command)
  */
 function rename_window($filename = '')
 {
-    global $lang, $start, $panel, $selection;
+    global $lang, $start, $panel, $selection, $main_window;
 
     if (empty($filename))
     {
         list($model, $iter) = $selection[$panel]->get_selected();
         $filename = $start[$panel]. DS .$model->get_value($iter, 0);
     }
-    $dialog = new GtkDialog(
-        $lang['rename']['title'],
-        NULL,
-        Gtk::DIALOG_MODAL,
-        array(
-            Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL,
-            Gtk::STOCK_OK, Gtk::RESPONSE_OK
-        )
-    );
+
+    $dialog = new GtkDialog($lang['rename']['title'], NULL, Gtk::DIALOG_MODAL);
     $dialog->set_has_separator(FALSE);
     $dialog->set_position(Gtk::WIN_POS_CENTER);
+    $dialog->set_transient_for($main_window);
+    $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+
+    $dialog->add_button($lang['rename']['rename_yes'], Gtk::RESPONSE_YES);
+    $dialog->add_button($lang['rename']['rename_no'], Gtk::RESPONSE_NO);
+
     $vbox = $dialog->vbox;
+
     $vbox->pack_start($hbox = new GtkHBox());
-    $hbox->pack_start($entry = new GtkEntry(basename(basename($filename))));
+    $hbox->pack_start($entry = new GtkEntry(basename($filename)));
     $entry->connect('activate', 'on_rename', $filename, $dialog);
+
     $dialog->show_all();
     $result = $dialog->run();
-    if ($result == Gtk::RESPONSE_OK)
+    if ($result == Gtk::RESPONSE_YES)
     {
         on_rename($entry, $filename, $dialog);
     }
@@ -546,7 +543,6 @@ function rename_window($filename = '')
     {
         $dialog->destroy();
     }
-    change_dir('none', '', 'all');
 }
 
 /**
@@ -580,6 +576,7 @@ function on_rename($entry, $filename, $window)
     // Если всё хорошо
     else
     {
+        // Запрещённые символы
         if (OS == 'Windows')
         {
             $array = array('/', '\\', ':', '*', '?', '"', '<', '>', '|');
@@ -592,6 +589,7 @@ function on_rename($entry, $filename, $window)
         rename($filename, dirname($filename) . DS .$new_name);
         $window->destroy();
     }
+    change_dir('none', '', 'all');
 }
 
 /**
@@ -770,7 +768,7 @@ function my_copy($source, $dest)
  */
 function delete_window()
 {
-    global $_config, $lang, $selection, $panel, $start, $active_files;
+    global $_config, $lang, $selection, $panel, $start, $active_files, $main_window;
 
     list($model, $iter) = $selection[$panel]->get_selected();
     @$filename = $start[$panel] . DS . $model->get_value($iter, 0);
@@ -785,8 +783,13 @@ function delete_window()
         $dialog->set_has_separator(FALSE);
         $dialog->set_resizable(FALSE);
         $dialog->set_position(Gtk::WIN_POS_CENTER);
+        $dialog->set_transient_for($main_window);
+
+        $dialog->add_button($lang['delete']['button_yes'], Gtk::RESPONSE_YES);
+        $dialog->add_button($lang['delete']['button_no'], Gtk::RESPONSE_NO);
         
         $vbox = $dialog->vbox;
+
         $vbox->pack_start($hbox = new GtkHBox());
         $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
         if (!empty($active_files[$panel]))
@@ -808,36 +811,14 @@ function delete_window()
         $label->set_line_wrap(TRUE);
         $hbox->pack_start($label, TRUE, TRUE, 20);
 
-        $action_area = $dialog->action_area;
-
-        $btn_yes = new GtkButton();
-        $btn_yes->add($hbox = new GtkHBox());
-        $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_YES, Gtk::ICON_SIZE_MENU), FALSE, FALSE);
-        $hbox->pack_start(new GtkLabel($lang['delete']['yes']), TRUE, TRUE);
-        $btn_yes->connect_simple('clicked', 'delete_yes', $filename, $dialog);
-        $action_area->add($btn_yes);
-
-        $btn_no = new GtkButton();
-        $btn_no->add($hbox = new GtkHBox());
-        $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_NO, Gtk::ICON_SIZE_MENU), FALSE, FALSE);
-        $hbox->pack_start(new GtkLabel($lang['delete']['no']), TRUE, TRUE);
-        $btn_no->connect_simple('clicked', 'dialog_destroy', $dialog);
-        $action_area->add($btn_no);
-
         $dialog->show_all();
-        $dialog->run();
+        $result = $dialog->run();
         $dialog->destroy();
+        if ($result != Gtk::RESPONSE_YES)
+        {
+            return FALSE;
+        }
     }
-    else
-    {
-        delete_yes($filename);
-    }
-    change_dir('none', '', 'all');
-}
-
-function delete_yes($filename = '', $dialog = '')
-{
-    global $active_files, $panel, $start;
 
     if (!empty($active_files[$panel]))
     {
@@ -854,11 +835,8 @@ function delete_yes($filename = '', $dialog = '')
     {
         $dialog->destroy();
     }
-}
 
-function dialog_destroy($dialog)
-{
-    $dialog->destroy();
+    change_dir('none', '', 'all');
 }
 
 /**
@@ -1331,65 +1309,49 @@ function new_element($type)
  */
 function close_window()
 {
-    global $window, $_config, $lang, $sqlite, $start;
+    global $_config, $lang, $sqlite, $start, $main_window;
 
     if ($_config['ask_close'] == 'on')
     {
-        $dialog = new GtkDialog(
-            $lang['close']['title'],
-            NULL,
-            Gtk::DIALOG_MODAL,
-            array(
-                Gtk::STOCK_NO, Gtk::RESPONSE_NO,
-                Gtk::STOCK_YES, Gtk::RESPONSE_YES
-            )
-        );
-        $dialog->set_has_separator(FALSE);
+        $dialog = new GtkDialog($lang['close']['title'], NULL, Gtk::DIALOG_MODAL);
+        $dialog->set_position(Gtk::WIN_POS_CENTER);
         $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
         $dialog->set_skip_taskbar_hint(TRUE);
         $dialog->set_resizable(FALSE);
+        $dialog->set_has_separator(FALSE);
+        $dialog->set_transient_for($main_window);
+
+        $dialog->add_button($lang['close']['button_yes'], Gtk::RESPONSE_YES);
+        $dialog->add_button($lang['close']['button_no'], Gtk::RESPONSE_NO);
+
         $vbox = $dialog->vbox;
+
         $vbox->pack_start($hbox = new GtkHBox());
         $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG), FALSE, FALSE);
         $text = str_replace('%s', basename($filename), $lang['close']['text']);
         $hbox->pack_start(new GtkLabel($text), TRUE, TRUE, 20);
+
         $dialog->show_all();
         $result = $dialog->run();
-        if ($result == Gtk::RESPONSE_YES)
-        {
-            sqlite_query($sqlite, "DELETE FROM history_left");
-            sqlite_query($sqlite, "DELETE FROM history_right");
+        $dialog->destroy();
 
-            if ($_config['save_folders'] == 'on')
-            {
-                $left = $start['left'];
-                $right = $start['right'];
-                sqlite_query($sqlite, "UPDATE config SET value = '$left' WHERE key = 'HOME_DIR_LEFT'");
-                sqlite_query($sqlite, "UPDATE config SET value = '$right' WHERE key = 'HOME_DIR_RIGHT'");
-            }
-            $dialog->destroy();
-            Gtk::main_quit();
-        }
-        else
+        if ($result != Gtk::RESPONSE_YES)
         {
-            $dialog->destroy();
             return TRUE;
         }
     }
-    else
-    {
-        sqlite_query($sqlite, "DELETE FROM history_left");
-        sqlite_query($sqlite, "DELETE FROM history_right");
 
-        if ($_config['save_folders'] == 'on')
-        {
-            $left = $start['left'];
-            $right = $start['right'];
-            sqlite_query($sqlite, "UPDATE config SET value = '$left' WHERE key = 'HOME_DIR_LEFT'");
-            sqlite_query($sqlite, "UPDATE config SET value = '$right' WHERE key = 'HOME_DIR_RIGHT'");
-        }
-        Gtk::main_quit();
+    sqlite_query($sqlite, "DELETE FROM history_left");
+    sqlite_query($sqlite, "DELETE FROM history_right");
+
+    if ($_config['save_folders'] == 'on')
+    {
+        $left = $start['left'];
+        $right = $start['right'];
+        sqlite_query($sqlite, "UPDATE config SET value = '$left' WHERE key = 'HOME_DIR_LEFT'");
+        sqlite_query($sqlite, "UPDATE config SET value = '$right' WHERE key = 'HOME_DIR_RIGHT'");
     }
+    Gtk::main_quit();
 }
 
 /**
@@ -1805,28 +1767,39 @@ function change_part($combo)
  */
 function enter_template_window()
 {
-    global $lang;
+    global $lang, $main_window;
     
-    $dialog = new GtkDialog(
-        $lang['tmp_window']['title'],
-        NULL,
-        Gtk::DIALOG_MODAL,
-        array(
-            Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL,
-            Gtk::STOCK_OK, Gtk::RESPONSE_OK
-        )
-    );
-    $dialog->set_has_separator(FALSE);
+    $dialog = new GtkDialog($lang['tmp_window']['title'], NULL, Gtk::DIALOG_MODAL);
     $dialog->set_position(Gtk::WIN_POS_CENTER);
+    $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+    $dialog->set_skip_taskbar_hint(TRUE);
+    $dialog->set_resizable(FALSE);
+    $dialog->set_has_separator(FALSE);
+    $dialog->set_transient_for($main_window);
+    
+    $dialog->add_button($lang['tmp_window']['button_yes'], Gtk::RESPONSE_YES);
+    $dialog->add_button($lang['tmp_window']['button_no'], Gtk::RESPONSE_NO);
+
     $vbox = $dialog->vbox;
+
     $vbox->pack_start($hbox = new GtkHBox());
     $hbox->pack_start($entry = new GtkEntry());
+    $entry->connect_simple('activate', 'redirect_template', $entry, $dialog);
+
     $dialog->show_all();
     $result = $dialog->run();
-    if ($result == Gtk::RESPONSE_OK)
+
+    if ($result == Gtk::RESPONSE_YES)
     {
         active_all('template', $entry->get_text());
     }
+
+    $dialog->destroy();
+}
+
+function redirect_template($entry, $dialog)
+{
+    active_all('template', $entry->get_text());
     $dialog->destroy();
 }
 
@@ -1979,7 +1952,7 @@ function drag_drop_action($filename, $action)
  */
 function file_exists_window($filename)
 {
-    global $lang;
+    global $lang, $main_window;
 
     $dialog = new GtkDialog($lang['alert']['title'], NULL, Gtk::DIALOG_MODAL);
     $dialog->set_position(Gtk::WIN_POS_CENTER);
@@ -1987,6 +1960,8 @@ function file_exists_window($filename)
     $dialog->set_skip_taskbar_hint(TRUE);
     $dialog->set_resizable(FALSE);
     $dialog->set_has_separator(FALSE);
+    $dialog->set_transient_for($main_window);
+
     $dialog->add_button($lang['alert']['replace_yes'], Gtk::RESPONSE_YES);
     $dialog->add_button($lang['alert']['replace_no'], Gtk::RESPONSE_NO);
 

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Файл русской локализации, кодировка CP1251.
+ * Файл русской локализации, кодировка UTF-8.
  *
  * @copyright Copyright (C) 2009, Вавилов Егор (Shecspi)
  * @license http://www.opensource.org/licenses/mit-license.php MIT License
@@ -190,6 +190,7 @@ $lang['properties']['perms_write']      = 'Запись';
 $lang['properties']['perms_run']        = 'Выполнение';
 
 $lang['alert']['title']                 = 'FlightFiles :: Внимание';
+$lang['alert']['button_ok']             = 'Ok';
 $lang['alert']['bufer_clear']           = 'Буфер обмена очищен';
 $lang['alert']['chmod_read_dir']        = 'У вас недостаточно прав для просмотра указанной директории!';
 $lang['alert']['chmod_read_file']       = 'У вас недостаточно прав для просмотра указанного файла!';
@@ -227,14 +228,16 @@ $lang['popup']['new_dir']               = 'Создать папку';
 $lang['popup']['open_terminal']         = 'Открыть терминал здесь';
 $lang['popup']['paste']                 = 'Вставить';
 
-$lang['rename']['title']                = 'FlightFiles :: Переименовать';
+$lang['rename']['title']                = 'Переименовать';
+$lang['rename']['rename_yes']           = 'Переименовать';
+$lang['rename']['rename_no']            = 'Отменить';
 
 $lang['delete']['title']                = 'FlightFiles :: Удалить';
 $lang['delete']['one_dir']              = 'Вы действительно хотите удалить папку "%s" со всем её содержимым?';
 $lang['delete']['one_file']             = 'Вы действительно хотите удалить файл "%s"?';
 $lang['delete']['actives']              = 'Вы действительно хотите удалить выбранные файлы/папки?';
-$lang['delete']['yes']                  = 'Да, удалить';
-$lang['delete']['no']                   = 'Нет, не удалять';
+$lang['delete']['button_yes']           = 'Да, удалить';
+$lang['delete']['button_no']            = 'Нет, не удалять';
 
 $lang['size']['b']                      = 'Б';
 $lang['size']['kib']                    = 'КиБ';
@@ -250,7 +253,7 @@ $lang['font']['preview']                = 'Файловый менеджер FlightFiles';
 $lang['text_view']['file']              = 'Файл';
 $lang['text_view']['edit']              = 'Правка';
 $lang['text_view']['help']              = 'Справка';
-$lang['text_view']['nenu_save']         = 'Сохранить';
+$lang['text_view']['menu_save']         = 'Сохранить';
 $lang['text_view']['menu_quit']         = 'Выход';
 $lang['text_view']['menu_undo']         = 'Отменить';
 $lang['text_view']['menu_redo']         = 'Вернуть';
@@ -272,15 +275,20 @@ $lang['text_view']['toolbar_cut']       = 'Вырезать';
 $lang['text_view']['toolbar_cut_hint']  = 'Вырезать выделенный текст в буфер обмена';
 $lang['text_view']['toolbar_paste']     = 'Вставить';
 $lang['text_view']['toolbar_paste_hint']= 'Вставить текст из буфер обмена в текущую позицию указателя';
+$lang['text_view']['close_title']       = 'Внимание';
+$lang['text_view']['label']             = "Файл '%s' был изменён.\nСохранить изменения перед закрытием?";
+$lang['text_view']['button_yes']        = 'Да, сохранить';
+$lang['text_view']['button_cancel']     = 'Отменить';
+$lang['text_view']['button_no']         = 'Нет, не сохранять';
 
-$lang['text_editor_close']['title']      = 'FlightFiles :: Сохранить изменения';
-$lang['text_editor_close']['label']      = "Файл '%s' был изменён.\nСохранить изменения?";
-
-$lang['checksum']['title']              = 'FlightFiles :: Контрольная сумма - %s';
+$lang['checksum']['title']              = 'Контрольная сумма - %s';
 $lang['checksum']['text']               = 'Файл - %s';
+$lang['checksum']['button_ok']         = 'Ok';
 
 $lang['close']['title']                 = 'FlightFiles :: Закрыть';
 $lang['close']['text']                  = 'Действительно закрыть FlightFiles?';
+$lang['close']['button_yes']            = 'Да, закрыть';
+$lang['close']['button_no']             = 'Нет, не закрывать';
 
 $lang['command']['none']                = "Не выбрана программа для открытия файлов типа '%s'";
 $lang['command']['not_found']           = "Не верно указана программа для открытия файлов типа '%s'";
@@ -340,6 +348,16 @@ $lang['image']['rotate_right']          = 'Вправо';
 $lang['image']['rotate_right_hint']     = 'Повернуть изображение вправо на 90 градусов';
 $lang['image']['gd_not_found']          = 'Не найдена библиотека GD.';
 $lang['image']['imagerotate_not_found'] = 'Функция imagerotate() не доступна.';
+$lang['image']['menu_file']             = '_Файл';
+$lang['image']['menu_view']             = '_Вид';
+$lang['image']['menu_help']             = '_Справка';
+$lang['image']['menu_close']            = 'Выход';
+$lang['image']['menu_zoom_in']          = 'Увеличить';
+$lang['image']['menu_zoom_out']         = 'Уменьшить';
+$lang['image']['menu_zoom_source']      = 'Исходный';
+$lang['image']['menu_rotate_left']      = 'Влево';
+$lang['image']['menu_rotate_right']     = 'Вправо';
+$lang['image']['about']                 = 'О программе';
 
 $lang['help']['using']                  = 'Использование:';
 $lang['help']['key']                    = 'КЛЮЧ';
@@ -349,7 +367,9 @@ $lang['help']['help']                   = 'Показать данную справку и выйти';
 $lang['help']['version']                = 'Показать версию программы и выйти';
 $lang['help']['one']                    = 'Запустить в однопанельном режиме';
 
-$lang['tmp_window']['title']            = 'FlightFiles :: Выделение по шаблону';
+$lang['tmp_window']['title']            = 'Выделение по шаблону';
+$lang['tmp_window']['button_yes']       = 'Продолжить';
+$lang['tmp_window']['button_no']        = 'Отменить';
 
 $lang['tray']['tooltip']                = 'Файловый менеджер FlightFiles';
 $lang['tray']['hide']                   = 'Скрыть окно';

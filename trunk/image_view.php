@@ -61,7 +61,89 @@ function image_view($filename)
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $window->set_position(Gtk::WIN_POS_CENTER);
     $window->set_size_request($width, $height);
+    $accel_group = new GtkAccelGroup();
+    $window->add_accel_group($accel_group);
+    
+    //////////////////////////////////
+    ///// Область с изображением /////
+    //////////////////////////////////
+    $pixbuf = GdkPixbuf::new_from_file($filename);
+    $image = GtkImage::new_from_pixbuf($pixbuf);
+    $scroll = new GtkScrolledWindow();
+    $scroll->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
+    $scroll->add_with_viewport($image);
 
+    ////////////////////////////
+    ///// Строка состояния /////
+    ////////////////////////////
+    $statusbar = new GtkStatusBar();
+    $statusbar->push(1, $pixbuf_width . ' x ' . $pixbuf_height . '    '.convert_size($filename) . '    ' . $scope_image . '%');
+
+    ////////////////
+    ///// Меню /////
+    ////////////////
+    $menu = new GtkMenuBar();
+
+    $file = new GtkMenuItem($lang['image']['menu_file']);
+    $view = new GtkMenuItem($lang['image']['menu_view']);
+    $help = new GtkMenuItem($lang['image']['menu_help']);
+
+    $sub_file = new GtkMenu();
+    $sub_view = new GtkMenu();
+    $sub_help = new GtkMenu();
+
+    $file->set_submenu($sub_file);
+    $view->set_submenu($sub_view);
+    $help->set_submenu($sub_help);
+
+    $menu->append($file);
+    $menu->append($view);
+    $menu->append($help);
+
+    $menu_item['close'] = new GtkImageMenuItem($lang['image']['menu_close']);
+    $menu_item['close']->set_image(GtkImage::new_from_stock(Gtk::STOCK_CLOSE, Gtk::ICON_SIZE_MENU));
+    $menu_item['close']->add_accelerator('activate', $accel_group, Gdk::KEY_Q, Gdk::CONTROL_MASK, 1);
+    $menu_item['close']->connect_simple('activate', 'image_view_close', $window);
+    $sub_file->append($menu_item['close']);
+
+    $menu_item['zoom_in'] = new GtkImageMenuItem($lang['image']['menu_zoom_in']);
+    $menu_item['zoom_in']->set_image(GtkImage::new_from_stock(Gtk::STOCK_ZOOM_IN, Gtk::ICON_SIZE_MENU));
+    $menu_item['zoom_in']->add_accelerator('activate', $accel_group, Gdk::KEY_plus, Gdk::CONTROL_MASK, 1);
+    $menu_item['zoom_in']->connect_simple('activate', 'change_size_image', 'zoom_in', $filename, $image, $statusbar);
+    $sub_view->append($menu_item['zoom_in']);
+
+    $menu_item['zoom_out'] = new GtkImageMenuItem($lang['image']['menu_zoom_out']);
+    $menu_item['zoom_out']->set_image(GtkImage::new_from_stock(Gtk::STOCK_ZOOM_OUT, Gtk::ICON_SIZE_MENU));
+    $menu_item['zoom_out']->add_accelerator('activate', $accel_group, Gdk::KEY_minus, Gdk::CONTROL_MASK, 1);
+    $menu_item['zoom_out']->connect_simple('activate', 'change_size_image', 'zoom_out', $filename, $image, $statusbar);
+    $sub_view->append($menu_item['zoom_out']);
+    
+    $menu_item['zoom_source'] = new GtkImageMenuItem($lang['image']['menu_zoom_source']);
+    $menu_item['zoom_source']->set_image(GtkImage::new_from_stock(Gtk::STOCK_ZOOM_100, Gtk::ICON_SIZE_MENU));
+    $menu_item['zoom_source']->add_accelerator('activate', $accel_group, Gdk::KEY_0, Gdk::CONTROL_MASK, 1);
+    $menu_item['zoom_source']->connect_simple('activate', 'change_size_image', 'zoom_source', $filename, $image, $statusbar);
+    $sub_view->append($menu_item['zoom_source']);
+
+    $sub_view->append(new GtkSeparatorMenuItem());
+
+    $menu_item['rotate_left'] = new GtkImageMenuItem($lang['image']['menu_rotate_left']);
+    $menu_item['rotate_left']->add_accelerator('activate', $accel_group, Gdk::KEY_Left, Gdk::CONTROL_MASK, 1);
+    $menu_item['rotate_left']->connect_simple('activate', 'rotate_image', 'left', $filename, $image);
+    $sub_view->append($menu_item['rotate_left']);
+
+    $menu_item['rotate_right'] = new GtkImageMenuItem($lang['image']['menu_rotate_right']);
+    $menu_item['rotate_right']->add_accelerator('activate', $accel_group, Gdk::KEY_Right, Gdk::CONTROL_MASK, 1);
+    $menu_item['rotate_right']->connect_simple('activate', 'rotate_image', 'right', $filename, $image);
+    $sub_view->append($menu_item['rotate_right']);
+
+    $menu_item['about'] = new GtkImageMenuItem($lang['image']['about']);
+    $menu_item['about']->set_image(GtkImage::new_from_stock(Gtk::STOCK_ABOUT, Gtk::ICON_SIZE_MENU));
+    $menu_item['about']->connect_simple('activate', 'about_window');
+    $sub_help->append($menu_item['about']);
+
+    ///////////////////////////////
+    ///// Панель инструментов /////
+    ///////////////////////////////
     $toolbar = new GtkToolBar();
     $toolbar->set_show_arrow(TRUE);
 
@@ -95,22 +177,16 @@ function image_view($filename)
     $rotate_right->set_tooltip_text($lang['image']['rotate_right_hint']);
     $toolbar->insert($rotate_right, -1);
 
-    $pixbuf = GdkPixbuf::new_from_file($filename);
-    $image = GtkImage::new_from_pixbuf($pixbuf);
-    $scroll = new GtkScrolledWindow();
-    $scroll->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
-    $scroll->add_with_viewport($image);
-
-    $statusbar = new GtkStatusBar();
-    $statusbar->push(1, $pixbuf_width . ' x ' . $pixbuf_height . '    '.convert_size($filename) . '    ' . $scope_image . '%');
-
     $zoom_in->connect_simple('clicked', 'change_size_image', 'zoom_in', $filename, $image, $statusbar);
     $zoom_out->connect_simple('clicked', 'change_size_image', 'zoom_out', $filename, $image, $statusbar);
     $zoom_source->connect_simple('clicked', 'change_size_image', 'zoom_source', $filename, $image, $statusbar);
     $rotate_left->connect_simple('clicked', 'rotate_image', 'left', $filename, $image);
     $rotate_right->connect_simple('clicked', 'rotate_image', 'right', $filename, $image);
 
+    ///////////////////////////////////
+
     $vbox = new GtkVBox();
+    $vbox->pack_start($menu, FALSE, FALSE, 0);
     $vbox->pack_start($toolbar, FALSE, FALSE);
     $vbox->pack_start($scroll, TRUE, TRUE);
     $vbox->pack_end($statusbar, FALSE, FALSE);
@@ -118,6 +194,12 @@ function image_view($filename)
     $window->add($vbox);
     $window->show_all();
     Gtk::main();
+}
+
+function image_view_close($window)
+{
+    $window->destroy();
+    Gtk::main_quit();
 }
 
 /**
