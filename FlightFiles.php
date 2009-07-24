@@ -101,14 +101,14 @@ if (!file_exists(LANG_DIR))
 // Подключаемся к базе данных
 if (!file_exists(DATABASE))
 {
-    $window = new GtkWindow();
-    $window->set_position(Gtk::WIN_POS_CENTER);
-    $window->set_title('FlightFiles :: Start');
-    $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
-    $window->set_resizable(FALSE);
-    $window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
-    $window->set_deletable(FALSE);
-    $window->connect_simple('destroy', 'Gtk::main_quit');
+    $start_window = new GtkWindow();
+    $start_window->set_position(Gtk::WIN_POS_CENTER);
+    $start_window->set_title('FlightFiles :: Start');
+    $start_window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+    $start_window->set_resizable(FALSE);
+    $start_window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
+    $start_window->set_deletable(FALSE);
+    $start_window->connect_simple('destroy', 'Gtk::main_quit');
 
     $hbox = new GtkHBox();
     $hbox->pack_start(new GtkLabel("Select language:"), FALSE, FALSE, 5);
@@ -128,10 +128,10 @@ if (!file_exists(DATABASE))
     $vbox = new GtkVBox();
     $vbox->pack_start($hbox, FALSE, FALSE);
     $vbox->pack_start($btn = new GtkButton('Next'), FALSE, FALSE);
-    $btn->connect_simple('clicked', 'create_database', $combo, $window);
+    $btn->connect_simple('clicked', 'create_database', $combo, $start_window);
 
-    $window->add($vbox);
-    $window->show_all();
+    $start_window->add($vbox);
+    $start_window->show_all();
     Gtk::main();
 }
 else
@@ -225,25 +225,25 @@ $active_files = array('left' => array(), 'right' => array());
  */
 $clp = array('action' => '', 'files' => array());
 
-$window = new GtkWindow();
-$window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
-$window->set_default_size(1100, 700);
-$window->set_position(Gtk::WIN_POS_CENTER);
-$window->set_title($lang['title_program']);
+$main_window = new GtkWindow();
+$main_window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+$main_window->set_default_size(1100, 700);
+$main_window->set_position(Gtk::WIN_POS_CENTER);
+$main_window->set_title($lang['title_program']);
 if ($_config['maximize'] == 'on')
 {
-    $window->maximize();
+    $main_window->maximize();
 }
-$window->connect_simple('delete-event', 'close_window');
+$main_window->connect_simple('delete-event', 'close_window');
 $accel_group = new GtkAccelGroup();
-$window->add_accel_group($accel_group);
+$main_window->add_accel_group($accel_group);
 $action_group = new GtkActionGroup('menubar');
 
 // Создаём иконку в трее
 $tray = GtkStatusIcon::new_from_file(ICON_PROGRAM);
 $tray->set_tooltip($lang['tray']['tooltip']);
-$tray->connect_simple('activate', 'window_hide', $window);
-$tray->connect_simple('popup-menu', 'tray_menu', $window);
+$tray->connect_simple('activate', 'window_hide', $main_window);
+$tray->connect_simple('popup-menu', 'tray_menu', $main_window);
 if ($_config['status_icon'] == 'on')
 {
     $tray->set_visible(TRUE);
@@ -666,8 +666,8 @@ $vbox->pack_start(status_bar(), FALSE, FALSE);
 //////////
 //////////
 
-$window->add($vbox);
-$window->show();
+$main_window->add($vbox);
+$main_window->show();
 Gtk::main();
 
 ?>

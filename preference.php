@@ -11,7 +11,7 @@
  */
 function preference()
 {
-    global $_config, $lang, $sqlite;
+    global $_config, $lang, $sqlite, $main_window;
     
     $window = new GtkWindow();
     $window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);

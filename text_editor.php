@@ -32,7 +32,6 @@ function text_editor_window($filename)
     $text_editor['window']->set_title($text_editor['title']);
     $accel_group = new GtkAccelGroup();
     $text_editor['window']->add_accel_group($accel_group);
-    $action_group = new GtkActionGroup('menu');
 
     $vbox = new GtkVBox();
 
@@ -94,7 +93,7 @@ function text_editor_window($filename)
     $menu->append($edit);
     $menu->append($help);
 
-    $text_editor['menu']['save'] = new GtkImageMenuItem($lang['text_view']['nenu_save']);
+    $text_editor['menu']['save'] = new GtkImageMenuItem($lang['text_view']['menu_save']);
     $text_editor['menu']['save']->set_image(GtkImage::new_from_stock(Gtk::STOCK_SAVE, Gtk::ICON_SIZE_MENU));
     $text_editor['menu']['save']->add_accelerator('activate', $text_editor['accel_group'], Gdk::KEY_S, Gdk::CONTROL_MASK, 1);
     $text_editor['menu']['save']->connect_simple('activate', 'save_file', $source_buffer);
@@ -385,45 +384,43 @@ function text_editor_window_close($buffer)
     $new_text = $buffer->get_text($buffer->get_start_iter(), $buffer->get_end_iter());
     if ($text_editor['old_text'] != $new_text)
     {
-        $dialog = new GtkDialog(
-            $lang['text_editor_close']['title'],
-            NULL,
-            Gtk::DIALOG_MODAL,
-            array(
-                Gtk::STOCK_YES, Gtk::RESPONSE_YES,
-                Gtk::STOCK_NO, Gtk::RESPONSE_NO,
-                Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL
-            )
-        );
+        $dialog = new GtkDialog($lang['text_view']['close_title'], NULL, Gtk::DIALOG_MODAL);
         $dialog->set_has_separator(FALSE);
-        $dialog->set_resizable(FALSE);
         $dialog->set_position(Gtk::WIN_POS_CENTER);
+        $dialog->set_transient_for($main_window);
+        $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+        
+        $dialog->add_button($lang['text_view']['button_yes'], Gtk::RESPONSE_YES);
+        $dialog->add_button($lang['text_view']['button_cancel'], Gtk::RESPONSE_CANCEL);
+        $dialog->add_button($lang['text_view']['button_no'], Gtk::RESPONSE_NO);
+
         $vbox = $dialog->vbox;
+
         $vbox->pack_start($hbox = new GtkHBox());
         $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
-        $str = str_replace('%s', basename($text_editor['filename']), $lang['text_editor_close']['label']);
+        $str = str_replace('%s', basename($text_editor['filename']), $lang['text_view']['label']);
         $label = new GtkLabel($str);
         $hbox->pack_start($label);
+
         $dialog->show_all();
         $result = $dialog->run();
+        $dialog->destroy();
+
         if ($result == Gtk::RESPONSE_YES)
         {
             save_file($buffer);
-            $dialog->destroy();
             $text_editor['window']->destroy();
             Gtk::main_quit();
             return FALSE;
         }
         elseif ($result == Gtk::RESPONSE_NO)
         {
-            $dialog->destroy();
             $text_editor['window']->destroy();
             Gtk::main_quit();
             return FALSE;
         }
         else
         {
-            $dialog->destroy();
             return TRUE;
         }
     }

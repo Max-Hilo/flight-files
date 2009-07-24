@@ -8,28 +8,36 @@
 
 /**
  * Создание диалоговое окна, в котором отображается контрольная сумма указанного файла.
- * @param string $fileName Адрес файла, для которого необходимо произвести операцию
- * @param string $algCrypt Алгоритм шифрования (поддерживается MD5 и SHA1)
+ * @param string $filename Адрес файла, для которого необходимо произвести операцию
+ * @param string $alg Алгоритм шифрования (поддерживается MD5 и SHA1)
  */
-function CheckSumWindow($fileName, $algCrypt)
+function checksum_window($filename, $alg)
 {
-    global $lang;
+    global $lang, $main_window;
     
-    $dialog = new GtkDialog(str_replace('%s', $algCrypt, $lang['checksum']['title']), NULL, Gtk::DIALOG_MODAL);
+    $dialog = new GtkDialog(str_replace('%s', $alg, $lang['checksum']['title']), NULL, Gtk::DIALOG_MODAL);
     $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $dialog->set_skip_taskbar_hint(TRUE);
     $dialog->set_position(Gtk::WIN_POS_CENTER);
     $dialog->set_size_request(400, -1);
+    $dialog->set_transient_for($main_window);
+    $dialog->set_has_separator(FALSE);
+
+    $dialog->add_button($lang['checksum']['button_ok'], Gtk::RESPONSE_OK);
+
     $vbox = $dialog->vbox;
-    $vbox->pack_start(new GtkLabel(str_replace('%s', basename($fileName), $lang['checksum']['text'])));
+
+    $vbox->pack_start(new GtkLabel(str_replace('%s', basename($filename), $lang['checksum']['text'])));
     $vbox->pack_start($hbox = new GtkHBox());
     $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_INFO, Gtk::ICON_SIZE_DIALOG), FALSE, FALSE);
-    if ($algCrypt == 'MD5')
-        $hbox->pack_start(new GtkEntry(md5_file($fileName), 32), TRUE, TRUE);
-    elseif ($algCrypt == 'SHA1')
-        $hbox->pack_start(new GtkEntry(sha1_file($fileName), 40), TRUE, TRUE );
-    $dialog->add_button(Gtk::STOCK_OK, Gtk::RESPONSE_OK);
-    $dialog->set_has_separator(FALSE);
+    if ($alg == 'MD5')
+    {
+        $hbox->pack_start(new GtkEntry(md5_file($filename), 32), TRUE, TRUE);
+    }
+    elseif ($alg == 'SHA1')
+    {
+        $hbox->pack_start(new GtkEntry(sha1_file($filename), 40), TRUE, TRUE );
+    }
     $dialog->show_all();
     $dialog->run();
     $dialog->destroy();
