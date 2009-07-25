@@ -75,7 +75,7 @@ function config_parser()
  */
 function on_button($view, $event, $type)
 {
-    global $panel, $lang, $store, $action_menu, $action, $start, $entry_current_dir, $number, $sqlite, $active_files, $clp;
+    global $panel, $lang, $store, $action_menu, $action, $start, $entry_current_dir, $number, $sqlite, $clp, $selection;
 
     $panel = $type;
 
@@ -84,8 +84,8 @@ function on_button($view, $event, $type)
 
     $action_menu['new_file']->set_sensitive(TRUE);
     $action_menu['new_dir']->set_sensitive(TRUE);
-    $action_menu['comparison_file']->set_sensitive(FALSE);
-    $action_menu['comparison_dir']->set_sensitive(FALSE);
+//    $action_menu['comparison_file']->set_sensitive(FALSE);
+//    $action_menu['comparison_dir']->set_sensitive(FALSE);
 
     $action_menu['copy']->set_sensitive(TRUE);
     $action_menu['cut']->set_sensitive(TRUE);
@@ -158,32 +158,6 @@ function on_button($view, $event, $type)
         $action_menu['paste']->set_sensitive(FALSE);
     }
 
-    $files = 0;
-    $dirs = 0;
-    if (!empty($active_files[$panel]))
-    {
-        foreach ($active_files[$panel] as $file)
-        {
-            $filename = $start[$panel]. DS .$file;
-            if (is_file($filename))
-            {
-                $files++;
-            }
-            elseif (is_dir($filename))
-            {
-                $dirs++;
-            }
-        }
-    }
-    if ($files == 2 OR $files == 3)
-    {
-        $action_menu['comparison_file']->set_sensitive(TRUE);
-    }
-    if ($dirs == 2 OR $dirs == 3)
-    {
-        $action_menu['comparison_dir']->set_sensitive(TRUE);
-    }
-
     // Устанавливаем новое значение в адресную строку
     $entry_current_dir->set_text($start[$panel]);
 
@@ -193,7 +167,7 @@ function on_button($view, $event, $type)
     @$iter = $store[$panel]->get_iter($path);
     @$file = $store[$panel]->get_value($iter, 0);
     @$extension = $store[$panel]->get_value($iter, 1);
-    @$dir_file = $store[$panel]->get_value($iter, 5);
+    @$dir_file = $store[$panel]->get_value($iter, 4);
     @$size = $store[$panel]->get_value($iter, 2);
 
     // Если щелчок был произведён в пустое место списка файлов
@@ -203,10 +177,11 @@ function on_button($view, $event, $type)
         $action_menu['cut']->set_sensitive(FALSE);
         $action_menu['delete']->set_sensitive(FALSE);
         $action_menu['rename']->set_sensitive(FALSE);
+        $selection[$panel]->unselect_all();
     }
 
     $filename = $start[$panel] . DS . $file;
-//    $image_size = @getimagesize($filename);
+
     if (function_exists('mime_content_type'))
     {
         $mime = mime_content_type($filename);
@@ -244,54 +219,42 @@ function on_button($view, $event, $type)
                 $ext = '.'.$explode[count($explode) - 1];
                 $query = sqlite_query($sqlite, "SELECT id_type, ext FROM ext_files WHERE ext = '$ext'");
                 $snr = sqlite_num_rows($query);
+
+                // Открыть программой из файловых ассоциаций
                 if ($snr != 0)
                 {
                     $sfa = sqlite_fetch_array($query);
                     $id = $sfa['id_type'];
                     $query = sqlite_query($sqlite, "SELECT id, type, command FROM type_files WHERE id = '$id'");
-                    $snr = sqlite_num_rows($query);
-                    if ($snr != 0)
+                    $sfa = sqlite_fetch_array($query);
+                    if (empty($sfa['command']))
                     {
-                        $sfa = sqlite_fetch_array($query);
-                        if (empty($sfa['command']))
-                        {
-                            if ($mime == 'image/jpeg' OR $mime == 'image/png' OR $mime == 'image/gif')
-                            {
-                                image_view($filename);
-                            }
-                            else
-                            {
-                                $str = str_replace('%s', $sfa['type'], $lang['command']['none']);
-                                alert_window($str);
-                            }
-                        }
-                        elseif (!file_exists($sfa['command']))
-                        {
-                            $str = str_replace('%s', $sfa['type'], $lang['command']['not_found']);
-                            alert_window($str);
-                        }
-                        elseif (OS == 'Windows')
-                        {
-                            pclose(popen('start /B "'.$sfa['command'].'" '.$filename, "r"));
-                        }
-                        else
-                        {
-                            exec('"'.$sfa['command'].'" "'.$filename.'" > /dev/null &');
-                        }
+                        alert_window($lang['alert']['empty_command']);
                     }
-                    elseif ($mime == 'image/jpeg' OR $mime == 'image/png' OR $mime == 'image/gif')
+                    elseif (!file_exists($sfa['command']))
                     {
-                        image_view($filename);
+                        alert_window($lang['command']['commabd_not_found']);
                     }
-                    elseif ($mime == 'text/plain' OR $mime == 'text/html')
+                    elseif (OS == 'Windows')
                     {
-                        text_editor_window($start[$panel] . DS . $file);
+                        pclose(popen('start /B "'.$sfa['command'].'" '.$filename, "r"));
+                    }
+                    else
+                    {
+                        exec('"'.$sfa['command'].'" "'.$filename.'" > /dev/null &');
                     }
                 }
+                // Открыть "системной" программой
+                elseif (OS == 'Windows')
+                {
+                    open_in_system($filename);
+                }
+                // Открыть встроенным просмотрщиком изображений
                 elseif ($mime == 'image/jpeg' OR $mime == 'image/png' OR $mime == 'image/gif')
                 {
                     image_view($filename);
                 }
+                // Открыть встроенным текстовым редактором
                 elseif (function_exists('mime_content_type'))
                 {
                     $mime = mime_content_type($start[$panel]. DS .$file);
@@ -332,8 +295,10 @@ function on_button($view, $event, $type)
             $checksum->set_submenu($sub_checksum);
             $md5 = new GtkMenuItem($lang['popup']['md5']);
             $sha1 = new GtkMenuItem($lang['popup']['sha1']);
+            $crc32 = new GtkMenuItem($lang['popup']['crc32']);
             $sub_checksum->append($md5);
             $sub_checksum->append($sha1);
+            $sub_checksum->append($crc32);
 
             // Расчитывать контрольную сумму для пустых файлов бессмысленно
             if ($size == '0 '.$lang['size']['b'])
@@ -355,13 +320,19 @@ function on_button($view, $event, $type)
                 $id = $sfa['id_type'];
                 $query = sqlite_query($sqlite, "SELECT id, type, command FROM type_files WHERE id = '$id' LIMIT 1");
                 $sfa = sqlite_fetch_array($query);
-                if (!empty($sfa['command']))
+                if (!empty($sfa['command']) AND file_exists($sfa['command']))
                 {
                     $command = $sfa['command'];
                     $open = new GtkMenuItem(str_replace('%s', basename($command), $lang['popup']['open_in']));
                     $open->connect_simple('activate', 'open_file', $filename, $command);
                     $menu->append($open);
                 }
+            }
+            elseif (OS == 'Windows')
+            {
+                $open = new GtkMenuItem($lang['popup']['open_in_system']);
+                $open->connect_simple('activate', 'open_in_system', $filename);
+                $menu->append($open);
             }
             if ($mime == 'image/jpeg' OR $mime == 'image/png' OR $mime == 'image/gif')
             {
@@ -390,12 +361,13 @@ function on_button($view, $event, $type)
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($properties);
 
-            $copy->connect_simple('activate', 'bufer_file', 'copy', $start[$panel]. DS .$file);
-            $cut->connect_simple('activate', 'bufer_file', 'cut', $start[$panel]. DS .$file);
-            $rename->connect_simple('activate', 'rename_window', $start[$panel]. DS .$file);
+            $copy->connect_simple('activate', 'bufer_file', 'copy');
+            $cut->connect_simple('activate', 'bufer_file', 'cut');
+            $rename->connect_simple('activate', 'rename_window');
             $delete->connect_simple('activate', 'delete_window');
             $md5->connect_simple('activate', 'checksum_window', $start[$panel]. DS .$file, 'MD5');
             $sha1->connect_simple('activate', 'checksum_window', $start[$panel]. DS .$file, 'SHA1');
+            $crc32->connect_simple('activate', 'checksum_window', $start[$panel]. DS .$file, 'CRC32');
             $properties->connect_simple('activate', 'properties_window', $start[$panel]. DS .$file);
             $terminal->connect_simple('activate', 'open_terminal');
         }
@@ -434,9 +406,9 @@ function on_button($view, $event, $type)
             $menu->append($properties);
 
             $open->connect_simple('activate', 'change_dir', 'open', $file);
-            $copy->connect_simple('activate', 'bufer_file', 'copy', $start[$panel]. DS .$file);
-            $cut->connect_simple('activate', 'bufer_file', 'cut', $start[$panel]. DS .$file);
-            $rename->connect_simple('activate', 'rename_window', $start[$panel]. DS .$file);
+            $copy->connect_simple('activate', 'bufer_file', 'copy');
+            $cut->connect_simple('activate', 'bufer_file', 'cut');
+            $rename->connect_simple('activate', 'rename_window');
             $delete->connect_simple('activate', 'delete_window');
             $terminal->connect_simple('activate', 'open_terminal');
             $properties->connect_simple('activate', 'properties_window', $start[$panel]. DS .$file);
@@ -449,8 +421,6 @@ function on_button($view, $event, $type)
             $new_dir->set_image(GtkImage::new_from_stock(Gtk::STOCK_DIRECTORY, Gtk::ICON_SIZE_MENU));
             $paste = new GtkImageMenuItem($lang['popup']['paste']);
             $paste->set_image(GtkImage::new_from_stock(Gtk::STOCK_PASTE, Gtk::ICON_SIZE_MENU));
-            $delete = new GtkImageMenuItem($lang['popup']['delete']);
-            $delete->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_MENU));
             $terminal = new GtkMenuItem($lang['popup']['open_terminal']);
 
             if (!is_writable($start[$panel]))
@@ -467,11 +437,6 @@ function on_button($view, $event, $type)
             $menu->append($new_dir);
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($paste);
-            if (!empty($active_files[$panel]))
-            {
-                $menu->append(new GtkSeparatorMenuItem());
-                $menu->append($delete);
-            }
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($terminal);
 
@@ -479,7 +444,6 @@ function on_button($view, $event, $type)
             $new_file->connect_simple('activate', 'new_element', 'file');
             $new_dir->connect_simple('activate', 'new_element', 'dir');
             $terminal->connect_simple('activate', 'open_terminal');
-            $delete->connect_simple('activate', 'delete_window');
         }
 
         // Показываем контекстное меню
@@ -506,17 +470,22 @@ function open_file($filename, $command)
  * @global array $start
  * @global string $panel
  * @global object $selection
- * @param string $filename Файл/каталог, для которого необходимо выполнить операцию.
  */
-function rename_window($filename = '')
+function rename_window()
 {
-    global $lang, $start, $panel, $selection, $main_window;
+    global $lang, $start, $panel, $selection, $main_window, $store;
 
-    if (empty($filename))
+    list($model, $rows) = $selection[$panel]->get_selected_rows();
+
+    // На данный момент переименовать можно только один файл
+    if (count($rows) != 1)
     {
-        list($model, $iter) = $selection[$panel]->get_selected();
-        $filename = $start[$panel]. DS .$model->get_value($iter, 0);
+        return FALSE;
     }
+
+    $iter = $store[$panel]->get_iter($rows[0][0]);
+    $file = $store[$panel]->get_value($iter, 0);
+    $filename = $start[$panel] . DS . $file;
 
     $dialog = new GtkDialog($lang['rename']['title'], NULL, Gtk::DIALOG_MODAL);
     $dialog->set_has_separator(FALSE);
@@ -594,31 +563,24 @@ function on_rename($entry, $filename, $window)
 
 /**
  * Функция помещает адреса выбранных файлов/каталогов в буфера обмена.
- * @param string $filename Адрес файла, для которого необходимо выполнить операцию.
  * @param string $act Идентификатор операции вырезания/копирования.
  */
-function bufer_file($act, $filename = '')
+function bufer_file($act)
 {
-    global $start, $panel, $action, $action_menu, $selection, $active_files, $clp;
+    global $start, $panel, $action, $action_menu, $selection, $clp, $store;
 
     unset($clp['action'], $clp['files']);
     $clp['action'] = $act;
-    if (empty($active_files[$panel]))
+
+    list($model, $rows) = $selection[$panel]->get_selected_rows();
+    foreach ($rows as $value)
     {
-        if (empty($filename))
-        {
-            list($model, $iter) = $selection[$panel]->get_selected();
-            $filename = $start[$panel]. DS .$model->get_value($iter, 0);
-        }
+        $iter = $store[$panel]->get_iter($value[0]);
+        $file = $store[$panel]->get_value($iter, 0);
+        $filename = $start[$panel] . DS . $file;
         $clp['files'][] = $filename;
     }
-    else
-    {
-        foreach ($active_files[$panel] as $value)
-        {
-            $clp['files'][] = $start[$panel] . DS . $value;
-        }
-    }
+
     $action_menu['clear_bufer']->set_sensitive(TRUE);
     if (is_writable($start[$panel]))
     {
@@ -768,18 +730,13 @@ function my_copy($source, $dest)
  */
 function delete_window()
 {
-    global $_config, $lang, $selection, $panel, $start, $active_files, $main_window;
-
-    list($model, $iter) = $selection[$panel]->get_selected();
-    @$filename = $start[$panel] . DS . $model->get_value($iter, 0);
+    global $_config, $lang, $selection, $panel, $start, $main_window, $store;
 
     if ($_config['ask_delete'] == 'on')
     {
-        $dialog = new GtkDialog(
-            $lang['delete']['title'],
-            NULL,
-            Gtk::DIALOG_MODAL
-        );
+        list($model, $rows) = $selection[$panel]->get_selected_rows();
+
+        $dialog = new GtkDialog($lang['delete']['title'], NULL, Gtk::DIALOG_MODAL);
         $dialog->set_has_separator(FALSE);
         $dialog->set_resizable(FALSE);
         $dialog->set_position(Gtk::WIN_POS_CENTER);
@@ -792,12 +749,11 @@ function delete_window()
 
         $vbox->pack_start($hbox = new GtkHBox());
         $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
-        if (!empty($active_files[$panel]))
+        if (count($rows) == 1)
         {
-            $str = str_replace('%s', basename($filename), $lang['delete']['actives']);
-        }
-        else
-        {
+            $iter = $store[$panel]->get_iter($rows[0][0]);
+            $file = $store[$panel]->get_value($iter, 0);
+            $filename = $start[$panel] . DS . $file;
             if (is_dir($filename))
             {
                 $str = str_replace('%s', basename($filename), $lang['delete']['one_dir']);
@@ -807,6 +763,10 @@ function delete_window()
                 $str = str_replace('%s', basename($filename), $lang['delete']['one_file']);
             }
         }
+        else
+        {
+            $str = str_replace('%s', basename($filename), $lang['delete']['actives']);
+        }
         $label = new GtkLabel($str);
         $label->set_line_wrap(TRUE);
         $hbox->pack_start($label, TRUE, TRUE, 20);
@@ -814,23 +774,21 @@ function delete_window()
         $dialog->show_all();
         $result = $dialog->run();
         $dialog->destroy();
+
         if ($result != Gtk::RESPONSE_YES)
         {
             return FALSE;
         }
     }
 
-    if (!empty($active_files[$panel]))
+    foreach ($rows as $value)
     {
-        foreach ($active_files[$panel] as $file)
-        {
-            my_rmdir($start[$panel]. DS .$file);
-        }
-    }
-    else
-    {
+        $iter = $store[$panel]->get_iter($value[0]);
+        $file = $store[$panel]->get_value($iter, 0);
+        $filename = $start[$panel] . DS . $file;
         my_rmdir($filename);
     }
+
     if (!empty($dialog))
     {
         $dialog->destroy();
@@ -950,7 +908,6 @@ function current_dir($panel, $status = '')
                         $ext,
                         convert_size($filename),
                         date('d.m.Y G:i',filemtime($filename)),
-                        FALSE,
                         '<FILE>',
                         ''));
             }
@@ -961,7 +918,7 @@ function current_dir($panel, $status = '')
         {
             if (empty($status))
             {
-                $store[$panel]->append(array($file, '', '', '', FALSE, '<DIR>', ''));
+                $store[$panel]->append(array($file, '', '', '', '<DIR>', ''));
             }
             $count_dir++;
         }
@@ -970,7 +927,7 @@ function current_dir($panel, $status = '')
     }
 
     $store[$panel]->set_sort_column_id(0, Gtk::SORT_ASCENDING);
-    $store[$panel]->set_sort_column_id(5, Gtk::SORT_ASCENDING);
+    $store[$panel]->set_sort_column_id(4, Gtk::SORT_ASCENDING);
 }
 
 /**
@@ -1048,7 +1005,7 @@ function history($direct)
 function change_dir($act = '', $dir = '', $all = FALSE)
 {
     global $vbox, $entry_current_dir, $action, $action_menu, $lang, $panel, $store,
-           $start, $number, $sqlite, $active_files, $tree_view, $_config, $clp;
+           $start, $number, $sqlite, $tree_view, $_config, $clp;
 
     // Устанавливаем новое значение текущей директории
     switch ($act)
@@ -1107,8 +1064,8 @@ function change_dir($act = '', $dir = '', $all = FALSE)
 
     $action_menu['new_file']->set_sensitive(TRUE);
     $action_menu['new_dir']->set_sensitive(TRUE);
-    $action_menu['comparison_file']->set_sensitive(FALSE);
-    $action_menu['comparison_dir']->set_sensitive(FALSE);
+//    $action_menu['comparison_file']->set_sensitive(FALSE);
+//    $action_menu['comparison_dir']->set_sensitive(FALSE);
 
     $action_menu['copy']->set_sensitive(FALSE);
     $action_menu['cut']->set_sensitive(FALSE);
@@ -1217,8 +1174,6 @@ function change_dir($act = '', $dir = '', $all = FALSE)
 
     // Устанавливаем новое значение в адресную строку
     $entry_current_dir->set_text($start[$panel]);
-
-    unset($active_files[$panel]);
 }
 
 /**
@@ -1430,14 +1385,10 @@ function columns($tree_view, $cell_renderer)
     $column_mtime->set_sizing(Gtk::TREE_VIEW_COLUMN_AUTOSIZE);
     $column_mtime->set_sort_column_id(3);
 
-    $render_boolen = new GtkCellRendererToggle();
-    $column_boolen = new GtkTreeViewColumn('', $render_boolen, 'active', 4);
-    $render_boolen->connect('toggled', 'active_element');
-
-    $column_df = new GtkTreeViewColumn('', $cell_renderer, 'text', 5);
+    $column_df = new GtkTreeViewColumn('', $cell_renderer, 'text', 4);
     $column_df->set_visible(FALSE);
 
-    $column_null = new GtkTreeViewColumn('', $cell_renderer, 'text', 6);
+    $column_null = new GtkTreeViewColumn('', $cell_renderer, 'text', 5);
     $column_null->set_sizing(Gtk::TREE_VIEW_COLUMN_FIXED);
 
     $tree_view->append_column($column_image);
@@ -1445,67 +1396,8 @@ function columns($tree_view, $cell_renderer)
     $tree_view->append_column($column_ext);
     $tree_view->append_column($column_size);
     $tree_view->append_column($column_mtime);
-    $tree_view->append_column($column_boolen);
     $tree_view->append_column($column_df);
     $tree_view->append_column($column_null);
-}
-
-/**
- * Выделение/снятие выделения с файла/папки.
- * @global GtkListStore $store
- * @global array $start
- * @global string $panel
- * @global array $active_files
- * @global object $action_menu
- * @param GtkCellRenderToggle $render
- * @param int|string $row Номер строки в списке файлов
- */
-function active_element($render, $row)
-{
-    global $store, $start, $panel, $active_files, $action_menu;
-
-    $iter = $store[$panel]->get_iter($row);
-    $file = $store[$panel]->get_value($iter, 0);
-    $active = $store[$panel]->get_value($iter, 4);
-    $store[$panel]->set($iter, 4, !$active);
-    if (!$active)
-    {
-        $active_files[$panel][$file] = $file;
-    }
-    else
-    {
-        unset($active_files[$panel][$file]);
-    }
-    $files = 0;
-    $dirs = 0;
-    foreach ($active_files[$panel] as $file)
-    {
-        $filename = $start[$panel]. DS .$file;
-        if (is_file($filename))
-        {
-            $files++;
-        }
-        elseif (is_dir($filename))
-        {
-            $dirs++;
-        }
-    }
-    if ($files == 2 OR $files == 3)
-    {
-        $action_menu['comparison_file']->set_sensitive(TRUE);
-    }
-    else
-    {
-        $action_menu['comparison_file']->set_sensitive(FALSE);
-    }
-    if ($dirs == 2 OR $dirs == 3)
-    {
-        $action_menu['comparison_dir']->set_sensitive(TRUE);
-    }
-    else
-    {
-        $action_menu['comparison_dir']->set_sensitive(FALSE);
-    }
 }
 
 /**
@@ -1514,12 +1406,16 @@ function active_element($render, $row)
 function image_column($column, $render, $model, $iter)
 {
     $path = $model->get_path($iter);
-    $type = $model->get_value($iter, 5);
+    $type = $model->get_value($iter, 4);
     $file = $model->get_value($iter, 0);
     if ($type == '<DIR>')
+    {
         $render->set_property('stock-id', 'gtk-directory');
+    }
     else
+    {
         $render->set_property('stock-id', 'gtk-file');
+    }
 }
 
 /**
@@ -1562,7 +1458,7 @@ function open_terminal()
  */
 function open_comparison($type)
 {
-    global $active_files, $start, $panel, $lang, $_config;
+    global $start, $panel, $lang, $_config, $selection, $store;
 
     if (empty($_config['comparison']))
     {
@@ -1576,33 +1472,49 @@ function open_comparison($type)
     else
     {
         $par = '';
-        foreach ($active_files[$panel] as $file)
+
+        list($model, $rows) = $selection[$panel]->get_selected_rows();
+
+        if (!empty($rows))
         {
-            $filename = $start[$panel]. DS .$file;
-            if ($type == 'file')
+            foreach ($rows as $value)
             {
-                if (is_file($filename))
+                $iter = $store[$panel]->get_iter($value[0]);
+                $file = $store[$panel]->get_value($iter, 0);
+                $filename = $start[$panel]. DS .$file;
+                if ($type == 'file')
                 {
-                    $par .= "'$filename' ";
+                    if (is_file($filename))
+                    {
+                        $par .= "'$filename' ";
+                    }
+                    else
+                    {
+                        continue;
+                    }
                 }
-                else
+                elseif ($type == 'dir')
                 {
-                    continue;
-                }
-            }
-            elseif ($type == 'dir')
-            {
-                if (is_dir($filename))
-                {
-                    $par .= "'$filename' ";
-                }
-                else
-                {
-                    continue;
+                    if (is_dir($filename))
+                    {
+                        $par .= "'$filename' ";
+                    }
+                    else
+                    {
+                        continue;
+                    }
                 }
             }
         }
-        exec($_config['comparison'].' '.$par.' > /dev/null &');
+
+        if (OS == 'Windows')
+        {
+            pclose(popen('start ' . fix_spaces($_config['comparison']) . ' ' . fix_spaces($par), 'r'));
+        }
+        else
+        {
+            exec($_config['comparison'].' '.$par.' > /dev/null &');
+        }
     }
 }
 
@@ -1613,60 +1525,85 @@ function open_comparison($type)
  */
 function active_all($action, $template = '')
 {
-    global $store, $panel, $count_element, $active_files, $action_menu;
+    global $store, $panel, $count_element, $action_menu, $selection, $start;
+
+    // Выделяем всё
+    if ($action == 'all')
+    {
+        $selection[$panel]->select_all();
+    }
+    // Снимаем выделение со всех
+    elseif ($action == 'none')
+    {
+        $selection[$panel]->unselect_all();
+        $action_menu['copy']->set_sensitive(FALSE);
+        $action_menu['cut']->set_sensitive(FALSE);
+        $action_menu['delete']->set_sensitive(FALSE);
+        $action_menu['rename']->set_sensitive(FALSE);
+//        $action_menu['comparison_file']->set_sensitive(FALSE);
+//        $action_menu['comparison_dir']->set_sensitive(FALSE);
+        return TRUE;
+    }
+
+    $count_rows = $selection[$panel]->count_selected_rows();
+    // Если не выбрано ни одной строки
+    if ($count_rows == 0)
+    {
+        $selection[$panel]->unselect_all();
+        $action_menu['copy']->set_sensitive(FALSE);
+        $action_menu['cut']->set_sensitive(FALSE);
+        $action_menu['delete']->set_sensitive(FALSE);
+        $action_menu['rename']->set_sensitive(FALSE);
+//        $action_menu['comparison_file']->set_sensitive(FALSE);
+//        $action_menu['comparison_dir']->set_sensitive(FALSE);
+        return FALSE;
+    }
 
     $files = 0;
     $dirs = 0;
 
-    // Снимаем выделение со всех файлов
-    for ($i = 0; $i < $count_element; $i++)
+    list($model, $rows) = $selection[$panel]->get_selected_rows();
+    foreach ($rows as $value)
     {
-        $iter = $store[$panel]->get_iter($i);
-        $store[$panel]->set($iter, 4, FALSE);
-        unset($active_files[$panel]);
-        $action_menu['delete']->set_sensitive(FALSE);
+        $iter = $store[$panel]->get_iter($value[0]);
+        $file = $store[$panel]->get_value($iter, 0);
+        $filename = $start[$panel] . DS . $file;
+        if (is_dir($filename))
+        {
+            $dirs++;
+        }
+        else
+        {
+            $files++;
+        }
     }
 
-    // Выделяем файлы
-    if ($action == 'all' OR $action == 'template')
+//    if ($files == 2 OR $files == 3)
+//    {
+//        $action_menu['comparison_file']->set_sensitive(TRUE);
+//    }
+//    else
+//    {
+//        $action_menu['comparison_file']->set_sensitive(FALSE);
+//    }
+//    if ($dirs == 2 OR $dirs == 3)
+//    {
+//        $action_menu['comparison_dir']->set_sensitive(TRUE);
+//    }
+//    else
+//    {
+//        $action_menu['comparison_dir']->set_sensitive(FALSE);
+//    }
+    $action_menu['copy']->set_sensitive(TRUE);
+    $action_menu['cut']->set_sensitive(TRUE);
+    $action_menu['delete']->set_sensitive(TRUE);
+    if ($count_rows == 1)
     {
-        for ($i = 0; $i < $count_element; $i++)
-        {
-            $iter = $store[$panel]->get_iter($i);
-            $file = $store[$panel]->get_value($iter, 0);
-            $type = $store[$panel]->get_value($iter, 5);
-            $template = str_replace('*', '(.+?)', $template);
-            if ($action == 'all' OR ($action == 'template' AND preg_match('#^' . $template . '$#is', $file)))
-            {
-                $store[$panel]->set($iter, 4, TRUE);
-                if ($type == '<DIR>')
-                {
-                    $dirs++;
-                }
-                elseif ($type == '<FILE>')
-                {
-                    $files++;
-                }
-                $active_files[$panel][$file] = $file;
-            }
-        }
-        $action_menu['delete']->set_sensitive(TRUE);
-    }
-    if ($files == 2 OR $files == 3)
-    {
-        $action_menu['comparison_file']->set_sensitive(TRUE);
+        $action_menu['rename']->set_sensitive(TRUE);
     }
     else
     {
-        $action_menu['comparison_file']->set_sensitive(FALSE);
-    }
-    if ($dirs == 2 OR $dirs == 3)
-    {
-        $action_menu['comparison_dir']->set_sensitive(TRUE);
-    }
-    else
-    {
-        $action_menu['comparison_dir']->set_sensitive(FALSE);
+        $action_menu['rename']->set_sensitive(FALSE);
     }
 }
 
@@ -1856,15 +1793,15 @@ function window_hide($window)
 
 function on_drag($widget, $context, $data)
 {
-    global $start, $panel;
+    global $start, $panel, $selection, $store;
 
-    $selection = $widget->get_selection();
-    list($model, $iter) = $selection->get_selected();
-    if (empty($iter))
+    list($model, $rows) = $selection[$panel]->get_selected_rows();
+    foreach ($rows as $value)
     {
-        return FALSE;
+        $iter = $store[$panel]->get_iter($value[0]);
+        $file = $store[$panel]->get_value($iter, 0);
+        $filename = $start[$panel] . DS . $file;
     }
-    $filename = $start[$panel] . DS . $model->get_value($iter, 0);
     $data->set_text($filename);
 }
 
@@ -1989,4 +1926,32 @@ function file_exists_window($filename)
     {
         return FALSE;
     }
+}
+
+/**
+ * Открывает файл во внешней программе
+ * @param string $filename Адрес файла, который необходимо открыть
+ */
+function open_in_system($filename)
+{
+    pclose(popen('start ' . fix_spaces($filename), 'r'));
+}
+
+/**
+ * Функция обрамляет строку с пробелами в кавычки.
+ */
+function find_spaces($var) {
+        return (strpos($var, ' ') == true)
+                ? '"' . $var . '"'
+                : $var;
+}
+
+/**
+ * Функция обрамляет все части адреса с пробелами в кавычки. Если в исходном адресе
+ * нет пробелов, отдаёт строку без изменений.
+ */
+function fix_spaces($filename) {
+        return (strpos($filename, ' ') == false)
+                ? $filename
+                : implode('\\', array_map('find_spaces', explode('\\', $filename)));
 }

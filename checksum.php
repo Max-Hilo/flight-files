@@ -30,14 +30,7 @@ function checksum_window($filename, $alg)
     $vbox->pack_start(new GtkLabel(str_replace('%s', basename($filename), $lang['checksum']['text'])));
     $vbox->pack_start($hbox = new GtkHBox());
     $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_INFO, Gtk::ICON_SIZE_DIALOG), FALSE, FALSE);
-    if ($alg == 'MD5')
-    {
-        $hbox->pack_start(new GtkEntry(md5_file($filename), 32), TRUE, TRUE);
-    }
-    elseif ($alg == 'SHA1')
-    {
-        $hbox->pack_start(new GtkEntry(sha1_file($filename), 40), TRUE, TRUE );
-    }
+    $hbox->pack_start(new GtkEntry(hash_file($alg, $filename), 40), TRUE, TRUE );
     $dialog->show_all();
     $dialog->run();
     $dialog->destroy();

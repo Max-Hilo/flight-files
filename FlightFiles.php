@@ -299,8 +299,8 @@ $array_menuitem = array(
     array('file', 'separator'),
     array('file', '', 'clear_bufer', $lang['menu']['clear_bufer'], Gtk::STOCK_CLEAR, 'clear_bufer', '', '', 'false', ''),
     array('file', 'separator'),
-    array('file', '', 'comparison_file', $lang['menu']['comparison_file'], '', 'open_comparison', 'file', '', 'false', ''),
-    array('file', '', 'comparison_dir', $lang['menu']['comparison_dir'], '', 'open_comparison', 'dir', '', 'false', ''),
+    array('file', '', 'comparison_file', $lang['menu']['comparison_file'], '', 'open_comparison', 'file', '', '', ''),
+    array('file', '', 'comparison_dir', $lang['menu']['comparison_dir'], '', 'open_comparison', 'dir', '', '', ''),
     array('file', 'separator'),
     array('file', '', 'active_all', $lang['menu']['active_all'], '', 'active_all', 'all', '', '', '<control>A'),
     array('file', '', 'active_template', $lang['menu']['active_template'], '', 'enter_template_window', '', '', '', '<control><alt>A'),
@@ -545,7 +545,7 @@ $left = new GtkFrame;
 $left->set_shadow_type(Gtk::SHADOW_IN);
 
 $store['left'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING,
-    GObject::TYPE_STRING, GObject::TYPE_BOOLEAN, GObject::TYPE_STRING, GObject::TYPE_STRING);
+    GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING);
 $tree_view['left'] = new GtkTreeView($store['left']);
 $tree_view['left']->drag_dest_set(Gtk::DEST_DEFAULT_ALL, array(array('text/plain', 0, 0)), Gdk::ACTION_COPY);
 $tree_view['left']->drag_source_set(Gdk::BUTTON1_MASK, array(array('text/plain', 0, 0)), Gdk::ACTION_COPY);
@@ -567,6 +567,7 @@ elseif ($_config['view_lines_files'] == 'on')
 }
 
 $selection['left'] = $tree_view['left']->get_selection();
+$selection['left']->set_mode(Gtk::SELECTION_MULTIPLE);
 $tree_view['left']->connect('button-press-event', 'on_button', 'left');
 $cell_renderer['left'] = new GtkCellRendererText();
 if (!empty($_config['font_list']))
@@ -593,7 +594,7 @@ $right = new GtkFrame;
 $right->set_shadow_type(Gtk::SHADOW_IN);
 
 $store['right'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING,
-    GObject::TYPE_STRING, GObject::TYPE_BOOLEAN, GObject::TYPE_STRING, GObject::TYPE_STRING);
+    GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING);
 sqlite_query($sqlite, "INSERT INTO history_right(path) VALUES('$start[right]')");
 current_dir('right');
 
@@ -618,6 +619,7 @@ elseif ($_config['view_lines_files'] == 'on')
 }
 
 $selection['right'] = $tree_view['right']->get_selection();
+$selection['right']->set_mode(Gtk::SELECTION_MULTIPLE);
 $tree_view['right']->connect('button-press-event', 'on_button', 'right');
 $cell_renderer['right'] = new GtkCellRendererText();
 if (!empty($_config['font_list']))
