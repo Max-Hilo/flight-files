@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Файл русской локализации, кодировка UTF-8.
+ * Файл русской локализации, кодировка CP1251.
  *
  * @copyright Copyright (C) 2009, Вавилов Егор (Shecspi)
  * @license http://www.opensource.org/licenses/mit-license.php MIT License
@@ -215,6 +215,7 @@ $lang['popup']['rename_file']           = 'Переименовать';
 $lang['popup']['checksum']              = 'Контрольная сумма';
 $lang['popup']['md5']                   = 'MD5';
 $lang['popup']['sha1']                  = 'SHA1';
+$lang['popup']['crc32']                 = 'CRC32';
 $lang['popup']['open_in']               = "Открыть в '%s'";
 $lang['popup']['open_image']            = 'Открыть изображение';
 $lang['popup']['open_text_file']        = 'Открыть в текстовом редакторе';
@@ -227,12 +228,13 @@ $lang['popup']['new_file']              = 'Создать файл';
 $lang['popup']['new_dir']               = 'Создать папку';
 $lang['popup']['open_terminal']         = 'Открыть терминал здесь';
 $lang['popup']['paste']                 = 'Вставить';
+$lang['popup']['open_in_system']        = 'Открыть в системе';
 
 $lang['rename']['title']                = 'Переименовать';
 $lang['rename']['rename_yes']           = 'Переименовать';
 $lang['rename']['rename_no']            = 'Отменить';
 
-$lang['delete']['title']                = 'FlightFiles :: Удалить';
+$lang['delete']['title']                = 'Удалить';
 $lang['delete']['one_dir']              = 'Вы действительно хотите удалить папку "%s" со всем её содержимым?';
 $lang['delete']['one_file']             = 'Вы действительно хотите удалить файл "%s"?';
 $lang['delete']['actives']              = 'Вы действительно хотите удалить выбранные файлы/папки?';
@@ -291,7 +293,8 @@ $lang['close']['button_yes']            = 'Да, закрыть';
 $lang['close']['button_no']             = 'Нет, не закрывать';
 
 $lang['command']['none']                = "Не выбрана программа для открытия файлов типа '%s'";
-$lang['command']['not_found']           = "Не верно указана программа для открытия файлов типа '%s'";
+$lang['command']['empty_command']       = 'Не выбранна программа для запуска данного типа файлов';
+$lang['command']['command_not_found']   = "Программа, указанная для запуска файлов данного типа не указана";
 $lang['command']['empty']               = 'Не указана программа для выполнения';
 $lang['command']['file_not_found']      = "Программа '%s' не найдена";
 
