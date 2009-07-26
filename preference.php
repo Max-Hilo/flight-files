@@ -116,7 +116,6 @@ function preference()
     // Сохранять открытые директории
     $save_folders = new GtkCheckButton($lang['preference']['save_folders']);
     $save_folders->set_tooltip_text($lang['preference']['save_folders_hinr']);
-    $save_folders->connect('toggled', 'check_button_write', 'save_folders');
     if ($_config['save_folders'] == 'on')
     {
         $save_folders->set_active(TRUE);
@@ -128,42 +127,30 @@ function preference()
     $label_home_dir_left->set_alignment(0, 0);
     $vbox->pack_start($label_home_dir_left, FALSE, FALSE);
 
-    $radio_home_left = new GtkRadioButton(NULL, HOME_DIR);
-    $radio_root_left = new GtkRadioButton($radio_home_left, ROOT_DIR);
-    $radio_home_left->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_LEFT', HOME_DIR);
-    $radio_root_left->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_LEFT', ROOT_DIR);
-    if ($_config['home_dir_left'] == ROOT_DIR)
-    {
-        $radio_root_left->set_active(TRUE);
-    }
-    else
-    {
-        $radio_home_left->set_active(TRUE);
-    }
-    $vbox->pack_start($hbox = new GtkHBox, FALSE, FALSE);
-    $hbox->pack_start($radio_root_left, TRUE, TRUE);
-    $hbox->pack_start($radio_home_left, TRUE, TRUE);
+    $entry_left = new GtkEntry($_config['home_dir_left']);
+    $entry_left->connect('changed', 'change_value', 'home_dir_left');
+    $button = new GtkButton('...');
+    $button->set_tooltip_text($lang['preference']['change_home_dir']);
+    $button->connect_simple('clicked', 'select_file_window', $entry_left, 'folder');
+    $vbox->pack_start($hbox = new GtkHBox(), FALSE, FALSE);
+    $hbox->pack_start($entry_left, TRUE, TRUE);
+    $hbox->pack_start($button, FALSE, FALSE);
 
     // Начальная директория для правой панели
     $label_home_dir_right = new GtkLabel($lang['preference']['home_dir_right']);
     $label_home_dir_right->set_alignment(0, 0);
     $vbox->pack_start($label_home_dir_right, FALSE, FALSE);
 
-    $radio_home_right = new GtkRadioButton(NULL, HOME_DIR);
-    $radio_root_right = new GtkRadioButton($radio_home_right, ROOT_DIR);
-    $radio_home_right->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_RIGHT', HOME_DIR);
-    $radio_root_right->connect_simple('toggled', 'radio_button_write', 'HOME_DIR_RIGHT', ROOT_DIR);
-    if ($_config['home_dir_right'] == ROOT_DIR)
-    {
-        $radio_root_right->set_active(TRUE);
-    }
-    else
-    {
-        $radio_home_right->set_active(TRUE);
-    }
-    $vbox->pack_start($hbox = new GtkHBox, FALSE, FALSE);
-    $hbox->pack_start($radio_root_right, TRUE, TRUE);
-    $hbox->pack_start($radio_home_right, TRUE, TRUE);
+    $entry_right = new GtkEntry($_config['home_dir_right']);
+    $entry_right->connect('changed', 'change_value', 'home_dir_right');
+    $button = new GtkButton('...');
+    $button->set_tooltip_text($lang['preference']['change_home_dir']);
+    $button->connect_simple('clicked', 'select_file_window', $entry_right, 'folder');
+    $vbox->pack_start($hbox = new GtkHBox(), FALSE, FALSE);
+    $hbox->pack_start($entry_right, TRUE, TRUE);
+    $hbox->pack_start($button, FALSE, FALSE);
+
+    $save_folders->connect('toggled', 'check_button_write', 'save_folders');
 
     // Язык программы
     $label_lang = new GtkLabel($lang['preference']['lang']);
@@ -195,11 +182,23 @@ function preference()
     $vbox->pack_start($hbox = new GtkHBox, FALSE, FALSE);
     $hbox->pack_start($label_lang, TRUE, TRUE);
     $hbox->pack_start($combo, TRUE, TRUE);
+
+    // Формат даты
+    $label_mtime = new GtkLabel($lang['prefernce']['mtime']);
+    $label_mtime->set_tooltip_text($lang['prefernce']['mtime_hint']);
+    $label_mtime->set_alignment(0, 0.5);
+
+    $entry_mtime = new GtkEntry($_config['mtime_format']);
+    $entry_mtime->set_tooltip_text($lang['prefernce']['mtime_hint']);
+    $entry_mtime->connect('changed', 'change_value', 'mtime_format');
+
+    $vbox->pack_start($hbox = new GtkHBox(), FALSE, FALSE);
+    $hbox->pack_start($label_mtime, TRUE, TRUE);
+    $hbox->pack_start($entry_mtime, TRUE, TRUE);
     
     /**
      * Вкладка "Шрифты".
      */
-
     $vbox = new GtkVBox;
     $notebook->append_page($vbox, new GtkLabel($lang['preference']['fonts']));
 
@@ -213,8 +212,10 @@ function preference()
     $vbox->pack_start($check_text_list, FALSE, FALSE);
 
     $entry_font_select = new GtkEntry();
-    $button_font_select = new GtkButton($lang['preference']['change']);
-    $button_font_select->connect_simple('clicked', 'font_select', $entry_font_select);
+    $entry_font_select->set_editable(FALSE);
+    $button_font_select = new GtkButton('...');
+    $button_font_select->set_tooltip_text($lang['preference']['change_font_hint']);
+    $button_font_select->connect_simple('clicked', 'select_font_window', $entry_font_select);
     $check_text_list->connect('toggled', 'check_font', $entry_font_select, $button_font_select);
     if (empty($_config['font_list']))
     {
@@ -245,15 +246,14 @@ function preference()
     $label_comparison->set_markup('<b>'.$lang['preference']['comparison'].'</b>');
     $vbox->pack_start($label_comparison, FALSE, FALSE);
 
-    $entry_comparison = new GtkEntry();
-    $entry_comparison->set_editable(FALSE);
-    $entry_comparison->set_text($_config['comparison']);
-    $btn_comparison = new GtkButton($lang['preference']['change']);
-    $btn_comparison->connect_simple('clicked', 'preference_command', 'comparison', $entry_comparison);
-    $hbox_comparison = new GtkHBox();
+    $entry_comparison = new GtkEntry($_config['comparison']);
+    $entry_comparison->connect('changed', 'change_value', 'comparison');
+    $btn_comparison = new GtkButton('...');
+    $btn_comparison->set_tooltip_text($lang['preference']['change_program_hint']);
+    $btn_comparison->connect_simple('clicked', 'select_file_window', $entry_comparison, 'file');
+    $vbox->pack_start($hbox_comparison = new GtkHBox(), FALSE, FALSE);
     $hbox_comparison->pack_start($entry_comparison, TRUE, TRUE);
     $hbox_comparison->pack_start($btn_comparison, FALSE, FALSE);
-    $vbox->pack_start($hbox_comparison, FALSE, FALSE);
 
     // Терминал
     $label_terminal = new GtkLabel();
@@ -261,15 +261,14 @@ function preference()
     $label_terminal->set_markup('<b>'.$lang['preference']['terminal'].'</b>');
     $vbox->pack_start($label_terminal, FALSE, FALSE);
 
-    $entry_terminal = new GtkEntry();
-    $entry_terminal->set_editable(FALSE);
-    $entry_terminal->set_text($_config['terminal']);
-    $btn_terminal = new GtkButton($lang['preference']['change']);
-    $btn_terminal->connect_simple('clicked', 'preference_command', 'terminal', $entry_terminal);
-    $hbox_terminal = new GtkHBox();
+    $entry_terminal = new GtkEntry($_config['terminal']);
+    $entry_terminal->connect('changed', 'change_value', 'terminal');
+    $btn_terminal = new GtkButton('...');
+    $btn_terminal->set_tooltip_text($lang['preference']['change_program_hint']);
+    $btn_terminal->connect_simple('clicked', 'select_file_window', $entry_terminal, 'file');
+    $vbox->pack_start($hbox_terminal = new GtkHBox(), FALSE, FALSE);
     $hbox_terminal->pack_start($entry_terminal, TRUE, TRUE);
     $hbox_terminal->pack_start($btn_terminal, FALSE, FALSE);
-    $vbox->pack_start($hbox_terminal, FALSE, FALSE);
 
     ///////////////////////
     
@@ -278,30 +277,65 @@ function preference()
     Gtk::main();
 }
 
-function preference_command($param, $entry)
+/**
+ * Создаёт окно для выбора файла или папки в зависимости от $type.
+ * Выбранный файл/папка устанавливается в $entry.
+ * @global array $lang
+ * @param GtkEntry $entry Поле ввода, соответствующее данной операции
+ * @param string $type Может иметь два значения: 'file' - для выбора файла, 'folder' - для выбора папки
+ */
+function select_file_window($entry, $type)
 {
-    global $sqlite, $id_type, $lang;
+    global $lang;
 
-    $dialog = new GtkFileChooserDialog(
-        $lang['preference']['select_file'],
-        NULL,
-        Gtk::FILE_CHOOSER_ACTION_OPEN,
-        array(
-            Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL,
-            Gtk::STOCK_OK, Gtk::RESPONSE_OK,
-        )
-    );
-    $dialog->set_filename($entry->get_text());
+    switch ($type)
+    {
+        case 'file':
+            $type = Gtk::FILE_CHOOSER_ACTION_OPEN;
+            $title = $lang['preference']['select_file'];
+            break;
+        case 'folder':
+            $type = Gtk::FILE_CHOOSER_ACTION_SELECT_FOLDER;
+            $title = $lang['preference']['select_folder'];
+            break;
+    }
+
+    $dialog = new GtkFileChooserDialog($title, NULL, $type);
+    $dialog->set_position(Gtk::WIN_POS_CENTER);
+    $dialog->add_button($lang['preference']['button_ok'], Gtk::RESPONSE_OK);
+    $dialog->add_button($lang['preference']['button_cancel'], Gtk::RESPONSE_CANCEL);
+    $value = $entry->get_text();
+    if (!empty($value))
+    {
+        $dialog->set_filename($value);
+    }
     $dialog->show_all();
     $result = $dialog->run();
+
     if ($result == Gtk::RESPONSE_OK)
     {
-        $command = $dialog->get_filename();
-        $param = strtoupper($param);
-        sqlite_query($sqlite, "UPDATE config SET value = '$command' WHERE key = '$param'");
-        $entry->set_text($command);
+        $entry->set_text($dialog->get_filename());
     }
+
     $dialog->destroy();
+}
+
+/**
+ * Записывает в базу данных текст,
+ * находящийся в данный момент в поле ввода $entry.
+ * @global resource $sqlite
+ * @param GtkEntry $entry Поле ввода, соответствующее данной операции
+ * @param string $param Изменяемый параметр
+ */
+function change_value($entry, $param)
+{
+    global $sqlite;
+
+    $format = $entry->get_text();
+    $format = sqlite_escape_string($format);
+    $param = strtoupper($param);
+    sqlite_query($sqlite, "UPDATE config SET value = '$format' WHERE key = '$param'");
+    change_dir('none', '', 'all');
 }
 
 /**
@@ -348,11 +382,6 @@ function check_button_write($check, $param, $timeout = '')
             $tray->set_visible(FALSE);
         }
     }
-    if ($param == 'SAVE_FOLDERS' AND $value == 'off')
-    {
-        sqlite_query($sqlite, "UPDATE config SET value = '" . ROOT_DIR . "' WHERE key = 'HOME_DIR_LEFT'");
-        sqlite_query($sqlite, "UPDATE config SET value = '" . HOME_DIR . "' WHERE key = 'HOME_DIR_RIGHT'");
-    }
 
     if ($timeout == 'partbar')
     {
@@ -388,7 +417,7 @@ function radio_button_write($param, $value)
  * Создаёт диалог GtkFontSelectionDialog и производит запись выбранного шрифта в базу данных.
  * @param object $entry Поле ввода GtkEntry для названия текста
  */
-function font_select($entry)
+function select_font_window($entry)
 {
     global $cell_renderer, $lang, $_config, $sqlite;
     
@@ -400,17 +429,18 @@ function font_select($entry)
         $dialog->set_font_name($_config['font_list']);
     }
     $dialog->show_all();
-    $dialog->run();
-    
-    $font_name = $dialog->get_font_name();
-    $entry->set_text($font_name);
-    
-    sqlite_query($sqlite, "UPDATE config SET value = '$font_name' WHERE key = 'FONT_LIST'");
-    
-    $cell_renderer['left']->set_property('font',  $font_name);
-    $cell_renderer['right']->set_property('font',  $font_name);
-    change_dir('none', '', TRUE);
-    
+    $result = $dialog->run();
+
+    if ($result == Gtk::RESPONSE_OK OR $result == Gtk::RESPONSE_APPLY)
+    {
+        $font_name = $dialog->get_font_name();
+        $entry->set_text($font_name);
+        sqlite_query($sqlite, "UPDATE config SET value = '$font_name' WHERE key = 'FONT_LIST'");
+        $cell_renderer['left']->set_property('font',  $font_name);
+        $cell_renderer['right']->set_property('font',  $font_name);
+        change_dir('none', '', TRUE);
+    }
+
     $dialog->destroy();
 }
 

@@ -26,6 +26,8 @@ function create_database($combo, $window)
     sqlite_query($sqlite, "CREATE TABLE type_files(id INTEGER PRIMARY KEY, type, command)");
     sqlite_query($sqlite, "CREATE TABLE ext_files(id_type, ext)");
     sqlite_query($sqlite, "INSERT INTO config(key, value) VALUES('HIDDEN_FILES', 'off');".
+                          "INSERT INTO config(key, value) VALUES('LAST_DIR_LEFT', '".ROOT_DIR."');".
+                          "INSERT INTO config(key, value) VALUES('LAST_DIR_RIGHT', '".HOME_DIR."');".
                           "INSERT INTO config(key, value) VALUES('HOME_DIR_LEFT', '".ROOT_DIR."');".
                           "INSERT INTO config(key, value) VALUES('HOME_DIR_RIGHT', '".HOME_DIR."');".
                           "INSERT INTO config(key, value) VALUES('ASK_DELETE', 'on');".
@@ -43,7 +45,8 @@ function create_database($combo, $window)
                           "INSERT INTO config(key, value) VALUES('VIEW_LINES_FILES', 'off');".
                           "INSERT INTO config(key, value) VALUES('VIEW_LINES_COLUMNS', 'on');".
                           "INSERT INTO config(key, value) VALUES('STATUS_ICON', 'on');".
-                          "INSERT INTO config(key, value) VALUES('SAVE_FOLDERS', 'on');");
+                          "INSERT INTO config(key, value) VALUES('SAVE_FOLDERS', 'on');".
+                          "INSERT INTO config(key, value) VALUES('MTIME_FORMAT', 'd.m.Y G:i');");
    $window->destroy();
 }
 
@@ -54,19 +57,11 @@ function create_database($combo, $window)
 function config_parser()
 {
     global $_config, $sqlite;
-
-    $array = array('HIDDEN_FILES', 'HOME_DIR_LEFT', 'HOME_DIR_RIGHT',
-                   'ASK_DELETE', 'TOOLBAR_VIEW', 'ADDRESSBAR_VIEW',
-                   'STATUSBAR_VIEW', 'FONT_LIST', 'ASK_CLOSE',
-                   'LANGUAGE', 'MAXIMIZE', 'COMPARISON',
-                   'TERMINAL', 'PARTBAR_VIEW', 'PARTBAR_REFRESH',
-                   'VIEW_LINES_FILES', 'VIEW_LINES_COLUMNS', 'STATUS_ICON',
-                   'SAVE_FOLDERS');
-    foreach ($array as $value)
+    
+    $query = sqlite_query($sqlite, "SELECT * FROM config");
+    while ($sfa = sqlite_fetch_array($query))
     {
-        $query = sqlite_query($sqlite, "SELECT * FROM config WHERE key = '$value'");
-        $sfa = sqlite_fetch_array($query);
-        $_config[strtolower($value)] = $sfa['value'];
+        $_config[strtolower($sfa['key'])] = $sfa['value'];
     }
 }
 
@@ -907,7 +902,7 @@ function current_dir($panel, $status = '')
                         $file,
                         $ext,
                         convert_size($filename),
-                        date('d.m.Y G:i',filemtime($filename)),
+                        date($_config['mtime_format'],filemtime($filename)),
                         '<FILE>',
                         ''));
             }
@@ -1296,16 +1291,16 @@ function close_window()
         }
     }
 
+    // Удаляем историю
     sqlite_query($sqlite, "DELETE FROM history_left");
     sqlite_query($sqlite, "DELETE FROM history_right");
 
-    if ($_config['save_folders'] == 'on')
-    {
-        $left = $start['left'];
-        $right = $start['right'];
-        sqlite_query($sqlite, "UPDATE config SET value = '$left' WHERE key = 'HOME_DIR_LEFT'");
-        sqlite_query($sqlite, "UPDATE config SET value = '$right' WHERE key = 'HOME_DIR_RIGHT'");
-    }
+    // Записываем последние посещённые директории
+    $left = $start['left'];
+    $right = $start['right'];
+    sqlite_query($sqlite, "UPDATE config SET value = '$left' WHERE key = 'LAST_DIR_LEFT'");
+    sqlite_query($sqlite, "UPDATE config SET value = '$right' WHERE key = 'LAST_DIR_RIGHT'");
+    
     Gtk::main_quit();
 }
 
@@ -1532,6 +1527,21 @@ function active_all($action, $template = '')
     {
         $selection[$panel]->select_all();
     }
+    // Выделение по шаблону
+    elseif ($action == 'template')
+    {
+        for ($i = 0; $i < $count_element; $i++)
+        {
+            $iter = $store[$panel]->get_iter($i);
+            $file = $store[$panel]->get_value($iter, 0);
+            $type = $store[$panel]->get_value($iter, 5);
+            $template = str_replace('*', '(.+?)', $template);
+            if (preg_match('#^' . $template . '$#is', $file))
+            {
+                $selection[$panel]->select_path($i);
+            }
+        }
+    }
     // Снимаем выделение со всех
     elseif ($action == 'none')
     {
@@ -1714,24 +1724,37 @@ function enter_template_window()
     $dialog->set_has_separator(FALSE);
     $dialog->set_transient_for($main_window);
     
-    $dialog->add_button($lang['tmp_window']['button_yes'], Gtk::RESPONSE_YES);
-    $dialog->add_button($lang['tmp_window']['button_no'], Gtk::RESPONSE_NO);
+    $dialog->add_button($lang['tmp_window']['button_yes'], Gtk::RESPONSE_OK);
+    $dialog->add_button($lang['tmp_window']['button_no'], Gtk::RESPONSE_CANCEL);
 
     $vbox = $dialog->vbox;
 
     $vbox->pack_start($hbox = new GtkHBox());
     $hbox->pack_start($entry = new GtkEntry());
-    $entry->connect_simple('activate', 'redirect_template', $entry, $dialog);
+    $entry->connect('changed', 'active_online');
+    $entry->connect('activate', 'redirect_template', $dialog);
 
     $dialog->show_all();
     $result = $dialog->run();
 
-    if ($result == Gtk::RESPONSE_YES)
+    if ($result == Gtk::RESPONSE_OK)
     {
         active_all('template', $entry->get_text());
     }
+    elseif ($result == Gtk::RESPONSE_CANCEL)
+    {
+        active_all('none');
+    }
 
     $dialog->destroy();
+}
+
+function active_online($entry)
+{
+    global $selection, $panel;
+
+    $selection[$panel]->unselect_all();
+    active_all('template', $entry->get_text());
 }
 
 function redirect_template($entry, $dialog)

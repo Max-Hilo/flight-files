@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Файл русской локализации, кодировка CP1251.
+ * Файл русской локализации, кодировка UTF-8.
  *
  * @copyright Copyright (C) 2009, Вавилов Егор (Shecspi)
  * @license http://www.opensource.org/licenses/mit-license.php MIT License
@@ -80,7 +80,7 @@ $lang['addressbar']['button_hint']      = 'Перейти в указанную папку';
 
 $lang['column']['title']                = 'Название';
 $lang['column']['size']                 = 'Размер';
-$lang['column']['mtime']                = 'Дата изменения';
+$lang['column']['mtime']                = 'Время изменения';
 $lang['column']['ext']                  = 'Расш.';
 
 $lang['statusbar']['count']             = 'Количество элементов:';
@@ -152,6 +152,7 @@ $lang['preference']['maximize_hint']    = 'При запуске главное окно FlightFiles 
 $lang['preference']['program']          = 'Внешние программы';
 $lang['preference']['comparison']       = 'Сравнение файлов:';
 $lang['preference']['select_file']      = 'Выбрать программу';
+$lang['preference']['select_folder']    = 'Выбрать папку';
 $lang['preference']['terminal']         = 'Терминал:';
 $lang['preference']['partbar_refresh']  = 'Автообновление списка разделов';
 $lang['preference']['partbar_refresh_hint'] = 'Список разделов будет автоматически обновляться каждую секунду';
@@ -165,6 +166,13 @@ $lang['preference']['status_icon_hint'] = 'При запуске программы в трее (системн
 $lang['preference']['save_folders']     = 'Сохранять открытые директории';
 $lang['preference']['save_folders_hinr'] = 'При выходе из FlightFiles будут сохранены открытые папки и при новом запуске '.
     'работа начнётся именно с них';
+$lang['prefernce']['mtime']             = 'Формат даты:';
+$lang['prefernce']['mtime_hint']        = 'Формат даты для колонки "Время изменения". Синтаксис аналогичен синтаксису функции PHP - date().';
+$lang['preference']['change_home_dir']  = 'Изменить домашнюю директорию';
+$lang['preference']['button_ok']        = 'Ok';
+$lang['preference']['button_cancel']    = 'Отменить';
+$lang['preference']['change_program_hint'] = 'Изменить программу';
+$lang['preference']['change_font_hint'] = 'Изменить шрифт';
 
 $lang['properties']['title']            = 'FlightFiles :: Свойства :: %s';
 $lang['properties']['name']             = 'Имя:';
@@ -298,7 +306,7 @@ $lang['command']['command_not_found']   = "Программа, указанная для запуска файл
 $lang['command']['empty']               = 'Не указана программа для выполнения';
 $lang['command']['file_not_found']      = "Программа '%s' не найдена";
 
-$lang['bulk_rename']['title']           = 'FlightFiles :: Массовое переименование';
+$lang['bulk_rename']['title']           = 'Массовое переименование';
 $lang['bulk_rename']['upper']           = '_Верхний регистр';
 $lang['bulk_rename']['upper_hint']      = 'Все буквы в именах файлов будут преобразованы в верхний регистр';
 $lang['bulk_rename']['lower']           = '_Нижний регистр';

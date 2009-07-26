@@ -203,6 +203,12 @@ for ($i = 1; $i < $argc; $i++)
 $start['left'] = (empty($start['left'])) ? $_config['home_dir_left'] : $start['left'];
 $start['right'] = (empty($start['right'])) ? $_config['home_dir_right'] : $start['right'];
 
+$start['left'] = ($_config['save_folders'] == 'on') ? $_config['last_dir_left'] : $start['left'];
+$start['right'] = ($_config['save_folders'] == 'on') ? $_config['last_dir_right'] : $start['right'];
+
+$start['left'] = !file_exists($start['left']) ? ROOT_DIR : $start['left'];
+$start['right'] = !file_exists($start['right']) ? HOME_DIR : $start['right'];
+
 
 /**
  * Используется для навигации по истории посещения директорий.
