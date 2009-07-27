@@ -232,7 +232,8 @@ function on_button($view, $event, $type)
                     }
                     elseif (OS == 'Windows')
                     {
-                        pclose(popen('start /B "'.$sfa['command'].'" '.$filename, "r"));
+
+                        pclose(popen('start /B "'.fix_spaces($sfa['command']).'" '.fix_spaces($filename), "r"));
                     }
                     else
                     {
@@ -1257,9 +1258,15 @@ function new_element($type)
 /**
  * При закрытии окна программы данная функция удаляет файл буфера обмена и историю.
  */
-function close_window()
+function close_window($action = '')
 {
     global $_config, $lang, $sqlite, $start, $main_window;
+
+    if ($action == 'minimize' AND $_config['status_icon'] == 'on')
+    {
+        window_hide($main_window);
+        return TRUE;
+    }
 
     if ($_config['ask_close'] == 'on')
     {
@@ -1518,7 +1525,7 @@ function open_comparison($type)
  * @param string $action Опеределяет выделяемые файлы - none|all|template
  * @param string Шаблон для выделения (только при $action == 'template')
  */
-function active_all($action, $template = '')
+function active_all($action, $template = '', $register = FALSE)
 {
     global $store, $panel, $count_element, $action_menu, $selection, $start;
 
@@ -1535,8 +1542,10 @@ function active_all($action, $template = '')
             $iter = $store[$panel]->get_iter($i);
             $file = $store[$panel]->get_value($iter, 0);
             $type = $store[$panel]->get_value($iter, 5);
-            $template = str_replace('*', '(.+?)', $template);
-            if (preg_match('#^' . $template . '$#is', $file))
+            $tmp = preg_quote($template);
+            $tmp = str_replace('\*', '(.+?)', $tmp);
+            $mod = $register ? 's' : 'is';
+            if (preg_match('#^' . $tmp . '$#' . $mod, $file))
             {
                 $selection[$panel]->select_path($i);
             }
@@ -1729,17 +1738,23 @@ function enter_template_window()
 
     $vbox = $dialog->vbox;
 
-    $vbox->pack_start($hbox = new GtkHBox());
-    $hbox->pack_start($entry = new GtkEntry());
-    $entry->connect('changed', 'active_online');
-    $entry->connect('activate', 'redirect_template', $dialog);
+    $vbox->pack_start($entry = new GtkEntry());
+    $vbox->pack_start($check = new GtkCheckButton($lang['tmp_window']['register']));
+    $entry->connect_simple('changed', 'active_online', $entry, $check);
+    $entry->connect_simple('activate', 'redirect_template', $entry, $dialog, $check);
+    $check->connect_simple('toggled', 'active_online', $entry, $check);
+    
+    $vbox->pack_start($label = new GtkLabel(), FALSE, FALSE, 10);
+    $label->set_markup('<i>'.$lang['tmp_window']['hint'].'</i>');
+    $label->set_line_wrap(TRUE);
+    $label->set_justify(Gtk::JUSTIFY_RIGHT);
 
     $dialog->show_all();
     $result = $dialog->run();
 
     if ($result == Gtk::RESPONSE_OK)
     {
-        active_all('template', $entry->get_text());
+        redirect_template($entry, $dialog, $check);
     }
     elseif ($result == Gtk::RESPONSE_CANCEL)
     {
@@ -1749,17 +1764,18 @@ function enter_template_window()
     $dialog->destroy();
 }
 
-function active_online($entry)
+function active_online($entry, $check)
 {
     global $selection, $panel;
 
     $selection[$panel]->unselect_all();
-    active_all('template', $entry->get_text());
+    active_all('template', $entry->get_text(), $check->get_active());
 }
 
-function redirect_template($entry, $dialog)
+function redirect_template($entry, $dialog, $check)
 {
-    active_all('template', $entry->get_text());
+    var_dump($check->get_active());
+    active_all('template', $entry->get_text(), $check->get_active());
     $dialog->destroy();
 }
 
@@ -1977,4 +1993,18 @@ function fix_spaces($filename) {
         return (strpos($filename, ' ') == false)
                 ? $filename
                 : implode('\\', array_map('find_spaces', explode('\\', $filename)));
+}
+
+function one_panel()
+{
+    global $right;
+
+    if ($right->is_visible())
+    {
+        $right->hide();
+    }
+    else
+    {
+        $right->show_all();
+    }
 }

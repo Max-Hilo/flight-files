@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Файл русской локализации, кодировка UTF-8.
+ * Файл русской локализации, кодировка CP1251.
  *
  * @copyright Copyright (C) 2009, Вавилов Егор (Shecspi)
  * @license http://www.opensource.org/licenses/mit-license.php MIT License
@@ -25,7 +25,7 @@ $lang['menu']['comparison_dir']         = 'Сравнить папки';
 $lang['menu']['active_all']             = 'Выделить все';
 $lang['menu']['active_all_none']        = 'Снять выделение';
 $lang['menu']['active_template']         = 'Выделить по шаблону';
-$lang['menu']['close']                  = 'Закрыть';
+$lang['menu']['close']                  = 'Выйти';
 $lang['menu']['copy']                   = 'Копировать';
 $lang['menu']['cut']                    = 'Вырезать';
 $lang['menu']['paste']                  = 'Вставить';
@@ -34,6 +34,7 @@ $lang['menu']['rename']                 = 'Переименовать';
 $lang['menu']['mass_rename']            = 'Массовое переименование';
 $lang['menu']['files_ass']              = 'Файловые ассоциации';
 $lang['menu']['preference']             = 'Настройки';
+$lang['menu']['one_panel']              = 'Однопанельный режим';
 $lang['menu']['toolbar_view']           = 'Панель инструментов';
 $lang['menu']['partbar_view']           = 'Список разделов';
 $lang['menu']['addressbar_view']        = 'Адресная строка';
@@ -97,7 +98,7 @@ $lang['bookmarks']['delete_hint']       = 'Удалить выбранную закладку';
 $lang['bookmarks']['delete_all']        = 'Удалить _все';
 $lang['bookmarks']['delete_all_hint']   = 'Удалить все закладки';
 $lang['bookmarks']['add']               = '_Добавить';
-$lang['bookmarks']['add_hint']          = 'Добавить новую закладку с настройками по умолчанию   ';
+$lang['bookmarks']['add_hint']          = 'Добавить новую закладку с настройками по умолчанию';
 $lang['bookmarks']['bookmarks']         = 'Закладки';
 $lang['bookmarks']['root']              = 'Корень';
 $lang['bookmarks']['new']               = 'Новая закладка';
@@ -379,6 +380,8 @@ $lang['help']['version']                = 'Показать версию программы и выйти';
 $lang['help']['one']                    = 'Запустить в однопанельном режиме';
 
 $lang['tmp_window']['title']            = 'Выделение по шаблону';
+$lang['tmp_window']['hint']             = 'Звёздочка (*) обозначает последовательность любых символов.';
+$lang['tmp_window']['register']         = 'Учитывать регистр';
 $lang['tmp_window']['button_yes']       = 'Продолжить';
 $lang['tmp_window']['button_no']        = 'Отменить';
 
