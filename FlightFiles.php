@@ -240,7 +240,7 @@ if ($_config['maximize'] == 'on')
 {
     $main_window->maximize();
 }
-$main_window->connect_simple('delete-event', 'close_window');
+$main_window->connect_simple('delete-event', 'close_window', 'minimize');
 $accel_group = new GtkAccelGroup();
 $main_window->add_accel_group($accel_group);
 $action_group = new GtkActionGroup('menubar');
@@ -324,6 +324,8 @@ $array_menuitem = array(
     array('edit', 'separator'),
     array('edit', '', 'files_associations', $lang['menu']['files_ass'], '', 'files_associations_window', '', '', '', ''),
     array('edit', '', 'preference', $lang['menu']['preference'], Gtk::STOCK_PROPERTIES, 'preference'),
+    array('view', 'toggle', 'one_panel', $lang['menu']['one_panel'], '', 'one_panel', '', '', 'false', 'F4'),
+    array('view', 'separator'),
     array('view', 'toggle', 'toolbar_view', $lang['menu']['toolbar_view'], '',
         'panel_view', 'toolbar', '', array($_config['toolbar_view'], 'on'), 'F5'),
     array('view', 'toggle', 'addressbar_view', $lang['menu']['addressbar_view'], '',
@@ -363,7 +365,11 @@ foreach ($array_menuitem as $value)
     elseif ($value[1] == 'toggle')
     {
         $action_menu[$value[2]] = new GtkToggleAction($value[2], $value[3], '', '');
-        if ($value[8][0] == $value[8][1])
+        if ($value[8] == 'false')
+        {
+            $action_menu[$value[2]]->set_active(TRUE);
+        }
+        elseif ($value[8][0] == $value[8][1])
         {
             $action_menu[$value[2]]->set_active(TRUE);
         }
@@ -399,7 +405,7 @@ foreach ($array_menuitem as $value)
             $action_menu[$value[2]]->set_sensitive(FALSE);
         }
     }
-    elseif ($value[8] == 'false')
+    elseif ($value[8] == 'false' AND $value[1] != 'toggle')
     {
         $action_menu[$value[2]]->set_sensitive(FALSE);
     }
@@ -645,11 +651,17 @@ $right->add($scroll_right);
 //////////////////////////
 
 $hbox->pack_start($left);
-if (!in_array('--one', $argv))
-{
-    $hbox->pack_start($right);
-}
+$hbox->pack_start($right);
 $hbox->show_all();
+if (in_array('--one', $argv))
+{
+    $left->show_all();
+    $right->hide();
+}
+else
+{
+    $right->show_all();
+}
 
 $vbox->pack_start($hbox);
 
