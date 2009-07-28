@@ -364,7 +364,7 @@ function combo_write($combo, $param)
  */
 function check_button_write($check, $param, $timeout = '')
 {
-    global $sqlite, $refresh_id, $tray;
+    global $sqlite, $refresh_id_left, $refresh_id_right, $tray;
 
     $value = $check->get_active() ? 'on' : 'off';
     
@@ -387,11 +387,13 @@ function check_button_write($check, $param, $timeout = '')
     {
         if ($value == 'on')
         {
-            $refresh_id = Gtk::timeout_add(1000, 'partbar');
+            $refresh_id_left = Gtk::timeout_add(1000, 'partbar', 'left');
+            $refresh_id_right = Gtk::timeout_add(1000, 'partbar', 'right');
         }
         else
         {
-            Gtk::timeout_remove($refresh_id);
+            Gtk::timeout_remove($refresh_id_left);
+            Gtk::timeout_remove($refresh_id_right);
         }
     }
     

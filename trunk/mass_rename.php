@@ -13,7 +13,7 @@
  */
 function BulkRenameWindow()
 {
-    global $active_type_rename, $window, $lang;
+    global $active_type_rename, $main_window, $lang;
 
     $active_type_rename = 'upper';
 

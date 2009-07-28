@@ -500,14 +500,32 @@ $vbox->pack_start($toolbar, FALSE, FALSE);
 ///////////////////////////
 ///// Панель разделов /////
 ///////////////////////////
-
 $partbar = new GtkHBox();
-$partbar = partbar();
-$vbox->pack_start($partbar, FALSE, FALSE);
+$partbar->set_homogeneous(TRUE);
+
+$partbar_left = new GtkHBox();
+$partbar_left = partbar('left');
+
+$partbar_right = new GtkHBox();
+$partbar_right = partbar('right');
+
 if ($_config['partbar_refresh'] == 'on')
 {
-    $refresh_id = Gtk::timeout_add(1000, 'partbar');
+    $refresh_id_left = Gtk::timeout_add(1000, 'partbar', 'left');
+    $refresh_id_right = Gtk::timeout_add(1000, 'partbar', 'right');
 }
+
+$partbar->pack_start($partbar_left);
+$partbar->pack_start($partbar_right);
+if ($_config['partbar_view'] == 'on')
+{
+    $partbar->show_all();
+}
+else
+{
+    $partbar->hide();
+}
+$vbox->pack_start($partbar, FALSE, FALSE);
 
 //////////////////////////
 ///// Адреная строка /////

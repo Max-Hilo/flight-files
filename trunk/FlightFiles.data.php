@@ -224,15 +224,14 @@ function on_button($view, $event, $type)
                     $sfa = sqlite_fetch_array($query);
                     if (empty($sfa['command']))
                     {
-                        alert_window($lang['alert']['empty_command']);
+                        alert_window($lang['command']['empty_command']);
                     }
                     elseif (!file_exists($sfa['command']))
                     {
-                        alert_window($lang['command']['commabd_not_found']);
+                        alert_window($lang['command']['command_not_found']);
                     }
                     elseif (OS == 'Windows')
                     {
-
                         pclose(popen('start /B "'.fix_spaces($sfa['command']).'" '.fix_spaces($filename), "r"));
                     }
                     else
@@ -946,22 +945,31 @@ function convert_size($filename)
             $size_byte = $explode[0];
         }
     }
+    return conversion_size($size_byte);
+    
+}
+
+function conversion_size($size_byte)
+{
+    global $lang;
+    
     if ($size_byte >= 0 AND $size_byte < 1024)
     {
-        return $size_byte.' '.$lang['size']['b'];
+        $size = $size_byte.' '.$lang['size']['b'];
     }
     elseif ($size_byte >= 1024 AND $size_byte < 1048576)
     {
-        return round($size_byte / 1024, 2).' '.$lang['size']['kib'];
+        $size = round($size_byte / 1024, 2).' '.$lang['size']['kib'];
     }
     elseif ($size_byte >= 1048576 AND $size_byte < 1073741824)
     {
-        return round($size_byte / 1048576, 2).' '.$lang['size']['mib'];
+        $size = round($size_byte / 1048576, 2).' '.$lang['size']['mib'];
     }
-    elseif ($size_byte >= 1073741824 AND $size_byte < 2147483648)
+    elseif ($size_byte >= 1073741824 AND $size_byte < 1099511627776)
     {
-        return round($size_byte / 1073741824, 2).' '.$lang['size']['gib'];
+        $size = round($size_byte / 1073741824, 2).' '.$lang['size']['gib'];
     }
+    return $size;
 }
 
 /**
@@ -1185,9 +1193,40 @@ function status_bar()
 
     $context_id = $statusbar->get_context_id('count_elements');
     $statusbar->push($context_id, '   '.$lang['statusbar']['count'].' '.$count_element
-                  .' ( '.$lang['statusbar']['dirs'].' '.$count_dir.', '.$lang['statusbar']['files'].' '.$count_file.' )');
+                  .' ( '.$lang['statusbar']['dirs'].' '.$count_dir.', '.$lang['statusbar']['files'].' '.$count_file.' )'
+                  .'            '.my_free_space().' '.$lang['statusbar']['of'].' '.my_total_space().' '.$lang['statusbar']['free']);
 
     return $statusbar;
+}
+
+/**
+ * Высчитывает свободное место на текущем разделе жёсткого диска
+ * и возвращает результат в удобном для восприятия виде.
+ * @global array $start
+ * @global string $panel
+ * @return string Возвращает свободное дисковое пространство
+ */
+function my_free_space()
+{
+    global $start, $panel;
+
+    $free = disk_free_space($start[$panel]);
+    return conversion_size($free);
+}
+
+/**
+ * Высчитывает общий объём текущего раздела жёсткого диска
+ * и возвращает результат в удобном для восприятия виде.
+ * @global array $start
+ * @global string $panel
+ * @return string Возвращает общий объём раздела
+ */
+function my_total_space()
+{
+    global $start, $panel;
+
+    $total = disk_total_space($start[$panel]);
+    return conversion_size($total);
 }
 
 /**
@@ -1364,18 +1403,27 @@ function columns($tree_view, $cell_renderer)
 {
     global $lang;
 
-    $render = new GtkCellRendererPixbuf;
-    $column_image = new GtkTreeViewColumn;
-    $column_image->pack_start($render);
+    $render = new GtkCellRendererPixbuf();
+    $column_image = new GtkTreeViewColumn();
+    $column_image->pack_start($render, FALSE);
     $column_image->set_cell_data_func($render, "image_column");
+
+    $render = new GtkCellRendererText();
+    $column_image->pack_start($render, TRUE);
+    $column_image->set_attributes($render, 'text', 0);
+    $column_image->set_cell_data_func($render, 'file_column');
+    $label = new GtkLabel($lang['column']['title']);
+    $label->show_all();
+    $column_image->set_widget($label);
+    $column_image->set_expand(TRUE);
+    $column_image->set_resizable(TRUE);
+    $column_image->set_sizing(Gtk::TREE_VIEW_COLUMN_FIXED);
+    $column_image->set_sort_column_id(0);
 
     $cell_renderer->set_property('ellipsize', Pango::ELLIPSIZE_END);
 
     $column_file = new GtkTreeViewColumn($lang['column']['title'], $cell_renderer, 'text', 0);
-    $column_file->set_expand(TRUE);
-    $column_file->set_resizable(TRUE);
-    $column_file->set_sizing(Gtk::TREE_VIEW_COLUMN_FIXED);
-    $column_file->set_sort_column_id(0);
+    $column_file->set_visible(FALSE);
 
     $column_ext = new GtkTreeViewColumn($lang['column']['ext'], $cell_renderer, 'text', 1);
     $column_ext->set_sort_column_id(1);
@@ -1418,6 +1466,16 @@ function image_column($column, $render, $model, $iter)
     {
         $render->set_property('stock-id', 'gtk-file');
     }
+}
+
+/**
+ * Добавляет имя файла/папки к изображению.
+ */
+function file_column($column, $render, $model, $iter)
+{
+    $path = $model->get_path($iter);
+    $file = $model->get_value($iter, 0);
+    $render->set_property('text', $file);
 }
 
 /**
@@ -1632,15 +1690,24 @@ function active_all($action, $template = '', $register = FALSE)
  * @global GtkHBox $partbar
  * @global array $_config
  */
-function partbar()
+function partbar($side)
 {
-    global $lang, $partbar, $_config;
+    global $lang, $partbar_left, $partbar_right, $_config;
 
-    foreach ($partbar->get_children() as $widget)
+    $partbar = 'partbar_' . $side;
+
+    foreach ($$partbar->get_children() as $widget)
     {
-        $partbar->remove($widget);
+        $$partbar->remove($widget);
     }
-    $partbar->pack_start(new GtkLabel($lang['partbar']['label']), FALSE, FALSE, 10);
+
+    $refresh_button = new GtkButton();
+    $refresh_button->set_image(GtkImage::new_from_stock(Gtk::STOCK_REFRESH, Gtk::ICON_SIZE_MENU));
+    $refresh_button->set_tooltip_text($lang['partbar']['refresh_hint']);
+    $refresh_button->connect_simple('clicked', 'partbar', $side);
+    $$partbar->pack_start($refresh_button, FALSE, FALSE);
+
+    $$partbar->pack_start(new GtkLabel('   '), FALSE, FALSE);
 
     if (OS == 'Unix')
     {
@@ -1663,10 +1730,22 @@ function partbar()
             $size = str_replace('M', ' '.$lang['size']['mib'], $size);
             $size = str_replace('G', ' '.$lang['size']['gib'], $size);
             $mount = $explode[5];
-            $button = new GtkButton($size.' - '.$system);
-            $button->set_tooltip_text($lang['partbar']['mount'].$mount);
-            $button->connect_simple('clicked', 'change_dir', 'bookmarks', $mount);
-            $partbar->pack_start($button, FALSE, FALSE);
+            $button = new GtkButton();
+            $button->set_image(GtkImage::new_from_stock(Gtk::STOCK_HARDDISK, Gtk::ICON_SIZE_MENU));
+            if ($mount == '/')
+            {
+                $button->set_label('/');
+            }
+            else
+            {
+                $button->set_label(basename($mount));
+            }
+            $button->set_tooltip_text(
+                $lang['partbar']['part'] . ' ' . $system . "\n" .
+                $lang['partbar']['mount'] . ' ' .$mount . "\n" .
+                $lang['partbar']['space'] . ' ' . $size);
+            $button->connect_simple('clicked', 'change_part', $side, $mount);
+            $$partbar->pack_start($button, FALSE, FALSE);
         }
     }
     elseif (OS == 'Windows')
@@ -1677,44 +1756,45 @@ function partbar()
         {
             if (file_exists($drive . ':'))
             {
-                $button = new GtkButton($lang['partbar']['drive'] . ' ' .$drive);
-                $button->connect_simple('clicked', 'change_dir', 'bookmarks', $drive . ':');
-                $partbar->pack_start($button, FALSE, FALSE);
+                $button = new GtkButton();
+                $button_hbox = new GtkHBox();
+                $button_hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_HARDDISK, Gtk::ICON_SIZE_MENU), FALSE, FALSE);
+                $button_hbox->pack_start(new GtkLabel(' '), FALSE, FALSE);
+                $button_hbox->pack_start(new GtkLabel($drive), FALSE, FALSE);
+                $button->add($button_hbox);
+                $size = conversion_size(disk_total_space($drive . ':'));
+                $button->set_tooltip_text(
+                    $lang['partbar']['part'] . ' ' . $drive . "\n" .
+                    $lang['partbar']['space'] . ' ' . $size);
+                $button->connect_simple('clicked', 'change_part', $side, $drive . ':');
+                $$partbar->pack_start($button, FALSE, FALSE);
             }
         }
     }
-    $refresh_button = new GtkButton();
-    $button_hbox = new GtkHBox();
-    $button_hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_REFRESH, Gtk::ICON_SIZE_BUTTON), FALSE, FALSE);
-    $button_hbox->pack_start(new GtkLabel());
-    $button_hbox->pack_start(new GtkLabel($lang['partbar']['refresh']));
-    $refresh_button->add($button_hbox);
-    $refresh_button->set_tooltip_text($lang['partbar']['refresh_hint']);
-    $refresh_button->connect_simple('clicked', 'partbar', TRUE);
-    $partbar->pack_end($refresh_button, FALSE, FALSE);
 
     if ($_config['partbar_view'] == 'on')
     {
-        $partbar->show_all();
+        $$partbar->show_all();
     }
     else
     {
-        $partbar->hide();
+        $$partbar->hide();
     }
-    return $partbar;
+    return $$partbar;
 }
 
 /**
- * Производит смену рраздела (только на Windows)
- * @param GtkComboBox $combo Список разделов
+ * Производит смену текущей директории на указанную в $disk.
+ * @global string $panel
+ * @param string $side Активная панель
+ * @param string $disk Новый адрес
  */
-function change_part($combo)
+function change_part($side, $disk)
 {
-    $active = $combo->get_active_text();
-    if (!empty($active))
-    {
-        change_dir('bookmarks', $active);
-    }
+    global $panel;
+
+    $panel = $side;
+    change_dir('bookmarks', $disk);
 }
 
 /**
