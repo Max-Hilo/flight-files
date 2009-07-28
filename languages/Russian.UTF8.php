@@ -69,11 +69,10 @@ $lang['toolbar']['new_dir_hint']        = 'Создать папку в теку
 $lang['toolbar']['paste']               = 'Вставить';
 $lang['toolbar']['paste_hint']          = 'Вставить элемент из буфера обмена в текущую директорию';
 
-$lang['partbar']['refresh']             = 'Обновить';
 $lang['partbar']['refresh_hint']        = 'Обновить список разделов';
-$lang['partbar']['label']               = 'Список разделов:';
-$lang['partbar']['mount']               = 'Точка монтирования - ';
-$lang['partbar']['drive']               = 'Диск';
+$lang['partbar']['mount']               = 'Точка монтирования:';
+$lang['partbar']['part']                = 'Раздел:';
+$lang['partbar']['space']               = 'Объём:';
 
 $lang['addressbar']['label']            = 'Текущий каталог:';
 $lang['addressbar']['button']           = 'Сменить';
@@ -87,6 +86,8 @@ $lang['column']['ext']                  = 'Расш.';
 $lang['statusbar']['count']             = 'Количество элементов:';
 $lang['statusbar']['dirs']              = 'папок:';
 $lang['statusbar']['files']             = 'файлов:';
+$lang['statusbar']['of']                = 'из';
+$lang['statusbar']['free']              = 'свободно';
 
 $lang['bookmarks']['title']             = 'FlightFiles :: Изменить закладки';
 $lang['bookmarks']['name']              = 'Название:';
@@ -303,7 +304,7 @@ $lang['close']['button_no']             = 'Нет, не закрывать';
 
 $lang['command']['none']                = "Не выбрана программа для открытия файлов типа '%s'";
 $lang['command']['empty_command']       = 'Не выбранна программа для запуска данного типа файлов';
-$lang['command']['command_not_found']   = "Программа, указанная для запуска файлов данного типа не указана";
+$lang['command']['command_not_found']   = "Программа, указанная для запуска файлов данного типа, не существует";
 $lang['command']['empty']               = 'Не указана программа для выполнения';
 $lang['command']['file_not_found']      = "Программа '%s' не найдена";
 
@@ -342,10 +343,13 @@ $lang['file_ass']['edit_ext']           = 'И_зменить';
 $lang['file_ass']['remove_ext']         = 'Уд_алить';
 $lang['file_ass']['command_hint']       = 'Изменить программу для запуска';
 $lang['file_ass']['chooser_command']    = 'Выбрать файл';
-$lang['file_ass']['cancel_add_ext']     = '_Отменить';
-$lang['file_ass']['ok_add_ext']         = '_Добавить';
-$lang['file_ass']['cancel_add_type']    = '_Отменить';
-$lang['file_ass']['ok_add_type']        = '_Добавить';
+$lang['file_ass']['add_type_title']     = 'Добавить тип файлов';
+$lang['file_ass']['add_ext_title']      = 'Добавить расширение';
+$lang['file_ass']['button_add']         = '_Добавить';
+$lang['file_ass']['button_edit']        = '_Изменить';
+$lang['file_ass']['button_cancel']      = '_Отменить';
+$lang['file_ass']['edit_type_title']    = 'Изменить тип файлов';
+$lang['file_ass']['edit_ext_title']     = 'Изменить расширение';
 
 $lang['image']['title']                 = 'FlightFiles :: Просмотр изображений :: %s';
 $lang['image']['zoom_in']               = 'Увеличить';
