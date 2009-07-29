@@ -70,7 +70,8 @@ function config_parser()
  */
 function on_button($view, $event, $type)
 {
-    global $panel, $lang, $store, $action_menu, $action, $start, $entry_current_dir, $number, $sqlite, $clp, $selection;
+    global $panel, $lang, $store, $action_menu, $action, $start,
+           $current_dir_left, $current_dir_right, $number, $sqlite, $clp, $selection;
 
     $panel = $type;
 
@@ -152,9 +153,6 @@ function on_button($view, $event, $type)
         $action_menu['clear_bufer']->set_sensitive(FALSE);
         $action_menu['paste']->set_sensitive(FALSE);
     }
-
-    // Устанавливаем новое значение в адресную строку
-    $entry_current_dir->set_text($start[$panel]);
 
     $path_array = $view->get_path_at_pos($event->x, $event->y);
     $path = $path_array[0][0];
@@ -447,6 +445,15 @@ function on_button($view, $event, $type)
 
         return FALSE;
     }
+}
+
+function jump_to_folder($entry, $side)
+{
+    global $panel;
+
+    $path = $entry->get_text();
+    $panel = $side;
+    change_dir('bookmarks', $path);
 }
 
 /**
@@ -1008,7 +1015,7 @@ function history($direct)
  */
 function change_dir($act = '', $dir = '', $all = FALSE)
 {
-    global $vbox, $entry_current_dir, $action, $action_menu, $lang, $panel, $store,
+    global $vbox, $current_dir_left, $current_dir_right, $action, $action_menu, $lang, $panel, $store,
            $start, $number, $sqlite, $tree_view, $_config, $clp;
 
     // Устанавливаем новое значение текущей директории
@@ -1177,7 +1184,8 @@ function change_dir($act = '', $dir = '', $all = FALSE)
     status_bar();
 
     // Устанавливаем новое значение в адресную строку
-    $entry_current_dir->set_text($start[$panel]);
+    $cur = 'current_dir_' . $panel;
+    $$cur->set_text($start[$panel]);
 }
 
 /**
@@ -1744,7 +1752,7 @@ function partbar($side)
                 $lang['partbar']['part'] . ' ' . $system . "\n" .
                 $lang['partbar']['mount'] . ' ' .$mount . "\n" .
                 $lang['partbar']['space'] . ' ' . $size);
-            $button->connect_simple('clicked', 'change_part', $side, $mount);
+            $button->connect_simple('clicked', 'jump_to_part', $side, $mount);
             $$partbar->pack_start($button, FALSE, FALSE);
         }
     }
@@ -1766,19 +1774,10 @@ function partbar($side)
                 $button->set_tooltip_text(
                     $lang['partbar']['part'] . ' ' . $drive . "\n" .
                     $lang['partbar']['space'] . ' ' . $size);
-                $button->connect_simple('clicked', 'change_part', $side, $drive . ':');
+                $button->connect_simple('clicked', 'jump_to_part', $side, $drive . ':');
                 $$partbar->pack_start($button, FALSE, FALSE);
             }
         }
-    }
-
-    if ($_config['partbar_view'] == 'on')
-    {
-        $$partbar->show_all();
-    }
-    else
-    {
-        $$partbar->hide();
     }
     return $$partbar;
 }
@@ -1789,7 +1788,7 @@ function partbar($side)
  * @param string $side Активная панель
  * @param string $disk Новый адрес
  */
-function change_part($side, $disk)
+function jump_to_part($side, $disk)
 {
     global $panel;
 
