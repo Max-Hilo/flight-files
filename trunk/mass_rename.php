@@ -11,7 +11,7 @@
  * @global GtkRadioButton $active_type_rename
  * @global GtkWindow $window
  */
-function BulkRenameWindow()
+function bulk_rename_window()
 {
     global $active_type_rename, $main_window, $lang;
 
@@ -97,13 +97,13 @@ function BulkRenameWindow()
     $hhbox->add($button_ok);
     $vbox->pack_start($hhbox, FALSE, FALSE);
     
-    $upper_radio->connect_simple('toggled', 'ActiveTypeRename', 'upper', $order_hbox, $replace_table, $ext_check);
-    $lower_radio->connect_simple('toggled', 'ActiveTypeRename', 'lower', $order_hbox, $replace_table, $ext_check);
-    $order_radio->connect_simple('toggled', 'ActiveTypeRename', 'order', $order_hbox, $replace_table, $ext_check);
-    $replace_radio->connect_simple('toggled', 'ActiveTypeRename', 'replace', $order_hbox, $replace_table, $ext_check);
-    $button_cancel->connect_simple('clicked', 'BulkRenameWindowClose', $wnd);
+    $upper_radio->connect_simple('toggled', 'active_type_rename', 'upper', $order_hbox, $replace_table, $ext_check);
+    $lower_radio->connect_simple('toggled', 'active_type_rename', 'lower', $order_hbox, $replace_table, $ext_check);
+    $order_radio->connect_simple('toggled', 'active_type_rename', 'order', $order_hbox, $replace_table, $ext_check);
+    $replace_radio->connect_simple('toggled', 'active_type_rename', 'replace', $order_hbox, $replace_table, $ext_check);
+    $button_cancel->connect_simple('clicked', 'bulk_rename_window_close', $wnd);
     $button_ok->connect_simple(
-        'clicked', 'BulkRenameAction', $wnd,
+        'clicked', 'bulk_rename_action', $wnd,
         $ext_check, $hidden_check, $order_name_entry,
         $replace_oldname_entry, $replace_newname_entry);
 
@@ -116,34 +116,34 @@ function BulkRenameWindow()
  * Функция заносит в глобальную переменную тип переименования файлов
  * и делает неактивными некоторые элементы интерфейса.
  * @global string $active_type_rename
- * @param string $typeRename
- * @param GtkBox $orderBox
- * @param GtkTable $replaceTable
- * @param GtkCheckButton $extCheckButton
+ * @param string $type
+ * @param GtkBox $order
+ * @param GtkTable $replace
+ * @param GtkCheckButton $extension
  */
-function ActiveTypeRename($typeRename, $orderBox, $replaceTable, $extCheckButton)
+function active_type_rename($type, $order, $replace, $extension)
 {
     global $active_type_rename;
 
-    if ($typeRename == 'order')
+    if ($type == 'order')
     {
-        $orderBox->set_sensitive(TRUE);
-        $replaceTable->set_sensitive(FALSE);
-        $extCheckButton->set_sensitive(TRUE);
+        $order->set_sensitive(TRUE);
+        $replace->set_sensitive(FALSE);
+        $extension->set_sensitive(TRUE);
     }
-    elseif ($typeRename == 'replace')
+    elseif ($type == 'replace')
     {
-        $orderBox->set_sensitive(FALSE);
-        $replaceTable->set_sensitive(TRUE);
-        $extCheckButton->set_sensitive(FALSE);
+        $order->set_sensitive(FALSE);
+        $replace->set_sensitive(TRUE);
+        $extension->set_sensitive(FALSE);
     }
     else
     {
-        $orderBox->set_sensitive(FALSE);
-        $replaceTable->set_sensitive(FALSE);
-        $extCheckButton->set_sensitive(TRUE);
+        $order->set_sensitive(FALSE);
+        $replace->set_sensitive(FALSE);
+        $extension->set_sensitive(TRUE);
     }
-    $active_type_rename = $typeRename;
+    $active_type_rename = $type;
 }
 
  /**
@@ -151,14 +151,14 @@ function ActiveTypeRename($typeRename, $orderBox, $replaceTable, $extCheckButton
   * @global string $active_type_rename
   * @global array $start
   * @global string $panel
-  * @param GtkWindow $renameWindow Окно, которое будет закрыто после завершения операции
-  * @param GtkCheckButton $extCheckButton Переключатель, отвечающий за переименование расширения
-  * @param GtkCheckButton $hiddenCheckButton Переключатель, отвечающий за пропуск скрытых файлов
-  * @param GtkEntry $orderEntry Поле ввода, используется, если тип переименования 'order'
-  * @param GtkEntry $replaceMatchEntry Поле ввода строки поиска, используется, если тип переименования 'replace'
-  * @param GtkEntry $replaceReplaceEntry Поле ввода строки замены, используется, если тип переименования 'replace'
+  * @param GtkWindow $window Окно, которое будет закрыто после завершения операции
+  * @param GtkCheckButton $extension Переключатель, отвечающий за переименование расширения
+  * @param GtkCheckButton $hidden Переключатель, отвечающий за пропуск скрытых файлов
+  * @param GtkEntry $order Поле ввода, используется, если тип переименования 'order'
+  * @param GtkEntry $match Поле ввода строки поиска, используется, если тип переименования 'replace'
+  * @param GtkEntry $replace Поле ввода строки замены, используется, если тип переименования 'replace'
   */
-function BulkRenameAction($renameWindow, $extCheckButton, $hiddenCheckButton, $orderEntry, $replaceMatchEntry, $replaceReplaceEntry)
+function bulk_rename_action($window, $extension, $hidden, $order, $match, $replace)
 {
     global $active_type_rename, $start, $panel;
 
@@ -178,7 +178,7 @@ function BulkRenameAction($renameWindow, $extCheckButton, $hiddenCheckButton, $o
         }
 
         // При необходимости пропускаем скрытые файлы
-        if ($hiddenCheckButton->get_active() === TRUE)
+        if ($hidden->get_active() === TRUE)
         {
             if (preg_match("#^\.(.+?)#", $file))
                 continue;
@@ -188,7 +188,7 @@ function BulkRenameAction($renameWindow, $extCheckButton, $hiddenCheckButton, $o
         if ($active_type_rename == 'upper')
         {
             // Оставляем прежние расширения
-            if ($extCheckButton->get_active() === TRUE)
+            if ($extension->get_active() === TRUE)
             {
                 $explode = explode ('.', $file);
                 $count = count($explode);
@@ -218,7 +218,7 @@ function BulkRenameAction($renameWindow, $extCheckButton, $hiddenCheckButton, $o
         elseif ($active_type_rename == 'lower')
         {
             // Оставляем прежние расширения
-            if ($extCheckButton->get_active() === TRUE)
+            if ($extension->get_active() === TRUE)
             {
                 $explode = explode ('.', $file);
                 $count = count($explode);
@@ -251,14 +251,14 @@ function BulkRenameAction($renameWindow, $extCheckButton, $hiddenCheckButton, $o
         // По порядку
         elseif ($active_type_rename == 'order')
         {
-            $name = $orderEntry->get_text();
+            $name = $order->get_text();
             if (empty($name))
             {
                 $name = 'Файл ';
             }
 
             // Оставляем прежние расширения
-            if ($extCheckButton->get_active() === TRUE)
+            if ($extension->get_active() === TRUE)
             {
                 $explode = explode ('.', $file);
                 $count = count($explode);
@@ -283,14 +283,14 @@ function BulkRenameAction($renameWindow, $extCheckButton, $hiddenCheckButton, $o
         // Замена
         elseif ($active_type_rename == 'replace')
         {
-            $match = $replaceMatchEntry->get_text();
-            $replace = $replaceReplaceEntry->get_text();
-            rename($filename, $start[$panel].'/'.str_replace($match, $replace, $file));
+            $mtc = $match->get_text();
+            $rpl = $replace->get_text();
+            rename($filename, $start[$panel].'/'.str_replace($mtc, $rpl, $file));
         }
     }
     closedir($opendir);
     change_dir('none', '', 'all');
-    $renameWindow->destroy();
+    $window->destroy();
 }
 
 /**
@@ -326,7 +326,7 @@ function my_strto($type, $str)
  * Закрытие окна.
  * @param GtkWindow $window Закрываемое окно
  */
-function BulkRenameWindowClose($window)
+function bulk_rename_window_close($window)
 {
     $window->destroy();
 }
