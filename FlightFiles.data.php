@@ -1200,9 +1200,12 @@ function status_bar()
     $statusbar->push($context_id, '');
 
     $context_id = $statusbar->get_context_id('count_elements');
-    $statusbar->push($context_id, '   '.$lang['statusbar']['count'].' '.$count_element
-                  .' ( '.$lang['statusbar']['dirs'].' '.$count_dir.', '.$lang['statusbar']['files'].' '.$count_file.' )'
-                  .'            '.my_free_space().' '.$lang['statusbar']['of'].' '.my_total_space().' '.$lang['statusbar']['free']);
+    $str = str_replace('%c', $count_element, $lang['statusbar']['label']);
+    $str = str_replace('%f', $count_file, $str);
+    $str = str_replace('%d', $count_dir, $str);
+    $str = str_replace('%s', my_free_space(), $str);
+    $str = str_replace('%t', my_total_space(), $str);
+    $statusbar->push($context_id, $str);
 
     return $statusbar;
 }
@@ -1434,13 +1437,15 @@ function columns($tree_view, $cell_renderer)
     $column_file->set_visible(FALSE);
 
     $column_ext = new GtkTreeViewColumn($lang['column']['ext'], $cell_renderer, 'text', 1);
+    $column_ext->set_resizable(TRUE);
     $column_ext->set_sort_column_id(1);
 
     $column_size = new GtkTreeViewColumn($lang['column']['size'], $cell_renderer, 'text', 2);
+    $column_size->set_resizable(TRUE);
     $column_size->set_sort_column_id(2);
 
     $column_mtime = new GtkTreeViewColumn($lang['column']['mtime'], $cell_renderer, 'text', 3);
-    $column_mtime->set_sizing(Gtk::TREE_VIEW_COLUMN_AUTOSIZE);
+    $column_mtime->set_resizable(TRUE);
     $column_mtime->set_sort_column_id(3);
 
     $column_df = new GtkTreeViewColumn('', $cell_renderer, 'text', 4);
@@ -1778,6 +1783,14 @@ function partbar($side)
                 $$partbar->pack_start($button, FALSE, FALSE);
             }
         }
+    }
+    if ($_config['partbar_view'] == 'on')
+    {
+        $$partbar->show_all();
+    }
+    else
+    {
+        $$partbar->hide();
     }
     return $$partbar;
 }

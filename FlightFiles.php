@@ -320,7 +320,7 @@ $array_menuitem = array(
     array('edit', '', 'delete', $lang['menu']['delete'], Gtk::STOCK_DELETE, 'delete_window', '', '', 'false', 'Delete'),
     array('edit', 'separator'),
     array('edit', '', 'rename', $lang['menu']['rename'], '', 'rename_window', '', '', 'false', 'F2'),
-    array('edit', '', 'mass_rename', $lang['menu']['mass_rename'], '', 'BulkRenameWindow', '', '', 'write', '<control>F2'),
+    array('edit', '', 'mass_rename', $lang['menu']['mass_rename'], '', 'bulk_rename_window', '', '', 'write', '<control>F2'),
     array('edit', 'separator'),
     array('edit', '', 'files_associations', $lang['menu']['files_ass'], '', 'files_associations_window', '', '', '', ''),
     array('edit', '', 'preference', $lang['menu']['preference'], Gtk::STOCK_PROPERTIES, 'preference'),
