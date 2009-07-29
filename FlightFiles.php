@@ -530,28 +530,31 @@ $vbox->pack_start($partbar, FALSE, FALSE);
 //////////////////////////
 ///// Адреная строка /////
 //////////////////////////
-
 $addressbar = new GtkHBox();
+$addressbar->set_homogeneous(TRUE);
 
-$label_current_dir = new GtkLabel($lang['addressbar']['label']);
-$entry_current_dir = new GtkEntry($start[$panel]);
-$button_change_dir = new GtkButton();
+$address_left = new GtkHBox();
+$current_dir_left = new GtkEntry($start['left']);
+$current_dir_left->connect('activate', 'jump_to_folder', 'left');
+$address_left->pack_start($current_dir_left, TRUE, TRUE);
+$button = new GtkButton();
+$button->set_image(GtkImage::new_from_stock(Gtk::STOCK_REDO, Gtk::ICON_SIZE_BUTTON));
+$button->set_tooltip_text($lang['addressbar']['button_hint']);
+$button->connect_simple('clicked', 'jump_to_folder', $current_dir_left, 'left');
+$address_left->pack_start($button, FALSE, FALSE);
 
-$button_change_dir->set_tooltip_text($lang['addressbar']['button_hint']);
-$button_hbox = new GtkHBox();
-$button_change_dir->add($button_hbox);
-$button_hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_REDO, Gtk::ICON_SIZE_BUTTON));
-$button_hbox->pack_start(new GtkLabel());
-$button_hbox->pack_start(new GtkLabel($lang['addressbar']['button']));
+$address_right = new GtkHBox();
+$current_dir_right = new GtkEntry($start['right']);
+$current_dir_right->connect('activate', 'jump_to_folder', 'right');
+$address_right->pack_start($current_dir_right, TRUE, TRUE);
+$button = new GtkButton();
+$button->set_image(GtkImage::new_from_stock(Gtk::STOCK_REDO, Gtk::ICON_SIZE_BUTTON));
+$button->set_tooltip_text($lang['addressbar']['button_hint']);
+$button->connect_simple('clicked', 'jump_to_folder', $current_dir_right, 'right');
+$address_right->pack_start($button, FALSE, FALSE);
 
-$entry_current_dir->connect_simple('activate', 'change_dir', 'user');
-$button_change_dir->connect_simple('clicked', 'change_dir', 'user');
-
-$addressbar->pack_start(new GtkLabel(' '), FALSE, FALSE);
-$addressbar->pack_start($label_current_dir, FALSE, FALSE);
-$addressbar->pack_start(new GtkLabel(' '), FALSE, FALSE);
-$addressbar->pack_start($entry_current_dir);
-$addressbar->pack_start($button_change_dir, FALSE, FALSE);
+$addressbar->pack_start($address_left);
+$addressbar->pack_start($address_right);
 
 if ($_config['addressbar_view'] == 'on')
 {
@@ -566,6 +569,7 @@ $vbox->pack_start($addressbar, FALSE, FALSE);
 /////////////////////////////
 
 $hbox = new GtkHBox;
+$hbox->set_homogeneous(TRUE);
 
 ////////////////////////
 ///// Левая панель /////
