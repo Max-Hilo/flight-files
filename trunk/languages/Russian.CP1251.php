@@ -80,14 +80,11 @@ $lang['addressbar']['button_hint']      = 'Перейти в указанную папку';
 
 $lang['column']['title']                = 'Название';
 $lang['column']['size']                 = 'Размер';
-$lang['column']['mtime']                = 'Время изменения';
+$lang['column']['mtime']                = 'Изменён';
 $lang['column']['ext']                  = 'Расш.';
 
-$lang['statusbar']['count']             = 'Количество элементов:';
-$lang['statusbar']['dirs']              = 'папок:';
-$lang['statusbar']['files']             = 'файлов:';
-$lang['statusbar']['of']                = 'из';
-$lang['statusbar']['free']              = 'свободно';
+$lang['statusbar']['label']             = 'Количество элементов: %c (файлов: %f, папок: %d)          '.
+    '%s из %t свободно';
 
 $lang['bookmarks']['title']             = 'FlightFiles :: Изменить закладки';
 $lang['bookmarks']['name']              = 'Название:';
