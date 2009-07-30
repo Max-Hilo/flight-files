@@ -33,77 +33,85 @@ function create_database($combo, $window)
     sqlite_query($sqlite, "CREATE TABLE type_files(id INTEGER PRIMARY KEY, type, command)");
     sqlite_query($sqlite, "CREATE TABLE ext_files(id_type, ext)");
 
-                          // $_config['hidden_files'] - если 'on', то будут показаны скрытые файлы.
-    sqlite_query($sqlite, "INSERT INTO config(key, value) VALUES('HIDDEN_FILES', 'off');".
+    sqlite_query($sqlite,
+        // $_config['hidden_files'] - если 'on', то будут показаны скрытые файлы.
+        "INSERT INTO config(key, value) VALUES('HIDDEN_FILES', 'off');".
 
-                          // $_config['last_dir_left'] - последняя посещённая директория в левой панели.
-                          // Запись прооизводится при выходе.
-                          "INSERT INTO config(key, value) VALUES('LAST_DIR_LEFT', '".ROOT_DIR."');".
+        // $_config['last_dir_left'] - последняя посещённая директория в левой панели.
+        // Запись прооизводится при выходе.
+        "INSERT INTO config(key, value) VALUES('LAST_DIR_LEFT', '".ROOT_DIR."');".
 
-                          // $_config['lasr_dir_right'] - последняя посещённая директория в правой панели.
-                          // Запись производится при выходе.
-                          "INSERT INTO config(key, value) VALUES('LAST_DIR_RIGHT', '".HOME_DIR."');".
+        // $_config['lasr_dir_right'] - последняя посещённая директория в правой панели.
+        // Запись производится при выходе.
+        "INSERT INTO config(key, value) VALUES('LAST_DIR_RIGHT', '".HOME_DIR."');".
 
-                          // $_config['home_dir_left'] - домашняя директория для левой панели.
-                          "INSERT INTO config(key, value) VALUES('HOME_DIR_LEFT', '".ROOT_DIR."');".
+        // $_config['home_dir_left'] - домашняя директория для левой панели.
+        "INSERT INTO config(key, value) VALUES('HOME_DIR_LEFT', '".ROOT_DIR."');".
 
-                          // $_config['home_dir_right'] - домашняя директория для правой панели
-                          "INSERT INTO config(key, value) VALUES('HOME_DIR_RIGHT', '".HOME_DIR."');".
+        // $_config['home_dir_right'] - домашняя директория для правой панели
+        "INSERT INTO config(key, value) VALUES('HOME_DIR_RIGHT', '".HOME_DIR."');".
 
-                          // $_config['ask_delete'] - если 'on', то перед удалением файлов
-                          // у пользователя будет спрошено подтверждение операции.
-                          "INSERT INTO config(key, value) VALUES('ASK_DELETE', 'on');".
+        // $_config['ask_delete'] - если 'on', то перед удалением файлов
+        // у пользователя будет спрошено подтверждение операции.
+        "INSERT INTO config(key, value) VALUES('ASK_DELETE', 'on');".
 
-                          // $_config['ask_close'] - если 'on', то перед закрытием главного окна
-                          // у пользователя будет спрошено подтверждение операции.
-                          "INSERT INTO config(key, value) VALUES('ASK_CLOSE', 'off');".
+        // $_config['ask_close'] - если 'on', то перед закрытием главного окна
+        // у пользователя будет спрошено подтверждение операции.
+        "INSERT INTO config(key, value) VALUES('ASK_CLOSE', 'off');".
 
-                          // $_config['toolbar_view'] - если 'on', то будет показана панель инструментов.
-                          "INSERT INTO config(key, value) VALUES('TOOLBAR_VIEW', 'on');".
+        // $_config['toolbar_view'] - если 'on', то будет показана панель инструментов.
+        "INSERT INTO config(key, value) VALUES('TOOLBAR_VIEW', 'on');".
 
-                          // $_config['addressbar_view'] - если 'on', то будет показана адресная панель.
-                          "INSERT INTO config(key, value) VALUES('ADDRESSBAR_VIEW', 'on');".
+        // $_config['addressbar_view'] - если 'on', то будет показана адресная панель.
+        "INSERT INTO config(key, value) VALUES('ADDRESSBAR_VIEW', 'on');".
 
-                          // $_config['statusbar_view'] - если 'on', то будет показана строка состояния
-                          "INSERT INTO config(key, value) VALUES('STATUSBAR_VIEW', 'on');".
+        // $_config['statusbar_view'] - если 'on', то будет показана строка состояния
+        "INSERT INTO config(key, value) VALUES('STATUSBAR_VIEW', 'on');".
 
-                          // $_config['partbar_view'] - если 'on', то будет показана панель разделов.
-                          "INSERT INTO config(key, value) VALUES('PARTBAR_VIEW', 'on');".
+        // $_config['partbar_view'] - если 'on', то будет показана панель разделов.
+        "INSERT INTO config(key, value) VALUES('PARTBAR_VIEW', 'on');".
 
-                          // $_config['font_list'] - шрифт, используемый для списка файлов.
-                          "INSERT INTO config(key, value) VALUES('FONT_LIST', '');".
+        // $_config['font_list'] - шрифт, используемый для списка файлов.
+        "INSERT INTO config(key, value) VALUES('FONT_LIST', '');".
 
-                          // $_config['language'] - язык программы.
-                          "INSERT INTO config(key, value) VALUES('LANGUAGE', '$language');".
+        // $_config['language'] - язык программы.
+        "INSERT INTO config(key, value) VALUES('LANGUAGE', '$language');".
 
-                          // $_config['maximize'] - если 'on', то при запуске главное окно будет развёрнуто на весь экран
-                          "INSERT INTO config(key, value) VALUES('MAXIMIZE', 'off');".
+        // $_config['maximize'] - если 'on', то при запуске главное окно будет развёрнуто на весь экран
+        "INSERT INTO config(key, value) VALUES('MAXIMIZE', 'off');".
 
-                          // $_config['terminal'] - адрес программы-консоли.
-                          "INSERT INTO config(key, value) VALUES('TERMINAL', '');".
+        // $_config['terminal'] - адрес программы-консоли.
+        "INSERT INTO config(key, value) VALUES('TERMINAL', '');".
 
-                          // $_config['conparison'] - адрес программы для сравнения файлов.
-                          "INSERT INTO config(key, value) VALUES('COMPARISON', '');".
+        // $_config['conparison'] - адрес программы для сравнения файлов.
+        "INSERT INTO config(key, value) VALUES('COMPARISON', '');".
 
-                          // $_config['partbar_refresh'] - если 'on', то панель разделов будет обновляться каждую секунду.
-                          // Не рекомендуется включать, т.к. замечет один очень неприятный баг.
-                          "INSERT INTO config(key, value) VALUES('PARTBAR_REFRESH', 'off');".
+        // $_config['partbar_refresh'] - если 'on', то панель разделов будет обновляться каждую секунду.
+        // Не рекомендуется включать, т.к. замечет один очень неприятный баг.
+        "INSERT INTO config(key, value) VALUES('PARTBAR_REFRESH', 'off');".
 
-                          // $_config['view_lines_files'] - если 'on', то будут показаны линии между файлами.
-                          "INSERT INTO config(key, value) VALUES('VIEW_LINES_FILES', 'off');".
+        // $_config['view_lines_files'] - если 'on', то будут показаны линии между файлами.
+        "INSERT INTO config(key, value) VALUES('VIEW_LINES_FILES', 'off');".
 
-                          // $_config['view_lines_columns'] - если 'on', то будут показаны линии между колонками.
-                          "INSERT INTO config(key, value) VALUES('VIEW_LINES_COLUMNS', 'on');".
+        // $_config['view_lines_columns'] - если 'on', то будут показаны линии между колонками.
+        "INSERT INTO config(key, value) VALUES('VIEW_LINES_COLUMNS', 'on');".
 
-                          // $_config['status_icon'] - если 'on', то в трее будет показан значок программы.
-                          "INSERT INTO config(key, value) VALUES('STATUS_ICON', 'on');".
+        // $_config['status_icon'] - если 'on', то в трее будет показан значок программы.
+        "INSERT INTO config(key, value) VALUES('STATUS_ICON', 'off');".
 
-                          // $_config['save_folders'] - если 'on', то при новом запуске программы будут
-                          // открыты папки из предыдущей сессии.
-                          "INSERT INTO config(key, value) VALUES('SAVE_FOLDERS', 'on');".
+        // $_config['save_folders'] - если 'on', то при новом запуске программы будут
+        // открыты папки из предыдущей сессии.
+        "INSERT INTO config(key, value) VALUES('SAVE_FOLDERS', 'on');".
 
-                          // $_config['mtime_format'] - формат даты для колонки "Изменён".
-                          "INSERT INTO config(key, value) VALUES('MTIME_FORMAT', 'd.m.Y G:i');");
+        // $_config['mtime_format'] - формат даты для колонки "Изменён".
+        "INSERT INTO config(key, value) VALUES('MTIME_FORMAT', 'd.m.Y G:i');".
+        
+        // $_config['addressbar_left'] - внешний вид левой адресной панели
+        "INSERT INTO config(key, value) VALUES('ADDRESSBAR_LEFT', 'buttons');".
+        
+        // $_config['addressbar_right'] - внешний вид правой адресной панели
+        "INSERT INTO config(key, value) VALUES('ADDRESSBAR_RIGHT', 'buttons');"
+    );
    $window->destroy();
 }
 
@@ -510,14 +518,19 @@ function on_button($view, $event, $type)
  * Функция получает текст из строки ввода адреса
  * и вызывает change_dir() для этого адреса.
  * @global string $panel
- * @param GtkEntry $entry
+ * @param GtkEntry $widget
  * @param string $side
+ * @param string $path
  */
-function jump_to_folder($entry, $side)
+function jump_to_folder($widget, $side, $path = '')
 {
-    global $panel;
+    global $panel, $addressbar_type;
 
-    $path = $entry->get_text();
+    if ($addressbar_type[$side] == 'entry')
+    {
+        $path = $widget->get_text();
+    }
+
     $panel = $side;
     change_dir('bookmarks', $path);
 }
@@ -1182,7 +1195,7 @@ function change_dir($act = '', $dir = '', $all = FALSE)
     }
     @closedir($opendir);
 
-    $start[$panel] = preg_replace ('#'.DS.'+#', DS, $start[$panel]);
+    $start[$panel] = preg_replace('#'.DS.'+#', DS, $start[$panel]);
 
     $action_menu['new_file']->set_sensitive(TRUE);
     $action_menu['new_dir']->set_sensitive(TRUE);
@@ -1295,8 +1308,9 @@ function change_dir($act = '', $dir = '', $all = FALSE)
     status_bar();
 
     // Устанавливаем новое значение в адресную строку
-    $cur = 'current_dir_' . $panel;
-    $$cur->set_text($start[$panel]);
+//    $cur = 'current_dir_' . $panel;
+//    $$cur->set_text($start[$panel]);
+    addressbar($panel);
 }
 
 /**
@@ -2089,13 +2103,13 @@ function window_hide()
 {
     global $main_window;
 
-    if ($window->is_visible())
+    if ($main_window->is_visible())
     {
-        $window->hide();
+        $main_window->hide();
     }
     else
     {
-        $window->show_all();
+        $main_window->show_all();
     }
 }
 
@@ -2305,4 +2319,118 @@ function one_panel()
     {
         $right->show_all();
     }
+}
+
+/**
+ * Добавляет на уже существующую адресную панель кнопки и поле ввода.
+ * @global GtkBox $address_left
+ * @global GtkBox $address_right
+ * @global array $start
+ * @global string $panel
+ * @global array $addressbar_type
+ * @global array $lang
+ * @global array $_config
+ * @param string $side Активная панель
+ */
+function addressbar($side)
+{
+    global $address_left, $address_right, $start, $panel, $addressbar_type, $lang, $_config;
+
+    $address = 'address_' . $side;
+
+    foreach ($$address->get_children() as $widget)
+    {
+        $$address->remove($widget);
+    }
+
+    $button = new GtkButton();
+    $button->set_image(GtkImage::new_from_stock(Gtk::STOCK_EDIT, Gtk::ICON_SIZE_BUTTON));
+    $button->set_tooltip_text($lang['addressbar']['change_type_hint']);
+    $button->connect_simple('clicked', 'change_type_addressbar', $side);
+    $$address->pack_start($button, FALSE, FALSE);
+
+    // Адресная панель в виде поля ввода
+    if ($addressbar_type[$side] == 'entry')
+    {
+        $current_dir = new GtkEntry($start[$side]);
+        $current_dir->connect('activate', 'jump_to_folder', 'left');
+        $$address->pack_start($current_dir, TRUE, TRUE);
+
+        $button = new GtkButton();
+        $button->set_image(GtkImage::new_from_stock(Gtk::STOCK_REDO, Gtk::ICON_SIZE_BUTTON));
+        $button->set_tooltip_text($lang['addressbar']['change_dir_hint']);
+        $button->connect_simple('clicked', 'jump_to_folder', $current_dir, 'left');
+        $$address->pack_start($button, FALSE, FALSE);
+    }
+    // Адресная панель в виде кнопок
+    elseif ($addressbar_type[$side] == 'buttons')
+    {
+        if (OS == 'Unix')
+        {
+            $button = new GtkButton();
+            $button->set_label('/');
+            $button->set_image(GtkImage::new_from_stock(Gtk::STOCK_HARDDISK, Gtk::ICON_SIZE_BUTTON));
+            if ($start[$panel] == '/')
+            {
+                $button->set_sensitive(FALSE);
+            }
+            $button->connect('clicked', 'jump_to_folder', $side, '/');
+            $$address->pack_start($button, FALSE, FALSE);
+        }
+
+        $explode = explode(DS, $start[$side]);
+        $path = '';
+        foreach ($explode as $value)
+        {
+            if (empty($value))
+            {
+                continue;
+            }
+            $button = new GtkButton($value);
+            if (empty($path))
+            {
+                $path .= $value;
+            }
+            else
+            {
+                $path .=  DS . $value;
+            }
+            $path = preg_replace('#'.DS.'+#', DS, $path);
+            if ($path == $start[$side])
+            {
+                $button->set_sensitive(FALSE);
+            }
+            $button->connect('clicked', 'jump_to_folder', $side, $path);
+            $$address->pack_start($button, FALSE, FALSE);
+        }
+    }
+
+    if ($_config['addressbar_view'] == 'on')
+    {
+        $$address->show_all();
+    }
+    else
+    {
+        $$address->hide();
+    }
+
+    return $$address;
+}
+
+/**
+ * Переключает внешний вид адресной панели.
+ * @global array $addressbar_type
+ * @param string $side Активная в данный момент панель
+ */
+function change_type_addressbar($side)
+{
+    global $addressbar_type, $sqlite;
+
+    $addressbar_type[$side] = ($addressbar_type[$side] == 'entry') ? 'buttons' : 'entry';
+    addressbar($side);
+
+    sqlite_query(
+        $sqlite,
+        "UPDATE config SET value = '".$addressbar_type[$side]."' WHERE key = 'ADDRESSBAR_".strtoupper($side)."'"
+    );
 }

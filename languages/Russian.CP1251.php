@@ -75,8 +75,8 @@ $lang['partbar']['part']                = 'Раздел:';
 $lang['partbar']['space']               = 'Объём:';
 
 $lang['addressbar']['label']            = 'Текущий каталог:';
-$lang['addressbar']['button']           = 'Сменить';
-$lang['addressbar']['button_hint']      = 'Перейти в указанную папку';
+$lang['addressbar']['change_dir_hint']  = 'Перейти в указанную папку';
+$lang['addressbar']['change_type_hint'] = 'Изменить тип отображения адресной панели';
 
 $lang['column']['title']                = 'Название';
 $lang['column']['size']                 = 'Размер';
