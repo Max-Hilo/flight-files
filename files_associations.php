@@ -10,6 +10,8 @@
  * Создание окна управления файловыми ассоциациями.
  * @global resource $sqlite
  * @global object $select_type
+ * @global object $select_ext
+ * @global array $lang
  */
 function files_associations_window()
 {
@@ -91,6 +93,16 @@ function files_associations_window()
     Gtk::main();
 }
 
+/**
+ * Отображает диалог изменения типа файлов или расширения.
+ * @global array $lang
+ * @global int $id_type
+ * @global resource $sqlite
+ * @global object $select_ext
+ * @param string $type Если 'type', то изменяется тип файлов, если 'ext' - расширение
+ * @param array $array Элементы интерфейса родительского окна
+ * @param GtkWindow $window Родительское окно
+ */
 function edit_window($type, $array, $window)
 {
     global $lang, $id_type, $sqlite, $select_ext;
@@ -145,6 +157,15 @@ function edit_window($type, $array, $window)
     }
 }
 
+/**
+ * Изменение типов файлов.
+ * @global resource $sqlite
+ * @global int $id_type
+ * @global object $select_type
+ * @param GtkEntry $entry Поле ввода типа файлов
+ * @param GtkDialog $dialog Диалог изменения типа файлов или расширения
+ * @param array $array Элементы интерфейса окна управления файловыми ассоциациями
+ */
 function edit_type($entry, $dialog, $array)
 {
     global $sqlite, $id_type, $select_type;
@@ -161,6 +182,15 @@ function edit_type($entry, $dialog, $array)
     $dialog->destroy();
 }
 
+/**
+ * Изменение расширений.
+ * @global resource $sqlite
+ * @global object $select_ext
+ * @global int $id_type
+ * @param GtkEntry $entry Поле ввода расширений
+ * @param GtkDialog $dialog Диалог изменения типа файлов или расширения
+ * @param array $array Элементы интерфейса окна управления файловыми ассоциациями
+ */
 function edit_extension($entry, $dialog, $array)
 {
     global $sqlite, $select_ext, $id_type;
@@ -180,6 +210,14 @@ function edit_extension($entry, $dialog, $array)
     $dialog->destroy();
 }
 
+/**
+ * Изменения комманды для запуска файлов.
+ * @global resource $sqlite
+ * @global int $id_type
+ * @global object $select_type
+ * @param GtkListStore $store Список типов файлов
+ * @param array $array Элементы интерфейса окна управления файловыми ассоциациями
+ */
 function change_command($store, $array)
 {
     global $sqlite, $id_type, $select_type;
@@ -191,6 +229,15 @@ function change_command($store, $array)
     $store->set($iter, 2, $command);
 }
 
+/**
+ * Отображает диалог выбора комманды для запуска файлов.
+ * @global resource $sqlite
+ * @global int $id_type
+ * @global array $lang
+ * @global object $select_type
+ * @param GtkListtStore $store Список типов файлов
+ * @param array $array Элементы интерфейса окна управления файловыми ассоциациями
+ */
 function add_command_window($store, $array)
 {
     global $sqlite, $id_type, $lang, $select_type;
@@ -225,6 +272,12 @@ function add_command_window($store, $array)
     $dialog->destroy();
 }
 
+/**
+ * Удаляет расширение
+ * @global resource $sqlite
+ * @global object $select_ext
+ * @param array $array Элементы интерфейса окна управления файловыми ассоциациями
+ */
 function remove_extension($array)
 {
     global $sqlite, $select_ext;
@@ -238,6 +291,16 @@ function remove_extension($array)
     $array['btn_edit_ext']->set_sensitive(FALSE);
 }
 
+/**
+ * Добавляет расширение
+ * @global resource $sqlite
+ * @global object $select_type
+ * @global int $id_type
+ * @param GtkEntry $entry
+ * @param GtkWindow $window Окно управления файловыми ассоциациями
+ * @param GtkListStore $model Список расширений
+ * @param array $array Элементы интерфейса окна управления файловыми ассоциациями
+ */
 function add_extension($entry, $window, $model, $array)
 {
     global $sqlite, $select_type, $id_type;
@@ -254,6 +317,13 @@ function add_extension($entry, $window, $model, $array)
     $window->destroy();
 }
 
+/**
+ * Генерация списка расширений.
+ * @global resource $sqlite
+ * @global object $select_type
+ * @global int $id_type
+ * @param GtkListStore $model Список расширений
+ */
 function list_of_extensions($model)
 {
     global $sqlite, $select_type, $id_type;
@@ -269,9 +339,9 @@ function list_of_extensions($model)
 }
 
 /**
- * Заполнение модели для списка типов файлов.
+ * Генерация списка типов файлов.
  * @global resource $sqlite
- * @param GtkListStore $model
+ * @param GtkListStore $model Список типов файлов
  */
 function list_of_types($model)
 {
@@ -389,6 +459,14 @@ function remove_type($model, $array)
     $array['entry_command']->set_text('');
 }
 
+/**
+ * Вызывается при щелчке по списку типов файлов.
+ * @global resource $sqlite
+ * @global object $select_type
+ * @global int $id_type
+ * @param GtkListStore $model Список типов файлов
+ * @param array $array Элементы интерфейса окна управления файловыми ассоциациями
+ */
 function on_selection_types($model, $array)
 {
     global $sqlite, $select_type, $id_type;
@@ -407,6 +485,10 @@ function on_selection_types($model, $array)
     $array['entry_command']->set_text($command);
 }
 
+/**
+ * Вызывается при щелчке по списку расширений.
+ * @param array $array Элементы интерфейса окна управления файловыми ассоциациями
+ */
 function on_selection_extensions($array)
 {
     $array['btn_remove_ext']->set_sensitive(TRUE);

@@ -8,6 +8,13 @@
  * @link http://code.google.com/p/flight-files/ Домашняя страница проекта
  */
 
+/**
+ * Функция создаёт базу данных ии заносит в неё значения
+ * по умолчанию. Также уничтожает стартовое окно $window.
+ * @global resource $sqlite
+ * @param GtkComboBox $combo
+ * @param GtkWindow $window
+ */
 function create_database($combo, $window)
 {
     global $sqlite;
@@ -25,34 +32,86 @@ function create_database($combo, $window)
     sqlite_query($sqlite, "CREATE TABLE history_right(id INTEGER PRIMARY KEY, path)");
     sqlite_query($sqlite, "CREATE TABLE type_files(id INTEGER PRIMARY KEY, type, command)");
     sqlite_query($sqlite, "CREATE TABLE ext_files(id_type, ext)");
+
+                          // $_config['hidden_files'] - если 'on', то будут показаны скрытые файлы.
     sqlite_query($sqlite, "INSERT INTO config(key, value) VALUES('HIDDEN_FILES', 'off');".
+
+                          // $_config['last_dir_left'] - последняя посещённая директория в левой панели.
+                          // Запись прооизводится при выходе.
                           "INSERT INTO config(key, value) VALUES('LAST_DIR_LEFT', '".ROOT_DIR."');".
+
+                          // $_config['lasr_dir_right'] - последняя посещённая директория в правой панели.
+                          // Запись производится при выходе.
                           "INSERT INTO config(key, value) VALUES('LAST_DIR_RIGHT', '".HOME_DIR."');".
+
+                          // $_config['home_dir_left'] - домашняя директория для левой панели.
                           "INSERT INTO config(key, value) VALUES('HOME_DIR_LEFT', '".ROOT_DIR."');".
+
+                          // $_config['home_dir_right'] - домашняя директория для правой панели
                           "INSERT INTO config(key, value) VALUES('HOME_DIR_RIGHT', '".HOME_DIR."');".
+
+                          // $_config['ask_delete'] - если 'on', то перед удалением файлов
+                          // у пользователя будет спрошено подтверждение операции.
                           "INSERT INTO config(key, value) VALUES('ASK_DELETE', 'on');".
+
+                          // $_config['ask_close'] - если 'on', то перед закрытием главного окна
+                          // у пользователя будет спрошено подтверждение операции.
                           "INSERT INTO config(key, value) VALUES('ASK_CLOSE', 'off');".
+
+                          // $_config['toolbar_view'] - если 'on', то будет показана панель инструментов.
                           "INSERT INTO config(key, value) VALUES('TOOLBAR_VIEW', 'on');".
+
+                          // $_config['addressbar_view'] - если 'on', то будет показана адресная панель.
                           "INSERT INTO config(key, value) VALUES('ADDRESSBAR_VIEW', 'on');".
+
+                          // $_config['statusbar_view'] - если 'on', то будет показана строка состояния
                           "INSERT INTO config(key, value) VALUES('STATUSBAR_VIEW', 'on');".
+
+                          // $_config['partbar_view'] - если 'on', то будет показана панель разделов.
                           "INSERT INTO config(key, value) VALUES('PARTBAR_VIEW', 'on');".
+
+                          // $_config['font_list'] - шрифт, используемый для списка файлов.
                           "INSERT INTO config(key, value) VALUES('FONT_LIST', '');".
+
+                          // $_config['language'] - язык программы.
                           "INSERT INTO config(key, value) VALUES('LANGUAGE', '$language');".
+
+                          // $_config['maximize'] - если 'on', то при запуске главное окно будет развёрнуто на весь экран
                           "INSERT INTO config(key, value) VALUES('MAXIMIZE', 'off');".
+
+                          // $_config['terminal'] - адрес программы-консоли.
                           "INSERT INTO config(key, value) VALUES('TERMINAL', '');".
+
+                          // $_config['conparison'] - адрес программы для сравнения файлов.
                           "INSERT INTO config(key, value) VALUES('COMPARISON', '');".
+
+                          // $_config['partbar_refresh'] - если 'on', то панель разделов будет обновляться каждую секунду.
+                          // Не рекомендуется включать, т.к. замечет один очень неприятный баг.
                           "INSERT INTO config(key, value) VALUES('PARTBAR_REFRESH', 'off');".
+
+                          // $_config['view_lines_files'] - если 'on', то будут показаны линии между файлами.
                           "INSERT INTO config(key, value) VALUES('VIEW_LINES_FILES', 'off');".
+
+                          // $_config['view_lines_columns'] - если 'on', то будут показаны линии между колонками.
                           "INSERT INTO config(key, value) VALUES('VIEW_LINES_COLUMNS', 'on');".
+
+                          // $_config['status_icon'] - если 'on', то в трее будет показан значок программы.
                           "INSERT INTO config(key, value) VALUES('STATUS_ICON', 'on');".
+
+                          // $_config['save_folders'] - если 'on', то при новом запуске программы будут
+                          // открыты папки из предыдущей сессии.
                           "INSERT INTO config(key, value) VALUES('SAVE_FOLDERS', 'on');".
+
+                          // $_config['mtime_format'] - формат даты для колонки "Изменён".
                           "INSERT INTO config(key, value) VALUES('MTIME_FORMAT', 'd.m.Y G:i');");
    $window->destroy();
 }
 
 /**
  * Функция достаёт настройки из базы данных и
- * помещает их в глобальную переменную $_config
+ * помещает их в глобальную переменную $_config.
+ * @global array $_config
+ * @global resource $sqlite
  */
 function config_parser()
 {
@@ -71,7 +130,7 @@ function config_parser()
 function on_button($view, $event, $type)
 {
     global $panel, $lang, $store, $action_menu, $action, $start,
-           $current_dir_left, $current_dir_right, $number, $sqlite, $clp, $selection;
+           $number, $sqlite, $clp, $selection;
 
     $panel = $type;
 
@@ -447,6 +506,13 @@ function on_button($view, $event, $type)
     }
 }
 
+/**
+ * Функция получает текст из строки ввода адреса
+ * и вызывает change_dir() для этого адреса.
+ * @global string $panel
+ * @param GtkEntry $entry
+ * @param string $side
+ */
 function jump_to_folder($entry, $side)
 {
     global $panel;
@@ -592,7 +658,7 @@ function bufer_file($act)
 }
 
 /**
- * Копирование/вырезание файлов, находящихся в буфере обмена.
+ * Копирует/вырезает файлы, находящиеся в буфере обмена.
  * @global array $start
  * @global string $panel
  * @global array $lang
@@ -628,7 +694,8 @@ function paste_file()
 }
 
 /**
- * Перемещение файла/директории.
+ * Перемещает файл/директорию.
+ * @global array $lang
  * @param string $oldname Исходный файл/директория
  * @param string $newname Новый файл/директория
  */
@@ -676,6 +743,7 @@ function my_rename($oldname, $newname)
 
 /**
  * Копирование файлов и рекурсивное копирование директорий.
+ * @globalarray $lang
  * @param string $source Исходный файл/директория
  * @param string $dest Создаваемый файл/директория
  */
@@ -729,6 +797,14 @@ function my_copy($source, $dest)
 /**
  * Функция удаляет выбранные файлы/папки,
  * предварительно спросив подтверждения у пользователя.
+ * @global array $_config
+ * @global array $lang
+ * @global array $selection
+ * @global string $panel
+ * @global array $start
+ * @global GtkWindow $main_window
+ * @global array $store
+ * @return <type>
  */
 function delete_window()
 {
@@ -853,6 +929,14 @@ function my_rmdir($filename)
 
 /**
  * Функция заполняет модель списком файлов и папок в текущей директории.
+ * @global array $store
+ * @global array $_config
+ * @global int $count_element
+ * @global int $count_dir
+ * @global int $count_file
+ * @global array $start
+ * @param string $panel Панель, для которой необходимо произвести операци.
+ * @param string $status Если $status не пуста, то генерируется список файлов, иначе только считаются файлы
  */
 function current_dir($panel, $status = '')
 {
@@ -933,7 +1017,9 @@ function current_dir($panel, $status = '')
 }
 
 /**
- * Функция переводит размер файла из байт в более удобные единицы.
+ * Определяет размер файла и вызывает для него функцию conversion_size().
+ * @global string $panel
+ * @global array $lang
  * @param string $filename Адрес файла, для которого необходимо произвести операцию
  */
 function convert_size($filename)
@@ -956,6 +1042,13 @@ function convert_size($filename)
     
 }
 
+/**
+ * Переводит размер файла в байтах, указанный в $size_byte,
+ * в более удобный для восприятия вид.
+ * @global array $lang
+ * @param int $size_byte Размер файла в байтах
+ * @return string Возвращает размер файла в удобном для восприятия виде.
+ */
 function conversion_size($size_byte)
 {
     global $lang;
@@ -981,7 +1074,11 @@ function conversion_size($size_byte)
 
 /**
  * Навигация по истории.
- * @param string $direct Напрваление навигации
+ * @global resource $sqlite
+ * @global int $numbet
+ * @global string $panel
+ * @global array $action
+ * @param string $direct Напрваление навигации (back - назад, forward - вперёд)
  */
 function history($direct)
 {
@@ -992,17 +1089,27 @@ function history($direct)
         $number[$panel]--;
         $query = sqlite_query($sqlite, "SELECT id, path FROM history_$panel");
         if ($number[$panel] == 1)
+        {
             $action['back']->set_sensitive(FALSE);
+        }
     }
     elseif ($direct == 'forward')
     {
         $number[$panel]++;
         $query = sqlite_query($sqlite, "SELECT id, path FROM history_$panel");
         if (sqlite_num_rows($query) == $number[$panel])
+        {
             $action['forward']->set_sensitive(FALSE);
+        }
+    }
+    else
+    {
+        return FALSE;
     }
     while ($row = sqlite_fetch_array($query, SQLITE_ASSOC))
+    {
         $last[] = $row;
+    }
     $last = $last[$number[$panel] - 1];
     change_dir('history', $last['path']);
 }
@@ -1059,6 +1166,10 @@ function change_dir($act = '', $dir = '', $all = FALSE)
     if (!file_exists($new_dir))
     {
         alert_window($lang['alert']['dir_not_exists']);
+    }
+    elseif (!is_dir($new_dir))
+    {
+        alert_window($lang['alert']['not_folder']);
     }
     // Если отказано в доступе
     elseif ($opendir === FALSE)
@@ -1191,6 +1302,11 @@ function change_dir($act = '', $dir = '', $all = FALSE)
 /**
  * Функция добавляет на уже существующую статусную панель информацию.
  * Возвращается статусная строка, готовая к добавлению в окно.
+ * @global GtkStatusBar $statusbar
+ * @global int $count_element
+ * @global int $count_dir
+ * @global int $counr_file
+ * @global array $lang
  */
 function status_bar()
 {
@@ -1211,7 +1327,7 @@ function status_bar()
 }
 
 /**
- * Высчитывает свободное место на текущем разделе жёсткого диска
+ * Определяет свободное место на текущем разделе жёсткого диска
  * и возвращает результат в удобном для восприятия виде.
  * @global array $start
  * @global string $panel
@@ -1226,7 +1342,7 @@ function my_free_space()
 }
 
 /**
- * Высчитывает общий объём текущего раздела жёсткого диска
+ * Определяет общий объём текущего раздела жёсткого диска
  * и возвращает результат в удобном для восприятия виде.
  * @global array $start
  * @global string $panel
@@ -1241,7 +1357,10 @@ function my_total_space()
 }
 
 /**
- * Функция создаёт файллы и папки в текущей директории при достаточных правах.
+ * Функция создаёт файлы и папки в текущей директории при достаточных правах.
+ * @global array $start
+ * @global array $lang
+ * @global string $panel
  * @param string $type Идентификатор файла/папки
  */
 function new_element($type)
@@ -1307,6 +1426,12 @@ function new_element($type)
 
 /**
  * При закрытии окна программы данная функция удаляет файл буфера обмена и историю.
+ * @global array $_config
+ * @global array $lang
+ * @global resource $sqlite
+ * @global array $start
+ * @global GtkWindow $main_window
+ * @param string $action Если 'minimize' и в трее показывается иконка, то программа сворачивается в трей
  */
 function close_window($action = '')
 {
@@ -1362,8 +1487,12 @@ function close_window($action = '')
 }
 
 /**
- * Функция очищает буфер обмена и выводит диалоговое окна,
+ * Функция очищает буфер обмена и выводит диалоговое окно,
  * сообщающее об успешном завершении операции.
+ * @global array $action
+ * @global array $action_menu
+ * @global array $lang
+ * @global array $clp
  */
 function clear_bufer()
 {
@@ -1405,7 +1534,7 @@ function panel_view($widget, $param)
 }
 
 /**
- * Созданёт колонки дял списка файлов.
+ * Созданёт колонки для списка файлов.
  * @global array $lang
  * @param GtkTreeView $tree_view
  * @param GtkCellRenderer $cell_renderer
@@ -1464,7 +1593,11 @@ function columns($tree_view, $cell_renderer)
 }
 
 /**
- * Добавление изображения файла/папки для строки в списке.
+ * Добавляет изображения файла/папки для строки в списке файлов.
+ * @param GtkTreeViewColumn $column
+ * @param GtkCellRendererPixbuf $render
+ * @param GtkListStore $model
+ * @param GtkTreeIter $iter
  */
 function image_column($column, $render, $model, $iter)
 {
@@ -1483,6 +1616,10 @@ function image_column($column, $render, $model, $iter)
 
 /**
  * Добавляет имя файла/папки к изображению.
+ * @param GtkTreeViewColumn $column
+ * @param GtkCellRendererText $render
+ * @param GtkListStore $model
+ * @param GtkTreeIter $iter
  */
 function file_column($column, $render, $model, $iter)
 {
@@ -1493,6 +1630,10 @@ function file_column($column, $render, $model, $iter)
 
 /**
  * Открытие терминала в текущей директории.
+ * @global array $start
+ * @global string $panel
+ * @global array $lang
+ * @global array $_config
  */
 function open_terminal()
 {
@@ -1526,7 +1667,13 @@ function open_terminal()
 }
 
 /**
- * Вызов программы для сравнения файлов.
+ * Открытие программы для сравнения файлов.
+ * @global array $start
+ * @global string $panel
+ * @global array $lang
+ * @global array $_config
+ * @global array $selection
+ * @global GtkListStore $store
  * @param string $type Тип сравниваемых объектов - file|dir.
  */
 function open_comparison($type)
@@ -1593,6 +1740,12 @@ function open_comparison($type)
 
 /**
  * Выделение/снятие выделения со всех файлов и папок в текущей директории.
+ * @global GtkListStore $store
+ * @global string $panel
+ * @global int $count_element
+ * @global array $action_menu
+ * @global array $selection
+ * @global array $start
  * @param string $action Опеределяет выделяемые файлы - none|all|template
  * @param string Шаблон для выделения (только при $action == 'template')
  */
@@ -1700,8 +1853,10 @@ function active_all($action, $template = '', $register = FALSE)
 /**
  * Функция заполняет панель со списком разделов.
  * @global array $lang
- * @global GtkHBox $partbar
+ * @global GtkBox $partbar_left
+ * @global GtkBox $partbar_right
  * @global array $_config
+ * @param string $side Активная панель
  */
 function partbar($side)
 {
@@ -1812,6 +1967,7 @@ function jump_to_part($side, $disk)
 /**
  * Создаёт окно для ввода шаблона выделения.
  * @global array $lang
+ * @global GtkWindow $main_window
  */
 function enter_template_window()
 {
@@ -1833,7 +1989,7 @@ function enter_template_window()
     $vbox->pack_start($entry = new GtkEntry());
     $vbox->pack_start($check = new GtkCheckButton($lang['tmp_window']['register']));
     $entry->connect_simple('changed', 'active_online', $entry, $check);
-    $entry->connect_simple('activate', 'redirect_template', $entry, $dialog, $check);
+    $entry->connect_simple('activate', 'redirect_template', $entry, $check, $dialog);
     $check->connect_simple('toggled', 'active_online', $entry, $check);
     
     $vbox->pack_start($label = new GtkLabel(), FALSE, FALSE, 10);
@@ -1846,7 +2002,7 @@ function enter_template_window()
 
     if ($result == Gtk::RESPONSE_OK)
     {
-        redirect_template($entry, $dialog, $check);
+        redirect_template($entry, $check, $dialog);
     }
     elseif ($result == Gtk::RESPONSE_CANCEL)
     {
@@ -1856,6 +2012,13 @@ function enter_template_window()
     $dialog->destroy();
 }
 
+/**
+ * Производит выделение по шаблону
+ * @global array $selection
+ * @global string $panel
+ * @param GtkEntry $entry Поле ввода шаблона
+ * @param GtkCheckButton $check Флажок, устанавливающий регистрозависимость
+ */
 function active_online($entry, $check)
 {
     global $selection, $panel;
@@ -1864,20 +2027,32 @@ function active_online($entry, $check)
     active_all('template', $entry->get_text(), $check->get_active());
 }
 
-function redirect_template($entry, $dialog, $check)
+/**
+ * Вызывает функцию active_all() для выделения по шаблону
+ * и уничтожает диалоговое окно для ввода шаблона.
+ * @param GtkEntry $entry
+ * @param GtkCheckButton $check
+ * @param GtkDialog $dialog
+ */
+function redirect_template($entry, $check, $dialog)
 {
-    var_dump($check->get_active());
     active_all('template', $entry->get_text(), $check->get_active());
     $dialog->destroy();
 }
 
-function tray_menu($window)
+/**
+ * Создаёт меню, отображаемое при нажатии правой
+ * кнопкой мыши по иконке в трее.
+ * @global array $lang
+ * @global GtkWindow $main_window
+ */
+function tray_menu()
 {
-    global $lang;
+    global $lang, $main_window;
     
     $menu = new GtkMenu();
     
-    if ($window->is_visible())
+    if ($main_window->is_visible())
     {
         $show = new GtkImageMenuItem($lang['tray']['hide']);
         $show->set_image(GtkImage::new_from_stock(Gtk::STOCK_NO, Gtk::ICON_SIZE_MENU));
@@ -1887,7 +2062,7 @@ function tray_menu($window)
         $show = new GtkImageMenuItem($lang['tray']['show']);
         $show->set_image(GtkImage::new_from_stock(Gtk::STOCK_YES, Gtk::ICON_SIZE_MENU));
     }
-    $show->connect_simple('activate', 'window_hide', $window);
+    $show->connect_simple('activate', 'window_hide');
     $menu->append($show);
 
     $close = new GtkImageMenuItem($lang['tray']['close']);
@@ -1908,10 +2083,12 @@ function tray_menu($window)
 
 /**
  * Если окно видимо - скрывает его, если скрыто - показывает.
- * @param GtkWindow $window Окно
+ * @global GtkWindow $main_window
  */
-function window_hide($window)
+function window_hide()
 {
+    global $main_window;
+
     if ($window->is_visible())
     {
         $window->hide();
@@ -1922,6 +2099,16 @@ function window_hide($window)
     }
 }
 
+/**
+ * Заносит перетаскиваемые файлы в $data.
+ * @global array $start
+ * @global string $panel
+ * @global array $selection
+ * @global array $store
+ * @param GtkTreeView $widget
+ * @param GdkDragContext $context
+ * @param GtkSelectionData $data
+ */
 function on_drag($widget, $context, $data)
 {
     global $start, $panel, $selection, $store;
@@ -1938,6 +2125,16 @@ function on_drag($widget, $context, $data)
 
 /**
  * Создаёт контекстное меню в момент отпускания перетаскиваемого файла.
+ * @global string $panel
+ * @global array $lang
+ * @param GtkTreeView $widget
+ * @param GdkDragContext $context
+ * @param int $x
+ * @param int $y
+ * @param GtkSelectionData $data
+ * @param int $info
+ * @param int $time
+ * @param string $panel_source
  */
 function on_drop($widget, $context, $x, $y, $data, $info, $time, $panel_source)
 {
@@ -2015,6 +2212,7 @@ function drag_drop_action($filename, $action)
  * что файл/папка с таким именем уже существует в данной директории
  * и предлагает его заменить.
  * @global array $lang
+ * @global GtkWindow $main_window
  * @param string $filename Адрес файла
  * @return bool Возвращает TRUE, если пользователь попросил заменить файл, иначе FALSE
  */
@@ -2060,12 +2258,15 @@ function file_exists_window($filename)
 }
 
 /**
- * Открывает файл во внешней программе
+ * Открывает файл во внешней программе.
  * @param string $filename Адрес файла, который необходимо открыть
  */
 function open_in_system($filename)
 {
-    pclose(popen('start ' . fix_spaces($filename), 'r'));
+    if (OS == 'Windows')
+    {
+        pclose(popen('start ' . fix_spaces($filename), 'r'));
+    }
 }
 
 /**
@@ -2080,6 +2281,7 @@ function find_spaces($var) {
 /**
  * Функция обрамляет все части адреса с пробелами в кавычки. Если в исходном адресе
  * нет пробелов, отдаёт строку без изменений.
+ * @param string $filename Адрес файла
  */
 function fix_spaces($filename) {
         return (strpos($filename, ' ') == false)
@@ -2087,6 +2289,10 @@ function fix_spaces($filename) {
                 : implode('\\', array_map('find_spaces', explode('\\', $filename)));
 }
 
+/**
+ * Переключает FlightFiles в однопанельный режим.
+ * @global GtkFrame $right
+ */
 function one_panel()
 {
     global $right;

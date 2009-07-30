@@ -248,8 +248,8 @@ $action_group = new GtkActionGroup('menubar');
 // Создаём иконку в трее
 $tray = GtkStatusIcon::new_from_file(ICON_PROGRAM);
 $tray->set_tooltip($lang['tray']['tooltip']);
-$tray->connect_simple('activate', 'window_hide', $main_window);
-$tray->connect_simple('popup-menu', 'tray_menu', $main_window);
+$tray->connect_simple('activate', 'window_hide');
+$tray->connect_simple('popup-menu', 'tray_menu');
 if ($_config['status_icon'] == 'on')
 {
     $tray->set_visible(TRUE);
