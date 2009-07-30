@@ -2365,37 +2365,40 @@ function addressbar($side)
     // Адресная панель в виде кнопок
     elseif ($addressbar_type[$side] == 'buttons')
     {
+        $path = '';
+        
         if (OS == 'Unix')
         {
+            $path = '/';
             $button = new GtkButton();
-            $button->set_label('/');
+            $button->set_label($path);
             $button->set_image(GtkImage::new_from_stock(Gtk::STOCK_HARDDISK, Gtk::ICON_SIZE_BUTTON));
-            if ($start[$panel] == '/')
+            if ($start[$panel] == $path)
             {
                 $button->set_sensitive(FALSE);
             }
-            $button->connect('clicked', 'jump_to_folder', $side, '/');
+            $button->connect('clicked', 'jump_to_folder', $side, $path);
             $$address->pack_start($button, FALSE, FALSE);
         }
 
         $explode = explode(DS, $start[$side]);
-        $path = '';
-        foreach ($explode as $value)
+        for ($i = 0; $i < count($explode); $i++)
         {
+            $value = $explode[$i];
             if (empty($value))
             {
                 continue;
             }
-            $button = new GtkButton($value);
             if (empty($path))
             {
-                $path .= $value;
+                $path = $value;
             }
             else
             {
-                $path .=  DS . $value;
+                $path .= DS . $value;
             }
             $path = preg_replace('#'.DS.'+#', DS, $path);
+            $button = new GtkButton($value);
             if ($path == $start[$side])
             {
                 $button->set_sensitive(FALSE);
