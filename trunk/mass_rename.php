@@ -7,9 +7,10 @@
  */
 
 /**
- * Отображение окна для массового переименования файлов.
+ * Отображает окно для массового переименования файлов.
  * @global GtkRadioButton $active_type_rename
- * @global GtkWindow $window
+ * @global GtkWindow $main_window
+ * @global array $lang
  */
 function bulk_rename_window()
 {
@@ -24,7 +25,7 @@ function bulk_rename_window()
     $wnd->set_resizable(TRUE);
     $wnd->set_modal(TRUE);
     $wnd->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
-    $wnd->set_transient_for($window);
+    $wnd->set_transient_for($main_window);
     $wnd->connect_simple('destroy', array('Gtk', 'main_quit'));
 
     $vbox = new GtkVBox;
@@ -116,10 +117,10 @@ function bulk_rename_window()
  * Функция заносит в глобальную переменную тип переименования файлов
  * и делает неактивными некоторые элементы интерфейса.
  * @global string $active_type_rename
- * @param string $type
- * @param GtkBox $order
- * @param GtkTable $replace
- * @param GtkCheckButton $extension
+ * @param string $type Тип переименования
+ * @param GtkBox $order Контейнер с элементами интерфейса
+ * @param GtkTable $replace Контейнер с элементами интерфейса
+ * @param GtkCheckButton $extension Флажок "Оставить прежние расширения"
  */
 function active_type_rename($type, $order, $replace, $extension)
 {
@@ -294,7 +295,8 @@ function bulk_rename_action($window, $extension, $hidden, $order, $match, $repla
 }
 
 /**
- * Правильное изменение регистра файлов с кириллическими символами в имени.
+ * Правильное изменение регистра файлов с нелатинскими символами в имени.
+ * На данный момент поддерживается только русский алфавит.
  * @param string $type Направление изменения регистра
  * @param string $str Старое имя файла
  * @return string Новое имя файла

@@ -122,7 +122,7 @@ function bookmarks_window()
  * @global resource $sqlite
  * @global object $selection_bookmarks
  * @global object $sub_menu
- * @param array $array Массив, содержащий все элементы интеррфейса окна
+ * @param array $array Элементы интерфейса окна управления закладками
  * @param GtkListStore $store Модель списка закладок
  */
 function change_bookmarks($array, $store)
@@ -222,7 +222,7 @@ function bookmarks_menu()
  * @global GtkAction $action_menu
  * @global GtkMenu $sub_menu
  * @global resource $sqlite
- * @param array $array Массив, содержащий элементы интерфейса окна управления закладками
+ * @param array $array Элементы интерфейса окна управления закладками
  * @param bool $all Есл TRUE, то будут удалены все закладки
  */
 function bookmarks_delete($array, $all = 'FALSE')
@@ -268,7 +268,7 @@ function bookmarks_delete($array, $all = 'FALSE')
  * @global GtkMenu $sub_menu
  * @global array $lang
  * @global resource $sqlite
- * @param array $array Массив, содержащий элементы интерфейса окна управления закладками
+ * @param array $array Элементы интерфейса окна управления закладками
  * @param bool $bool Если TRUE, то в закладки будет добавлена текущая директория, иначе - корневая.
  */
 function bookmark_add($array = '', $bool = FALSE)
@@ -314,6 +314,9 @@ function bookmark_add($array = '', $bool = FALSE)
 
 /**
  * Функция заполняет текстовые поля в окне "Управление закладками" при выборе закладки в списке.
+ * @global resource $sqlite
+ * @param object $selection
+ * @param array $array Элементы интерфейса окна управления закладками
  */
 function on_selection_bookmarks($selection, $array)
 {

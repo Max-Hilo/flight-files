@@ -10,6 +10,7 @@
  * Функция отображает диалоговое окно, в котором указана
  * информация о программе, разработчике и лицензии.
  * @global array $lang
+ * @global GtkWindow $main_window
  */
 function about_window()
 {

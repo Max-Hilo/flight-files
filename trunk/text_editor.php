@@ -11,6 +11,7 @@
  * @global array $start
  * @global string $panel
  * @global array $lang
+ * @global array $text_editor
  * @param string $filename Адрес файла, для которого необходимо произвести операцию
  */
 function text_editor_window($filename)
@@ -55,7 +56,7 @@ function text_editor_window($filename)
         }
         $source_buffer->set_highlight(TRUE);
         $source_buffer->set_text($text_editor['old_text']);
-        $source_buffer->connect('changed', 'on_buffer_changed', $text_editor['window']);
+        $source_buffer->connect('changed', 'on_buffer_changed');
         $source = GtkSourceView::new_with_buffer($source_buffer);
         $source->set_show_line_numbers(TRUE);
     }
@@ -292,6 +293,13 @@ function my_mime($ext)
     return $mime;
 }
 
+/**
+ * Вызывается при выделении текста или снятии с него выделения
+ * и изменяет активность некоторых пунктов меню и кнопок
+ * на панели инструментов.
+ * @global array $text_editor
+ * @param GtkTextBuffer $buffer Текстовый буфер
+ */
 function has_selection($buffer)
 {
     global $text_editor;
@@ -312,6 +320,12 @@ function has_selection($buffer)
     }
 }
 
+/**
+ * Отменяет последнее действие и изменяет активность
+ * некоторых пунктов меню и кнопок на панели инструментов.
+ * @global array $text_editor
+ * @param GtkTextBuffer $buffer Текстовый буфер
+ */
 function undo($buffer)
 {
     global $text_editor;
@@ -326,6 +340,13 @@ function undo($buffer)
     $text_editor['menu']['redo']->set_sensitive(TRUE);
 }
 
+/**
+ * Возвращает последнее отменённое действие и изменяет
+ * активность некоторых пунктов меню и кнопок
+ * на панели инструментов.
+ * @global array $text_editor
+ * @param GtkTextBuffer $buffer Текстовый буфер
+ */
 function redo($buffer)
 {
     global $text_editor;
@@ -338,7 +359,16 @@ function redo($buffer)
     }
 }
 
-function on_buffer_changed($buffer, $window)
+/**
+ * Вызывается при любом изменении текстового буфера.
+ * Изменяет активность некоторых пунктов меню и кнопок
+ * на панели инструментов. А также, при необходимости,
+ * в заголовок окна помещает звёздочку, информирующую
+ * пользователя о том, что в файле были произведены изменения.
+ * @global array $text_editor
+ * @param GtkTextBuffer $buffer Текстовый буфер
+ */
+function on_buffer_changed($buffer)
 {
     global $text_editor;
 
@@ -347,18 +377,19 @@ function on_buffer_changed($buffer, $window)
     $new_text = $buffer->get_text($buffer->get_start_iter(), $buffer->get_end_iter());
     if ($new_text != $text_editor['old_text'])
     {
-        $window->set_title(basename($text_editor['filename']) . ' (*)');
+        $text_editor['window']->set_title(basename($text_editor['filename']) . ' (*)');
         $text_editor['toolbar']['save']->set_sensitive(TRUE);
     }
     else
     {
-        $window->set_title(basename($text_editor['filename']));
+        $text_editor['window']->set_title(basename($text_editor['filename']));
     }
 }
 
 /**
- * Сохранение файла.
- * @param GtkSourceBuffer $buffer Текстовый буфер
+ * Сохраняет файл и убирает из заголовка окна звёздочку.
+ * @global array $text_editor
+ * @param GtkTextBuffer $buffer Текстовый буфер
  */
 function save_file($buffer)
 {
@@ -373,9 +404,12 @@ function save_file($buffer)
 }
 
 /**
- * Закрытие окна текстового редактора.
+ * Производит закрытие окна текстового редактора,
+ * при необходимости, предупредив пользователя о том,
+ * что файл был изменён.
  * @global array $lang
- * @param GtkSourceBuffer $buffer
+ * @global array $text_editor
+ * @param GtkTextBuffer $buffer
  */
 function text_editor_window_close($buffer)
 {

@@ -10,8 +10,6 @@
 
 /**
  * Создание окна для просмотра изображения.
- * @global int
- * @global $pixbuf_image
  * @global int $pixbuf_width
  * @global int $pixbuf_height
  * @global array $lang
@@ -20,8 +18,8 @@
  */
 function image_view($filename)
 {
-    global $pixbuf_image, $pixbuf_width, $pixbuf_height, $lang, $scope_image;
-    
+    global $pixbuf_width, $pixbuf_height, $lang, $scope_image;
+
     $image_size = getimagesize($filename);
 
     /**
@@ -196,6 +194,10 @@ function image_view($filename)
     Gtk::main();
 }
 
+/**
+ * Закрывает окно с изобрражением.
+ * @param GtkWindow $window
+ */
 function image_view_close($window)
 {
     $window->destroy();
@@ -203,7 +205,7 @@ function image_view_close($window)
 }
 
 /**
- * Изменение положения изображения.
+ * Изменение угла поворота изображения.
  * Если библиотека GD или функция imagerotate() не найдены,
  * то открывается диалог alert_window(), информирующий об этом.
  * @global int $rotate_image

@@ -7,7 +7,11 @@
  */
  
 /**
- * Окно с настройками.
+ * Отображает окно с настройками.
+ * @global array $_config
+ * @global array $lang
+ * @global resource $sqlite
+ * @global GtkWindow $main_window
  */
 function preference()
 {
@@ -74,7 +78,7 @@ function preference()
     // Автообновление списка разделов
     $partbar_refresh = new GtkCheckButton($lang['preference']['partbar_refresh']);
     $partbar_refresh->set_tooltip_text($lang['preference']['partbar_refresh_hint']);
-    $partbar_refresh->connect('toggled', 'check_button_write', 'partbar_refresh', 'partbar');
+    $partbar_refresh->connect('toggled', 'check_button_write', 'partbar_refresh');
     if ($_config['partbar_refresh'] == 'on')
     {
         $partbar_refresh->set_active(TRUE);
@@ -279,7 +283,7 @@ function preference()
 
 /**
  * Создаёт окно для выбора файла или папки в зависимости от $type.
- * Выбранный файл/папка устанавливается в $entry.
+ * Адрес выбранного файла/папки устанавливается в $entry.
  * @global array $lang
  * @param GtkEntry $entry Поле ввода, соответствующее данной операции
  * @param string $type Может иметь два значения: 'file' - для выбора файла, 'folder' - для выбора папки
@@ -321,8 +325,8 @@ function select_file_window($entry, $type)
 }
 
 /**
- * Записывает в базу данных текст,
- * находящийся в данный момент в поле ввода $entry.
+ * Записывает в базу данных текст, находящийся
+ * в данный момент в поле ввода $entry.
  * @global resource $sqlite
  * @param GtkEntry $entry Поле ввода, соответствующее данной операции
  * @param string $param Изменяемый параметр
@@ -340,7 +344,9 @@ function change_value($entry, $param)
 
 /**
  * Производит запись в базу данных при изменении активного элемента в списке GtkComboBox.
- * @param object $combo Список GtkComboBox
+ * @global resource $sqlite
+ * @global array $lang
+ * @param GtkComboBox $combo Список
  * @param string $param Изменяемый параметр
  */
 function combo_write($combo, $param)
@@ -359,10 +365,15 @@ function combo_write($combo, $param)
 
 /**
  * Производит запись в базу данных при изменении значения переключателя GtkCheckButton.
- * @param object $check Переключатель GtkCheckButton
+ * @global resource $sqlite
+ * @global int $refresh_id_left
+ * @global int $refresh_id_right
+ * @global GtkStatusIcon $tray
+ * @param GtkCheckButton $check Флажок
  * @param string $param Изменяемый параметр
+ *
  */
-function check_button_write($check, $param, $timeout = '')
+function check_button_write($check, $param)
 {
     global $sqlite, $refresh_id_left, $refresh_id_right, $tray;
 
@@ -383,7 +394,7 @@ function check_button_write($check, $param, $timeout = '')
         }
     }
 
-    if ($timeout == 'partbar')
+    if ($param == 'PARTBAR_REFRESH')
     {
         if ($value == 'on')
         {
@@ -402,6 +413,7 @@ function check_button_write($check, $param, $timeout = '')
 
 /**
  * Производит запись в базу данных при изменении значения радиокнопки GtkRadioButton.
+ * @global resource $sqlite
  * @param string $param Изменяемый параметр
  * @param string $value Новое значение параметра
  */
@@ -417,12 +429,16 @@ function radio_button_write($param, $value)
 
 /**
  * Создаёт диалог GtkFontSelectionDialog и производит запись выбранного шрифта в базу данных.
- * @param object $entry Поле ввода GtkEntry для названия текста
+ * @global array $cell_renderer
+ * @global array $lang
+ * @global array $_config
+ * @global resource $sqlite
+ * @param GtkEntry $entry Поле ввода для названия шрифта
  */
 function select_font_window($entry)
 {
     global $cell_renderer, $lang, $_config, $sqlite;
-    
+
     $dialog = new GtkFontSelectionDialog($lang['font']['title']);
     $dialog->set_position(Gtk::WIN_POS_CENTER_ALWAYS);
     $dialog->set_preview_text($lang['font']['preview']);
@@ -448,9 +464,11 @@ function select_font_window($entry)
 
 /**
  * Сбрасывает значение шрифта.
- * @param object $check Переключатель GtkCheckButton
- * @param object $entry Поле ввода GtkEntry для названия шрифта
- * @param object $button Кнопка GtkButton
+ * @global array $cell_renderer
+ * @global reosurce $sqlite
+ * @param GtkCheckButton $check Флажок "Использовать системный шрифт"
+ * @param GtkEntry $entry Поле ввода для названия шрифта
+ * @param GtkButton $button Кнопка "..."
  */
 function check_font($check, $entry, $button)
 {
