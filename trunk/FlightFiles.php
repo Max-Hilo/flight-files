@@ -231,6 +231,16 @@ $active_files = array('left' => array(), 'right' => array());
  */
 $clp = array('action' => '', 'files' => array());
 
+/**
+ * Тип адресной строки по умолчанию
+ * @global array $GLOBALS['addressbar_type']
+ * @name $addressbar_type
+ */
+$addressbar_type = array(
+    'left' => $_config['addressbar_left'],
+    'right' => $_config['addressbar_right']
+);
+
 $main_window = new GtkWindow();
 $main_window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
 $main_window->set_default_size(1100, 700);
@@ -528,30 +538,21 @@ else
 $vbox->pack_start($partbar, FALSE, FALSE);
 
 //////////////////////////
+$separator = new GtkHSeparator();
+$separator->show_all();
+$vbox->pack_start($separator, FALSE, FALSE);
+
+//////////////////////////
 ///// Адреная строка /////
 //////////////////////////
 $addressbar = new GtkHBox();
 $addressbar->set_homogeneous(TRUE);
 
 $address_left = new GtkHBox();
-$current_dir_left = new GtkEntry($start['left']);
-$current_dir_left->connect('activate', 'jump_to_folder', 'left');
-$address_left->pack_start($current_dir_left, TRUE, TRUE);
-$button = new GtkButton();
-$button->set_image(GtkImage::new_from_stock(Gtk::STOCK_REDO, Gtk::ICON_SIZE_BUTTON));
-$button->set_tooltip_text($lang['addressbar']['button_hint']);
-$button->connect_simple('clicked', 'jump_to_folder', $current_dir_left, 'left');
-$address_left->pack_start($button, FALSE, FALSE);
+$address_left = addressbar('left');
 
 $address_right = new GtkHBox();
-$current_dir_right = new GtkEntry($start['right']);
-$current_dir_right->connect('activate', 'jump_to_folder', 'right');
-$address_right->pack_start($current_dir_right, TRUE, TRUE);
-$button = new GtkButton();
-$button->set_image(GtkImage::new_from_stock(Gtk::STOCK_REDO, Gtk::ICON_SIZE_BUTTON));
-$button->set_tooltip_text($lang['addressbar']['button_hint']);
-$button->connect_simple('clicked', 'jump_to_folder', $current_dir_right, 'right');
-$address_right->pack_start($button, FALSE, FALSE);
+$address_right = addressbar('right');
 
 $addressbar->pack_start($address_left);
 $addressbar->pack_start($address_right);
