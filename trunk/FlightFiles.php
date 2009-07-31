@@ -145,7 +145,8 @@ config_parser();
 
 $explode = explode('.', $_config['language']);
 include LANG_DIR . DS .$_config['language'] . '.php';
-ini_set('php-gtk.codepage', $explode[1]);
+$charset = $explode[1];
+ini_set('php-gtk.codepage', $charset);
 
 // Выводим версию программы
 if (in_array('--version', $argv) OR in_array('-v', $argv))
@@ -552,6 +553,7 @@ $address_left = new GtkHBox();
 $address_left = addressbar('left');
 
 $address_right = new GtkHBox();
+$address_right->set_resize_mode(Gtk::RESIZE_QUEUE);
 $address_right = addressbar('right');
 
 $addressbar->pack_start($address_left);
