@@ -107,10 +107,10 @@ function create_database($combo, $window)
         "INSERT INTO config(key, value) VALUES('MTIME_FORMAT', 'd.m.Y G:i');".
         
         // $_config['addressbar_left'] - внешний вид левой адресной панели
-        "INSERT INTO config(key, value) VALUES('ADDRESSBAR_LEFT', 'buttons');".
+        "INSERT INTO config(key, value) VALUES('ADDRESSBAR_LEFT', 'entry');".
         
         // $_config['addressbar_right'] - внешний вид правой адресной панели
-        "INSERT INTO config(key, value) VALUES('ADDRESSBAR_RIGHT', 'buttons');"
+        "INSERT INTO config(key, value) VALUES('ADDRESSBAR_RIGHT', 'entry');"
     );
    $window->destroy();
 }
@@ -2330,11 +2330,12 @@ function one_panel()
  * @global array $addressbar_type
  * @global array $lang
  * @global array $_config
+ * @global array $charset
  * @param string $side Активная панель
  */
 function addressbar($side)
 {
-    global $address_left, $address_right, $start, $panel, $addressbar_type, $lang, $_config;
+    global $address_left, $address_right, $start, $panel, $addressbar_type, $lang, $_config, $charset;
 
     $address = 'address_' . $side;
 
@@ -2398,11 +2399,16 @@ function addressbar($side)
                 $path .= DS . $value;
             }
             $path = preg_replace('#'.DS.'+#', DS, $path);
+            if (mb_strlen($value, $charset) > 13)
+            {
+                $value = mb_substr($value, 0, 13, $charset) . '...';
+            }
             $button = new GtkButton($value);
             if ($path == $start[$side])
             {
                 $button->set_sensitive(FALSE);
             }
+            $button->set_tooltip_text($path);
             $button->connect('clicked', 'jump_to_folder', $side, $path);
             $$address->pack_start($button, FALSE, FALSE);
         }
