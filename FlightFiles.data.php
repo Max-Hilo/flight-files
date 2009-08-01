@@ -1655,7 +1655,8 @@ function open_terminal()
 
     if (OS == 'Windows')
     {
-        pclose(popen('start', 'r'));
+        $wscript = new COM('wscript.shell');
+        $wscript->run('cmd /k cd /D ' . $start[$panel]);
     }
     elseif (empty($_config['terminal']))
     {
