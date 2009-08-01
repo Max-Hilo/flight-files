@@ -2310,15 +2310,19 @@ function fix_spaces($filename) {
  */
 function one_panel()
 {
-    global $right;
+    global $right, $address_right, $partbar_right;
 
     if ($right->is_visible())
     {
         $right->hide();
+        $address_right->hide();
+        $partbar_right->hide();
     }
     else
     {
         $right->show_all();
+        $address_right->show_all();
+        $partbar_right->show_all();
     }
 }
 
@@ -2375,7 +2379,7 @@ function addressbar($side)
             $button = new GtkButton();
             $button->set_label($path);
             $button->set_image(GtkImage::new_from_stock(Gtk::STOCK_HARDDISK, Gtk::ICON_SIZE_BUTTON));
-            if ($start[$panel] == $path)
+            if ($start[$side] == $path)
             {
                 $button->set_sensitive(FALSE);
             }

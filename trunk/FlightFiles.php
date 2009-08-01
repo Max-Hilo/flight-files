@@ -680,12 +680,15 @@ $hbox->pack_start($right);
 $hbox->show_all();
 if (in_array('--one', $argv))
 {
-    $left->show_all();
     $right->hide();
+    $address_right->hide();
+    $partbar_right->hide();
 }
 else
 {
     $right->show_all();
+    $address_right->show_all();
+    $partbar_right->show_all();
 }
 
 $vbox->pack_start($hbox);
