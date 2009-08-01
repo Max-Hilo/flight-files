@@ -680,12 +680,14 @@ $hbox->pack_start($right);
 $hbox->show_all();
 if (in_array('--one', $argv))
 {
+    $action_menu['one_panel']->set_active(TRUE);
     $right->hide();
     $address_right->hide();
     $partbar_right->hide();
 }
 else
 {
+    $action_menu['one_panel']->set_active(FALSE);
     $right->show_all();
     $address_right->show_all();
     $partbar_right->show_all();
