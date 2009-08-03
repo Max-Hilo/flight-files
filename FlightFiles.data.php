@@ -242,10 +242,10 @@ function on_button($view, $event, $type)
 
     $filename = $start[$panel] . DS . $file;
 
-    if (function_exists('mime_content_type'))
-    {
+//    if (function_exists('mime_content_type'))
+//    {
         $mime = mime_content_type($filename);
-    }
+//    }
 
     // Если нажата левая кнопка, то...
     if ($event->button == 1)
@@ -310,18 +310,18 @@ function on_button($view, $event, $type)
                     open_in_system($filename);
                 }
                 // Открыть встроенным просмотрщиком изображений
-                elseif ($mime == 'image/jpeg' OR $mime == 'image/png' OR $mime == 'image/gif')
+                elseif ($mime == 'image/jpeg' OR $mime == 'image/x-png' OR $mime == 'image/gif')
                 {
                     image_view($filename);
                 }
                 // Открыть встроенным текстовым редактором
-                elseif (function_exists('mime_content_type'))
+                elseif ($mime == 'text/plain' OR $mime == 'text/html')
                 {
-                    $mime = mime_content_type($start[$panel]. DS .$file);
-                    if ($mime == 'text/plain' OR $mime == 'text/html')
-                    {
+                    //$mime = mime_content_type($start[$panel]. DS .$file);
+                    //if ($mime == 'text/plain' OR $mime == 'text/html')
+                    //{
                         text_editor_window($start[$panel] . DS . $file);
-                    }
+                    //}
                 }
             }
         }
@@ -1025,8 +1025,11 @@ function current_dir($panel, $status = '')
         $count_element++;
     }
 
-    $store[$panel]->set_sort_column_id(0, Gtk::SORT_ASCENDING);
-    $store[$panel]->set_sort_column_id(4, Gtk::SORT_ASCENDING);
+	if (empty($status))
+	{
+	    $store[$panel]->set_sort_column_id(0, Gtk::SORT_ASCENDING);
+	    $store[$panel]->set_sort_column_id(4, Gtk::SORT_ASCENDING);
+	}
 }
 
 /**
@@ -2350,7 +2353,7 @@ function addressbar($side)
     }
 
     $button = new GtkButton();
-    $button->set_image(GtkImage::new_from_stock(Gtk::STOCK_EDIT, Gtk::ICON_SIZE_BUTTON));
+    $button->set_image(GtkImage::new_from_stock(Gtk::STOCK_EDIT, Gtk::ICON_SIZE_MENU));
     $button->set_tooltip_text($lang['addressbar']['change_type_hint']);
     $button->connect_simple('clicked', 'change_type_addressbar', $side);
     $$address->pack_start($button, FALSE, FALSE);
@@ -2363,7 +2366,7 @@ function addressbar($side)
         $$address->pack_start($current_dir, TRUE, TRUE);
 
         $button = new GtkButton();
-        $button->set_image(GtkImage::new_from_stock(Gtk::STOCK_REDO, Gtk::ICON_SIZE_BUTTON));
+        $button->set_image(GtkImage::new_from_stock(Gtk::STOCK_REDO, Gtk::ICON_SIZE_MENU));
         $button->set_tooltip_text($lang['addressbar']['change_dir_hint']);
         $button->connect_simple('clicked', 'jump_to_folder', $current_dir, 'left');
         $$address->pack_start($button, FALSE, FALSE);
@@ -2378,7 +2381,7 @@ function addressbar($side)
             $path = '/';
             $button = new GtkButton();
             $button->set_label($path);
-            $button->set_image(GtkImage::new_from_stock(Gtk::STOCK_HARDDISK, Gtk::ICON_SIZE_BUTTON));
+            $button->set_image(GtkImage::new_from_stock(Gtk::STOCK_HARDDISK, Gtk::ICON_SIZE_MENU));
             if ($start[$side] == $path)
             {
                 $button->set_sensitive(FALSE);
@@ -2413,7 +2416,7 @@ function addressbar($side)
             {
                 $button->set_sensitive(FALSE);
             }
-            $button->set_tooltip_text($path);
+            $button->set_tooltip_text(basename($path));
             $button->connect('clicked', 'jump_to_folder', $side, $path);
             $$address->pack_start($button, FALSE, FALSE);
         }
