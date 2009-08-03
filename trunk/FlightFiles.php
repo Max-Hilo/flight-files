@@ -1,6 +1,5 @@
-#!/usr/bin/php
+#!/usr/bin/php	
 <?php
-
 /**
  * Файловый менеджер FlightFiles.
  * 
@@ -13,7 +12,7 @@ if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
 {
     $os = 'Windows';
     $home_dir = $_ENV['USERPROFILE'];
-    $root_dir = 'C:';
+    $root_dir = $_ENV['SystemDrive'];
 }
 else
 {
@@ -544,7 +543,7 @@ $separator->show_all();
 $vbox->pack_start($separator, FALSE, FALSE);
 
 //////////////////////////
-///// Адреная строка /////
+//// Адреcная строка  ////
 //////////////////////////
 $addressbar = new GtkHBox();
 $addressbar->set_homogeneous(TRUE);
@@ -584,6 +583,7 @@ $left->set_shadow_type(Gtk::SHADOW_IN);
 $store['left'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING,
     GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING);
 $tree_view['left'] = new GtkTreeView($store['left']);
+$tree_view['left']->set_enable_search(FALSE);
 $tree_view['left']->drag_dest_set(Gtk::DEST_DEFAULT_ALL, array(array('text/plain', 0, 0)), Gdk::ACTION_COPY);
 $tree_view['left']->drag_source_set(Gdk::BUTTON1_MASK, array(array('text/plain', 0, 0)), Gdk::ACTION_COPY);
 $tree_view['left']->connect('drag-data-get', 'on_drag');
@@ -636,6 +636,7 @@ sqlite_query($sqlite, "INSERT INTO history_right(path) VALUES('$start[right]')")
 current_dir('right');
 
 $tree_view['right'] = new GtkTreeView($store['right']);
+$tree_view['left']->set_enable_search(FALSE);
 $tree_view['right']->drag_dest_set(Gtk::DEST_DEFAULT_ALL, array(array('text/plain', 0, 0)), Gdk::ACTION_COPY);
 $tree_view['right']->drag_source_set(Gdk::BUTTON1_MASK, array(array('text/plain', 0, 0)), Gdk::ACTION_COPY);
 $tree_view['right']->connect('drag-data-get', 'on_drag');
