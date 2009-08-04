@@ -394,7 +394,7 @@ function on_button($view, $event, $type)
                 $open->connect_simple('activate', 'open_in_system', $filename);
                 $menu->append($open);
             }
-            if ($mime == 'image/jpeg' OR $mime == 'image/png' OR $mime == 'image/gif')
+            if ($mime == 'image/jpeg' OR $mime == 'image/x-png' OR $mime == 'image/gif')
             {
                 $open = new GtkMenuItem($lang['popup']['open_image']);
                 $menu->append($open);
@@ -948,7 +948,7 @@ function my_rmdir($filename)
  * @global int $count_dir
  * @global int $count_file
  * @global array $start
- * @param string $panel Панель, для которой необходимо произвести операци.
+ * @param string $panel Панель, для которой необходимо произвести операции.
  * @param string $status Если $status не пуста, то генерируется список файлов, иначе только считаются файлы
  */
 function current_dir($panel, $status = '')
@@ -1040,22 +1040,17 @@ function current_dir($panel, $status = '')
  */
 function convert_size($filename)
 {
-    global $panel, $lang;
-
-    $size_byte = filesize($filename);
-    if ($size_byte < 0)
+    if (OS == 'Unix')
     {
-        if (OS == 'Unix')
-        {
-            unset($du);
-            exec("du '$filename'", $du);
-            $du = preg_replace('#\t#is', ' ', $du[0]);
-            $explode = explode(' ', $du);
-            $size_byte = $explode[0];
-        }
+		$size_byte = shell_exec('stat -c%s "' . $filename . '"');
     }
-    return conversion_size($size_byte);
-    
+    else 
+    {
+	    $fsobj = new COM('Scripting.FileSystemObject');
+	    $file = $fsobj->GetFile($filename);
+	    $size_byte = $file->Size;
+    }
+    return conversion_size(trim($size_byte));   
 }
 
 /**
@@ -1198,12 +1193,13 @@ function change_dir($act = '', $dir = '', $all = FALSE)
     }
     @closedir($opendir);
 
-    $start[$panel] = preg_replace('#'.DS.'+#', DS, $start[$panel]);
+    //$start[$panel] = preg_replace('#[\\' . DS . ']{2,}#', DS, $start[$panel]);
+    $start[$panel] = str_replace(DS.DS, DS, $start[$panel]);
 
     $action_menu['new_file']->set_sensitive(TRUE);
     $action_menu['new_dir']->set_sensitive(TRUE);
-//    $action_menu['comparison_file']->set_sensitive(FALSE);
-//    $action_menu['comparison_dir']->set_sensitive(FALSE);
+//  $action_menu['comparison_file']->set_sensitive(FALSE);
+//  $action_menu['comparison_dir']->set_sensitive(FALSE);
 
     $action_menu['copy']->set_sensitive(FALSE);
     $action_menu['cut']->set_sensitive(FALSE);
@@ -1314,6 +1310,7 @@ function change_dir($act = '', $dir = '', $all = FALSE)
 //    $cur = 'current_dir_' . $panel;
 //    $$cur->set_text($start[$panel]);
     addressbar($panel);
+    
 }
 
 /**
@@ -2362,13 +2359,13 @@ function addressbar($side)
     if ($addressbar_type[$side] == 'entry')
     {
         $current_dir = new GtkEntry($start[$side]);
-        $current_dir->connect('activate', 'jump_to_folder', 'left');
+        $current_dir->connect('activate', 'jump_to_folder', $side);
         $$address->pack_start($current_dir, TRUE, TRUE);
-
+        
         $button = new GtkButton();
         $button->set_image(GtkImage::new_from_stock(Gtk::STOCK_REDO, Gtk::ICON_SIZE_MENU));
         $button->set_tooltip_text($lang['addressbar']['change_dir_hint']);
-        $button->connect_simple('clicked', 'jump_to_folder', $current_dir, 'left');
+        $button->connect_simple('clicked', 'jump_to_folder', $current_dir, $side);
         $$address->pack_start($button, FALSE, FALSE);
     }
     // Адресная панель в виде кнопок
@@ -2406,7 +2403,8 @@ function addressbar($side)
             {
                 $path .= DS . $value;
             }
-            $path = preg_replace('#'.DS.'+#', DS, $path);
+			//$path = preg_replace('#[\\'. DS . ']{2,}#', DS, $path);
+			$path = str_replace(DS.DS, DS, $path);
             if (mb_strlen($value, $charset) > 13)
             {
                 $value = mb_substr($value, 0, 13, $charset) . '...';

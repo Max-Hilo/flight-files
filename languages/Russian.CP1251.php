@@ -188,8 +188,10 @@ $lang['properties']['file']             = 'Файл';
 $lang['properties']['simlink']          = 'Символическая ссылка';
 $lang['properties']['size']             = 'Размер:';
 $lang['properties']['path']             = 'Местоположение:';
-$lang['properties']['mtime']            = 'Дата изменения:';
-$lang['properties']['atime']            = 'Дата доступа:';
+$lang['properties']['mtime_file']       = 'Дата изменения:';
+$lang['properties']['atime_file']       = 'Дата доступа:';
+$lang['properties']['mtime_dir']        = 'Дата создания:';
+$lang['properties']['atime_dir']        = 'Дата доступа:';
 $lang['properties']['general']          = 'Основные';
 $lang['properties']['owner']            = 'Владелец:';
 $lang['properties']['group']            = 'Группа:';
@@ -300,7 +302,7 @@ $lang['text_view']['button_no']         = 'Нет, не сохранять';
 
 $lang['checksum']['title']              = 'Контрольная сумма - %s';
 $lang['checksum']['text']               = 'Файл - %s';
-$lang['checksum']['button_ok']         = 'Ok';
+$lang['checksum']['button_ok']          = 'Ok';
 
 $lang['close']['title']                 = 'FlightFiles :: Закрыть';
 $lang['close']['text']                  = 'Действительно закрыть FlightFiles?';

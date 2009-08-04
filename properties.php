@@ -38,7 +38,8 @@ function properties_window($filename)
     $label_name->modify_font(new PangoFontDescription('Bold'));
     $table->attach($label_name, 0, 1, 0, 1, Gtk::FILL, Gtk::FILL, 10);
 
-    $name = new GtkEntry(preg_replace ('#'.DS.'+#', DS, $filename));
+    //$name = new GtkEntry(preg_replace ('#'.DS.'+#', DS, $filename));
+    $name = new GtkEntry(str_replace(DS.DS, DS, $filename));
     $name->set_editable(FALSE);
     $table->attach($name, 1, 2, 0, 1, Gtk::FILL, Gtk::FILL);
 
@@ -53,7 +54,31 @@ function properties_window($filename)
     $type->set_alignment(0, 0);
     $table->attach($type, 1, 2, 1, 2);
 
-    if (!is_dir($filename))
+	$type = is_file($filename) ? 'file' : 'dir';
+	
+	$table->attach(new GtkHSeparator, 0, 2, 2, 3);
+	
+    // Дата изменения файла/папки
+    $label_mtime = new GtkLabel($lang['properties']['mtime_' . $type]);
+    $label_mtime->set_alignment(0, 0.5);
+    $label_mtime->modify_font(new PangoFontDescription('Bold'));
+    $table->attach($label_mtime, 0, 1, 6, 7, Gtk::FILL, Gtk::FILL);
+
+    $mtime = new GtkLabel(date('d.m.Y G:i:s', filemtime($filename)));
+    $mtime->set_alignment(0.0, 0.5);
+    $table->attach($mtime, 1, 2, 6, 7);
+
+    // Дата доступа к файлу/папке
+    $label_atime = new GtkLabel($lang['properties']['atime_' . $type]);
+    $label_atime->set_alignment(0, 0.5);
+    $label_atime->modify_font(new PangoFontDescription('Bold'));
+    $table->attach($label_atime, 0, 1, 7, 8, Gtk::FILL, Gtk::FILL);
+    
+    $atime = new GtkLabel(date('d.m.Y G:i:s', fileatime($filename)));
+    $atime->set_alignment(0, 0.5);
+    $table->attach($atime, 1, 2, 7, 8);
+
+    if ($type == 'file')
     {
         $table->attach(new GtkHSeparator, 0, 2, 2, 3);
 
