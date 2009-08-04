@@ -1044,10 +1044,17 @@ function convert_size($filename)
     {
 		$size_byte = shell_exec('stat -c%s "' . $filename . '"');
     }
-    else 
+    else
     {
-	    $fsobj = new COM('Scripting.FileSystemObject');
-	    $file = $fsobj->GetFile($filename);
+	    $fsobj = new COM('Scripting.FileSystemObject'); // Функция позволяет получать объем папки
+	    if(is_dir($filename))  
+	    {
+	    	$file = $fsobj->GetFolder($filename);
+	    }
+	    else 
+	    {
+	    	$file = $fsobj->GetFile($filename);
+	    }
 	    $size_byte = $file->Size;
     }
     return conversion_size(trim($size_byte));   
@@ -1588,6 +1595,8 @@ function columns($tree_view, $cell_renderer)
     $column_size->set_sort_column_id(2);
 
     $column_mtime = new GtkTreeViewColumn($lang['column']['mtime'], $cell_renderer, 'text', 3);
+    $column_mtime->set_sizing(Gtk::TREE_VIEW_COLUMN_FIXED);
+    $column_mtime->set_fixed_width(100);
     $column_mtime->set_resizable(TRUE);
     $column_mtime->set_sort_column_id(3);
 
