@@ -23,9 +23,13 @@ function preference()
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $window->set_resizable(FALSE);
     $window->set_title($lang['preference']['title']);
+    $window->set_size_request(340, 400);
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
     
+    $layout = new GtkLayout();
+    
     $notebook = new GtkNotebook();
+	$notebook->set_size_request(320, 380);
     
     /**
      * Вкладка "Основные".
@@ -275,8 +279,9 @@ function preference()
     $hbox_terminal->pack_start($btn_terminal, FALSE, FALSE);
 
     ///////////////////////
-    
-    $window->add($notebook);
+    $layout->put($notebook , 10, 10);
+    $window->add($layout);
+    //$window->add($notebook);
     $window->show_all();
     Gtk::main();
 }

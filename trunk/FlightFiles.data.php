@@ -133,6 +133,58 @@ function config_parser()
 }
 
 /**
+ * Функция определяет действия, выполняемые при нажатии клавиши на клавиатуре.
+ */
+function on_key($view, $event, $type)
+{
+//    global $panel, $lang, $store, $start, $selection;
+//   
+//    list($model, $rows) = $selection[$panel]->get_selected_rows();
+//    $iter = $store[$panel]->get_iter($rows[0][0]);
+//    $file = $store[$panel]->get_value($iter, 0);
+//
+//    $filename = $start[$panel] . DS . $file;
+//   
+////    if (empty($file))
+////    {
+////    	return FALSE;
+////    }
+//   
+//    if ($event->keyval == Gdk::KEY_Return)
+//    {
+//        if(is_dir($filename))
+//        {
+//			if (!is_readable($filename))
+//			{
+//				alert_window($lang['alert']['chmod_read_dir']);
+//				return FALSE;
+//			}
+//			else
+//			{
+//				change_dir('open', $file);
+//			}
+//        }
+//        elseif (is_file($filename))
+//        {
+//        	if (!is_readable($filename))
+//          {
+//                alert_window($lang['alert']['chmod_read_file']);
+//                return FALSE;
+//          }
+//        	if (OS == 'Windows') 
+//        	{
+//              open_in_system($file);
+//          }
+//        }
+//    } 
+//    else
+//    {
+//    	return FALSE;
+//    }
+    return FALSE;
+}
+
+/**
  * Функция определяет действия, выполняемые при нажатии кнопкой мыши по строке.
  */
 function on_button($view, $event, $type)
@@ -1002,11 +1054,18 @@ function current_dir($panel, $status = '')
                 {
                     $ext = '';
                 }
-                $store[$panel]->append(array(
+//                $store[$panel]->append(array(
+//                        $file,
+//                        $ext,
+//                        convert_size($filename),
+//                        date($_config['mtime_format'],filemtime($filename)),
+//                        '<FILE>',
+//                        ''));
+             $store[$panel]->insert(0, array(
                         $file,
                         $ext,
                         convert_size($filename),
-                        date($_config['mtime_format'],filemtime($filename)),
+                        date($_config['mtime_format'], filemtime($filename)),
                         '<FILE>',
                         ''));
             }
@@ -1017,7 +1076,8 @@ function current_dir($panel, $status = '')
         {
             if (empty($status))
             {
-                $store[$panel]->append(array($file, '', '', '', '<DIR>', ''));
+                //$store[$panel]->append(array($file, '', '', '', '<DIR>', ''));
+                $store[$panel]->insert(0, array($file, '', '', '', '<DIR>', ''));
             }
             $count_dir++;
         }
@@ -1896,7 +1956,8 @@ function partbar($side)
     $refresh_button = new GtkButton();
     $refresh_button->set_image(GtkImage::new_from_stock(Gtk::STOCK_REFRESH, Gtk::ICON_SIZE_MENU));
     $refresh_button->set_tooltip_text($lang['partbar']['refresh_hint']);
-    $refresh_button->connect_simple('clicked', 'partbar', $side);
+    $refresh_button->connect_simple('clicked', 'partbar', 'left');
+    $refresh_button->connect_simple('clicked', 'partbar', 'right');
     $$partbar->pack_start($refresh_button, FALSE, FALSE);
 
     $$partbar->pack_start(new GtkLabel('   '), FALSE, FALSE);
@@ -1933,8 +1994,8 @@ function partbar($side)
                 $button->set_label(basename($mount));
             }
             $button->set_tooltip_text(
-                $lang['partbar']['part'] . ' ' . $system . "\n" .
-                $lang['partbar']['mount'] . ' ' .$mount . "\n" .
+                $lang['partbar']['part']  . ' ' . $system . "\n" .
+                $lang['partbar']['mount'] . ' ' . $mount . "\n" .
                 $lang['partbar']['space'] . ' ' . $size);
             $button->connect_simple('clicked', 'jump_to_part', $side, $mount);
             $$partbar->pack_start($button, FALSE, FALSE);

@@ -28,10 +28,13 @@ function about_window()
     $window->set_transient_for($main_window);
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
 
+    $layout = new GtkLayout();
+    
     $notebook = new GtkNotebook();
+	$notebook->set_size_request(430, 280);
 
     $vbox = new GtkVBox();
-    $title = new GtkLabel('FlightFiles - '.VERSION_PROGRAM);
+    $title = new GtkLabel('FlightFiles - ' . VERSION_PROGRAM);
     $title->modify_font(new PangoFontDescription('Bold 18px'));
     $vbox->pack_start($title);
     $url = new GtkLabel('http://code.google.com/p/flight-files/');
@@ -46,14 +49,14 @@ function about_window()
     $notebook->append_page($vbox, new GtkLabel($lang['about']['about']));
 
     $buffer = new GtkTextBuffer();
-    $buffer->set_text('Vavilov Egor (Shecspi) <shecspi@gmail.com>');
+    $buffer->set_text(" Vavilov Egor (Shecspi) <shecspi@gmail.com> \n Hilo Maxim (Nemesis) <HiloMax@gmail.com>");
     $view = new GtkTextView();
     $view->set_buffer($buffer);
     $view->set_editable(FALSE);
     $notebook->append_page($view, new GtkLabel($lang['about']['authors']));
 
     $buffer = new GtkTextBuffer();
-    $buffer->set_text($lang['about']['license_text'].file_get_contents(SHARE_DIR . DS . 'LICENSE'));
+    $buffer->set_text($lang['about']['license_text'] . ' ' . file_get_contents(SHARE_DIR . DS . 'LICENSE'));
     $view = new GtkTextView();
     $view->set_buffer($buffer);
     $view->set_editable(FALSE);
@@ -62,7 +65,9 @@ function about_window()
     $scroll->add($view);
     $notebook->append_page($scroll, new GtkLabel($lang['about']['license']));
 
-    $window->add($notebook);
+	$layout->put($notebook , 10, 10);
+    $window->add($layout);
+    //$window->add($notebook);
     $window->show_all();
     Gtk::main();
 }
