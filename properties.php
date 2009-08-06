@@ -21,11 +21,14 @@ function properties_window($filename)
     $window->set_position(Gtk::WIN_POS_CENTER);
     $window->set_title(str_replace('%s', basename($filename), $lang['properties']['title']));
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
-    $window->set_size_request(500, -1);
+    $window->set_size_request(500, 225);
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
     
-    $notebook = new GtkNotebook();
+    $layout = new GtkLayout();
     
+    $notebook = new GtkNotebook();
+	$notebook->set_size_request(482, 205);
+
     //////////////////////////////
     ///// Вкладка "Основные" /////
     //////////////////////////////
@@ -39,7 +42,7 @@ function properties_window($filename)
     $table->attach($label_name, 0, 1, 0, 1, Gtk::FILL, Gtk::FILL, 10);
 
     //$name = new GtkEntry(preg_replace ('#'.DS.'+#', DS, $filename));
-    $name = new GtkEntry(str_replace(DS.DS, DS, $filename));
+    $name = new GtkEntry(str_replace(DS.DS, DS, basename($filename)));
     $name->set_editable(FALSE);
     $table->attach($name, 1, 2, 0, 1, Gtk::FILL, Gtk::FILL);
 
@@ -95,6 +98,7 @@ function properties_window($filename)
         $table->attach($label_path, 0, 1, 4, 5, Gtk::FILL, Gtk::FILL);
 
         $path = new GtkLabel(dirname($filename));
+        $path->set_selectable(TRUE);
         $path->set_alignment(0, 0.5);
         $table->attach($path, 1, 2, 4, 5);
 
@@ -124,17 +128,20 @@ function properties_window($filename)
     {
     	$table->attach(new GtkHSeparator, 0, 2, 2, 3);
     	
-    	// Размер папки включая все вложенные
-        $label_size = new GtkLabel($lang['properties']['size']);
-        $label_size->set_alignment(0, 0.5);
-        $label_size->modify_font(new PangoFontDescription('Bold'));
-        $table->attach($label_size, 0, 1, 4, 5, Gtk::FILL, Gtk::FILL);
-        
-        $size = new GtkLabel(convert_size($filename));
-        $size->set_alignment(0, 0.5);
-        $table->attach($size, 1, 2, 4, 5);
-    	
-    	$table->attach(new GtkHSeparator, 0, 2, 6, 7);
+    	if(OS == 'Windows')
+    	{
+	    	// Размер папки включая все вложенные
+	        $label_size = new GtkLabel($lang['properties']['size']);
+	        $label_size->set_alignment(0, 0.5);
+	        $label_size->modify_font(new PangoFontDescription('Bold'));
+	        $table->attach($label_size, 0, 1, 4, 5, Gtk::FILL, Gtk::FILL);
+	        
+	        $size = new GtkLabel(convert_size($filename));
+	        $size->set_alignment(0, 0.5);
+	        $table->attach($size, 1, 2, 4, 5);
+	    	
+	    	$table->attach(new GtkHSeparator, 0, 2, 6, 7);
+    	}
     	
 	    // Дата изменения папки
 	    $label_mtime = new GtkLabel($lang['properties']['mtime_dir']);
@@ -157,7 +164,7 @@ function properties_window($filename)
 	    $table->attach($atime, 1, 2, 9, 10);
     }
     
-    $table->set_col_spacing(0, 10);
+    $table->set_col_spacing(0, 5);
     
     $notebook->append_page($table, new GtkLabel($lang['properties']['general']));
     
@@ -296,9 +303,11 @@ function properties_window($filename)
         $notebook->append_page($table, new GtkLabel($lang['properties']['perms_tab']));
     }
 
-    $vbox = new GtkVBox();
-    $vbox->pack_start($notebook, FALSE, FALSE);
-    $window->add($vbox);
+//    $vbox = new GtkVBox();
+//    $vbox->pack_start($notebook, FALSE, FALSE);
+    //$window->add($vbox);
+    $layout->put($notebook , 10, 10);
+    $window->add($layout);
     $window->show_all();
     Gtk::main();
 }

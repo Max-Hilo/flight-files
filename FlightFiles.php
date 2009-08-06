@@ -482,7 +482,9 @@ foreach ($array_toolbar as $value)
     if (is_array($value[7]))
     {
         if ($value[7][0] == $value[7][1])
+        {	
             $action[$value[0]]->set_sensitive(FALSE);
+        }
     }
     elseif ($value[7] == 'false')
     {
@@ -491,7 +493,9 @@ foreach ($array_toolbar as $value)
     elseif ($value[7] == 'write')
     {
         if (!is_writable($start[$panel]))
+        {
             $action[$value[0]]->set_sensitive(FALSE);
+        }
     }
 
     $toolbar->insert($toolitem, -1);
@@ -527,6 +531,7 @@ if ($_config['partbar_refresh'] == 'on')
 
 $partbar->pack_start($partbar_left);
 $partbar->pack_start($partbar_right);
+
 if ($_config['partbar_view'] == 'on')
 {
     $partbar->show_all();
@@ -606,6 +611,7 @@ elseif ($_config['view_lines_files'] == 'on')
 $selection['left'] = $tree_view['left']->get_selection();
 $selection['left']->set_mode(Gtk::SELECTION_MULTIPLE);
 $tree_view['left']->connect('button-press-event', 'on_button', 'left');
+$tree_view['left']->connect('key-press-event', 'on_key', 'left');
 $cell_renderer['left'] = new GtkCellRendererText();
 if (!empty($_config['font_list']))
 {
@@ -659,6 +665,7 @@ elseif ($_config['view_lines_files'] == 'on')
 $selection['right'] = $tree_view['right']->get_selection();
 $selection['right']->set_mode(Gtk::SELECTION_MULTIPLE);
 $tree_view['right']->connect('button-press-event', 'on_button', 'right');
+$tree_view['right']->connect('key-press-event', 'on_key', 'right');
 $cell_renderer['right'] = new GtkCellRendererText();
 if (!empty($_config['font_list']))
 {
