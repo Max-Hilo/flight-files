@@ -355,7 +355,7 @@ $array_menuitem = array(
     array('bookmarks', 'bookmarks'),
     array('help', '', 'shortcuts', $lang['menu']['shortcuts'], Gtk::STOCK_INFO, 'shortcuts_window'),
     array('help', 'separator'),
-    array('help', '', 'about', $lang['menu']['about'], Gtk::STOCK_ABOUT, 'about_window')
+    array('help', '', 'about', $lang['menu']['about'], Gtk::STOCK_ABOUT, 'about_window', 'none', '', '', 'F1')
 );
 foreach ($array_menuitem as $value)
 {
@@ -588,11 +588,15 @@ $left->set_shadow_type(Gtk::SHADOW_IN);
 $store['left'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING,
     GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING);
 $tree_view['left'] = new GtkTreeView($store['left']);
+$selection['left'] = $tree_view['left']->get_selection();
+$selection['left']->set_mode(Gtk::SELECTION_MULTIPLE);
 $tree_view['left']->set_enable_search(FALSE);
 $tree_view['left']->drag_dest_set(Gtk::DEST_DEFAULT_ALL, array(array('text/plain', 0, 0)), Gdk::ACTION_COPY);
 $tree_view['left']->drag_source_set(Gdk::BUTTON1_MASK, array(array('text/plain', 0, 0)), Gdk::ACTION_COPY);
 $tree_view['left']->connect('drag-data-get', 'on_drag');
 $tree_view['left']->connect('drag-data-received', 'on_drop', 'left');
+$tree_view['left']->connect('button-press-event', 'on_button', 'left');
+$tree_view['left']->connect('key-press-event', 'on_key', 'left');
 
 // При необходимости показываем линии между колонками и между файлами
 if ($_config['view_lines_columns'] == 'on' AND $_config['view_lines_files'] == 'on')
@@ -608,10 +612,7 @@ elseif ($_config['view_lines_files'] == 'on')
     $tree_view['left']->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_HORIZONTAL);
 }
 
-$selection['left'] = $tree_view['left']->get_selection();
-$selection['left']->set_mode(Gtk::SELECTION_MULTIPLE);
-$tree_view['left']->connect('button-press-event', 'on_button', 'left');
-$tree_view['left']->connect('key-press-event', 'on_key', 'left');
+
 $cell_renderer['left'] = new GtkCellRendererText();
 if (!empty($_config['font_list']))
 {
@@ -642,11 +643,15 @@ sqlite_query($sqlite, "INSERT INTO history_right(path) VALUES('$start[right]')")
 current_dir('right');
 
 $tree_view['right'] = new GtkTreeView($store['right']);
-$tree_view['left']->set_enable_search(FALSE);
+$selection['right'] = $tree_view['right']->get_selection();
+$selection['right']->set_mode(Gtk::SELECTION_MULTIPLE);
+$tree_view['right']->set_enable_search(FALSE);
 $tree_view['right']->drag_dest_set(Gtk::DEST_DEFAULT_ALL, array(array('text/plain', 0, 0)), Gdk::ACTION_COPY);
 $tree_view['right']->drag_source_set(Gdk::BUTTON1_MASK, array(array('text/plain', 0, 0)), Gdk::ACTION_COPY);
 $tree_view['right']->connect('drag-data-get', 'on_drag');
 $tree_view['right']->connect('drag-data-received', 'on_drop', 'right');
+$tree_view['right']->connect('button-press-event', 'on_button', 'right');
+$tree_view['right']->connect('key-press-event', 'on_key', 'right');
 
 // При необходимости показываем линии между колонками и между файлами
 if ($_config['view_lines_columns'] == 'on' AND $_config['view_lines_files'] == 'on')
@@ -662,10 +667,6 @@ elseif ($_config['view_lines_files'] == 'on')
     $tree_view['right']->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_HORIZONTAL);
 }
 
-$selection['right'] = $tree_view['right']->get_selection();
-$selection['right']->set_mode(Gtk::SELECTION_MULTIPLE);
-$tree_view['right']->connect('button-press-event', 'on_button', 'right');
-$tree_view['right']->connect('key-press-event', 'on_key', 'right');
 $cell_renderer['right'] = new GtkCellRendererText();
 if (!empty($_config['font_list']))
 {

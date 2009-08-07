@@ -68,7 +68,7 @@ function properties_window($filename)
 	    $table->attach($label_mtime, 0, 1, 6, 7, Gtk::FILL, Gtk::FILL);
 
 	    $mtime = new GtkLabel(date('d.m.Y G:i:s', filemtime($filename)));
-	    $mtime->set_alignment(0.0, 0.5);
+	    $mtime->set_alignment(0, 0.5);
 	    $table->attach($mtime, 1, 2, 6, 7);
 
 	    // Дата доступа к файлу

@@ -137,46 +137,50 @@ function config_parser()
  */
 function on_key($view, $event, $type)
 {
-//    global $panel, $lang, $store, $start, $selection;
-//   
-//    list($model, $rows) = $selection[$panel]->get_selected_rows();
-//    $iter = $store[$panel]->get_iter($rows[0][0]);
-//    $file = $store[$panel]->get_value($iter, 0);
-//
-//    $filename = $start[$panel] . DS . $file;
-//   
-////    if (empty($file))
-////    {
-////    	return FALSE;
-////    }
-//   
-//    if ($event->keyval == Gdk::KEY_Return)
-//    {
-//        if(is_dir($filename))
-//        {
-//			if (!is_readable($filename))
-//			{
-//				alert_window($lang['alert']['chmod_read_dir']);
-//				return FALSE;
-//			}
-//			else
-//			{
-//				change_dir('open', $file);
-//			}
-//        }
-//        elseif (is_file($filename))
-//        {
-//        	if (!is_readable($filename))
-//          {
-//                alert_window($lang['alert']['chmod_read_file']);
-//                return FALSE;
-//          }
-//        	if (OS == 'Windows') 
-//        	{
-//              open_in_system($file);
-//          }
-//        }
-//    } 
+    global $panel, $lang, $store, $start, $selection;
+	
+    list($model, $rows) = $selection[$panel]->get_selected_rows();
+    @$iter = $store[$panel]->get_iter($rows[0][0]);
+    @$file = $store[$panel]->get_value($iter, 0);
+
+    $filename = $start[$panel] . DS . $file;
+   
+    if (empty($file))
+    {
+    	return FALSE;
+    }
+   
+    if ($event->keyval == Gdk::KEY_Return)
+    {
+        if(is_dir($filename))
+        {
+			if (!is_readable($filename))
+			{
+				alert_window($lang['alert']['chmod_read_dir']);
+				return FALSE;
+			}
+			else
+			{
+				change_dir('open', $file);
+			}
+        }
+        elseif (is_file($filename))
+        {
+			if (!is_readable($filename))
+			{
+				alert_window($lang['alert']['chmod_read_file']);
+				return FALSE;
+			}
+			if (OS == 'Windows') 
+			{
+				open_in_system($filename);
+			} 
+			else
+			{
+				return FALSE; // Linux заглушка
+			}
+        }
+    } 
 //    else
 //    {
 //    	return FALSE;
@@ -401,7 +405,8 @@ function on_button($view, $event, $type)
             $delete->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_MENU));
             $checksum = new GtkMenuItem($lang['popup']['checksum']);
             $terminal = new GtkMenuItem($lang['popup']['open_terminal']);
-            $properties = new GtkImageMenuItem(Gtk::STOCK_PROPERTIES);
+            $properties = new GtkImageMenuItem($lang['properties']['properties']);
+            $properties->set_image(GtkImage::new_from_stock(Gtk::STOCK_PROPERTIES, Gtk::ICON_SIZE_MENU));
 
             $sub_checksum = new GtkMenu();
             $checksum->set_submenu($sub_checksum);
@@ -495,7 +500,8 @@ function on_button($view, $event, $type)
             $delete = new GtkImageMenuItem($lang['popup']['delete']);
             $delete->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_MENU));
             $terminal = new GtkMenuItem($lang['popup']['open_terminal']);
-            $properties = new GtkImageMenuItem(Gtk::STOCK_PROPERTIES);
+            $properties = new GtkImageMenuItem($lang['properties']['properties']);
+            $properties->set_image(GtkImage::new_from_stock(Gtk::STOCK_PROPERTIES, Gtk::ICON_SIZE_MENU));
 
             if (!is_writable($start[$panel]))
             {
@@ -734,7 +740,7 @@ function paste_file()
 
     foreach ($clp['files'] as $filename)
     {
-        $dest = $start[$panel]. DS .basename($filename);
+        $dest = $start[$panel] . DS . basename($filename);
         if (file_exists($dest))
         {
             if (file_exists_window($dest))

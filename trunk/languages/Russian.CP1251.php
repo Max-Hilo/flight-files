@@ -180,6 +180,7 @@ $lang['preference']['button_cancel']    = 'Отменить';
 $lang['preference']['change_program_hint'] = 'Изменить программу';
 $lang['preference']['change_font_hint'] = 'Изменить шрифт';
 
+$lang['properties']['properties']       = 'Свойства';
 $lang['properties']['title']            = 'FlightFiles :: Свойства :: %s';
 $lang['properties']['name']             = 'Имя:';
 $lang['properties']['type']             = 'Тип:';
