@@ -40,7 +40,7 @@ function about_window()
     $url = new GtkLabel('http://code.google.com/p/flight-files/');
     $url->set_selectable(TRUE);
     $vbox->pack_end($url, FALSE, FALSE, 10);
-    $copyright = new GtkLabel('Copyright (C) 2009 Vavilov Egor (Shecspi)');
+    $copyright = new GtkLabel('Copyright 2009 Vavilov Egor (Shecspi)');
     $copyright->modify_font(new PangoFontDescription('10px'));
     $vbox->pack_end($copyright, FALSE, FALSE, 10);
     $description = new GtkLabel($lang['about']['description']);
