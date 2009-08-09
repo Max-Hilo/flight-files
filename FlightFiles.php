@@ -1,5 +1,6 @@
 #!/usr/bin/php
 <?php
+
 /**
  * Файловый менеджер FlightFiles.
  * 
@@ -84,6 +85,52 @@ include SHARE_DIR . DS . 'preference.php';
 include SHARE_DIR . DS . 'properties.php';
 include SHARE_DIR . DS . 'shortcuts.php';
 include SHARE_DIR . DS . 'text_editor.php';
+
+if (!extension_loaded('php-gtk'))
+{
+    if ((OS == 'Windows' AND @!dl('php_gtk2.dll')) OR (OS == 'Unix' AND @!dl('php_gtk2.so')))
+    {
+        echo "\r\nFatal Error: Unable to load dynamic library 'php_gtk2'\r\n\r\n";
+        exit();
+    }
+}
+if (!extension_loaded('pdo'))
+{
+    if ((OS == 'Windows' AND @!dl('php_pdo.dll')) OR (OS == 'Unix' AND @!dl('php_pdo.so')))
+    {
+        echo "\r\nFatal Error: Unable to load dynamic library 'pdo'\r\n\r\n";
+        exit();
+    }
+}
+if (!extension_loaded('sqlite'))
+{
+    if ((OS == 'Windows' AND @!dl('php_sqlite.dll')) OR (OS == 'Unix' AND @!dl('php_sqlite.so')))
+    {
+        echo "\r\nFatal Error: Unable to load dynamic library 'php_sqlite'\r\n\r\n";
+        exit();
+    }
+}
+if (!extension_loaded('gd'))
+{
+    if ((OS == 'Windows' AND @!dl('php_gd2.dll')) OR (OS == 'Unix' AND @!dl('php_gd2.so')))
+    {
+        echo "\r\nWarning: Unable to load dinamic library 'php_gd2'\r\n\r\n";
+    }
+}
+if (!extension_loaded('mime_magic'))
+{
+    if ((OS == 'Windows' AND @!dl('php_mime_magic.dll')) OR (OS == 'Unix' AND @!dl('php_mime_magic.so')))
+    {
+        echo "\r\nWarning: Unable to load dinamic library 'php_mime_magic'\r\n\r\n";
+    }
+}
+if (!extension_loaded('mbstring'))
+{
+    if ((OS == 'Windows' AND @!dl('php_mbstring.dll')) OR (OS == 'Unix' AND @!dl('php_mbstring.so')))
+    {
+        echo "\r\nWarning: Unable to load dinamic library 'php_mbstring'\r\n\r\n";
+    }
+}
 
 // Создаём папку с конфигами
 if (!file_exists(CONFIG_DIR))
@@ -484,7 +531,7 @@ foreach ($array_toolbar as $value)
     if (is_array($value[7]))
     {
         if ($value[7][0] == $value[7][1])
-        {	
+        {   
             $action[$value[0]]->set_sensitive(FALSE);
         }
     }
