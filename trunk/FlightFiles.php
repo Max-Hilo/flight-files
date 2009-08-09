@@ -209,6 +209,8 @@ $start['right'] = ($_config['save_folders'] == 'on') ? $_config['last_dir_right'
 $start['left'] = !file_exists($start['left']) ? ROOT_DIR : $start['left'];
 $start['right'] = !file_exists($start['right']) ? HOME_DIR : $start['right'];
 
+$start['left'] = (preg_match("#^[a-z]:$#is", $start[$panel])) ? $start['left'] . DS : $start['left'];
+$start['right'] = (preg_match("#^[a-z]:$#is", $start[$panel])) ? $start['right'] . DS : $start['right'];
 
 /**
  * Используется для навигации по истории посещения директорий.

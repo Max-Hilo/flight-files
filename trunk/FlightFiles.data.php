@@ -1020,6 +1020,8 @@ function current_dir($panel, $status = '')
     $count_dir = 0;
     $count_file = 0;
 
+    
+
     $opendir = opendir($start[$panel]);
 
     while (FALSE !== ($file = readdir($opendir)))
@@ -1091,11 +1093,32 @@ function current_dir($panel, $status = '')
         $count_element++;
     }
 
-	if (empty($status))
-	{
-	    $store[$panel]->set_sort_column_id(0, Gtk::SORT_ASCENDING);
-	    $store[$panel]->set_sort_column_id(4, Gtk::SORT_ASCENDING);
-	}
+    if (empty($status))
+    {
+        $store[$panel]->set_sort_column_id(0, Gtk::SORT_ASCENDING);
+        $store[$panel]->set_sort_column_id(4, Gtk::SORT_ASCENDING);
+
+        // Добавляем в список директорию '..'
+        if (OS == 'Unix')
+        {
+            if ($start[$panel] != ROOT_DIR)
+            {
+                $store[$panel]->insert(0, array('..', '', '', '', '<DIR>', ''));
+            }
+        }
+        elseif (OS == 'Windows')
+        {
+            $array = array(
+                'B:\\', 'C:\\', 'D:\\', 'E:\\', 'F:\\', 'G:\\', 'H:\\',
+                'I:\\', 'J:\\', 'K:\\', 'L:\\', 'M:\\', 'N:\\', 'O:\\',
+                'P:\\', 'Q:\\', 'R:\\', 'S:\\', 'T:\\', 'U:\\', 'V:\\',
+                'W:\\', 'X:\\', 'Y:\\', 'Z:\\');
+            if (!in_array($start[$panel], $array))
+            {
+                $store[$panel]->insert(0, array('..', '', '', '', '<DIR>', ''));
+            }
+        }
+    }
 }
 
 /**
@@ -1222,7 +1245,14 @@ function change_dir($act = '', $dir = '', $all = FALSE)
             $new_dir = HOME_DIR;
             break;
         case 'open':
-            $new_dir = $start[$panel]. DS .$dir;
+            if ($dir == '..')
+            {
+                $new_dir = dirname($start[$panel]);
+            }
+            else
+            {
+                $new_dir = $start[$panel]. DS .$dir;
+            }
             break;
         case 'bookmarks':
             $new_dir = $dir;
@@ -1266,8 +1296,11 @@ function change_dir($act = '', $dir = '', $all = FALSE)
     }
     @closedir($opendir);
 
-    //$start[$panel] = preg_replace('#[\\' . DS . ']{2,}#', DS, $start[$panel]);
-    $start[$panel] = str_replace(DS.DS, DS, $start[$panel]);
+    // Удаляем лишние разделители
+    $start[$panel] = str_replace(DS . DS, DS, $start[$panel]);
+
+    // Приводим к стандартному типу
+    $start[$panel] = (preg_match("#^[a-z]:$#is", $start[$panel])) ? $start[$panel] . DS : $start[$panel];
 
     $action_menu['new_file']->set_sensitive(TRUE);
     $action_menu['new_dir']->set_sensitive(TRUE);
