@@ -396,6 +396,13 @@ $array_menuitem = array(
     array('view', 'separator'),
     array('view', 'toggle', 'hidden_files', $lang['menu']['hidden_files'], '',
         'check_button_write', 'hidden_files', '', array($_config['hidden_files'], 'on'), '<control>H'),
+    array('view', 'separator'),
+    array('view', 'toggle', 'extension_column', $lang['menu']['extension_column'], '',
+        'columns_view', 'extension', '', array($_config['extension_column'], 'on'), ''),
+    array('view', 'toggle', 'size_column', $lang['menu']['size_column'], '', 
+        'columns_view', 'size', '', array($_config['size_column'], 'on'), ''),
+    array('view', 'toggle', 'mtime_column', $lang['menu']['mtime_column'], '',
+        'columns_view', 'mtime', '', array($_config['mtime_column'], 'on'), ''),
     array('go', '', 'up', $lang['menu']['up'], Gtk::STOCK_GO_UP, 'change_dir', '', '', array($start[$panel], ROOT_DIR), '<control>Up'),
     array('go', '', 'back', $lang['menu']['back'], Gtk::STOCK_GO_BACK, 'history', 'back', '', 'false', '<control>Left'),
     array('go', '', 'forward', $lang['menu']['forward'], Gtk::STOCK_GO_FORWARD, 'history', 'forward', '', 'false', '<control>Right'),
@@ -428,9 +435,16 @@ foreach ($array_menuitem as $value)
         {
             $action_menu[$value[2]]->set_active(TRUE);
         }
-        elseif ($value[8][0] == $value[8][1])
+        elseif (is_array($value[8]))
         {
-            $action_menu[$value[2]]->set_active(TRUE);
+            if ($value[8][0] == $value[8][1])
+            {
+                $action_menu[$value[2]]->set_active(TRUE);
+            }
+            else
+            {
+                $action_menu[$value[2]]->set_active(FALSE);
+            }
         }
         $action_menu[$value[2]]->connect('activate', $value[5], $value[6], $value[7]);
     }

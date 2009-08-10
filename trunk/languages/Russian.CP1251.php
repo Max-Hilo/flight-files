@@ -49,6 +49,9 @@ $lang['menu']['bookmarks_add']          = 'Добавить в закладки';
 $lang['menu']['bookmarks_edit']         = 'Изменить закладки';
 $lang['menu']['shortcuts']              = 'Сочетания клавиш';
 $lang['menu']['about']                  = 'О программе';
+$lang['menu']['extension_column']       = "Колонка 'Расширение'";
+$lang['menu']['size_column']            = "Колонка 'Размер'";
+$lang['menu']['mtime_column']           = "Колонка 'Дата изменения'";
 
 $lang['toolbar']['back']                = 'Назад';
 $lang['toolbar']['back_hint']           = 'Перейти в предыдущую посещённую папку';
