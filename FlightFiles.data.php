@@ -48,7 +48,7 @@ function create_database($combo, $window)
         // $_config['home_dir_left'] - домашняя директория для левой панели.
         "INSERT INTO config(key, value) VALUES('HOME_DIR_LEFT', '".ROOT_DIR."');".
 
-        // $_config['home_dir_right'] - домашняя директория для правой панели
+        // $_config['home_dir_right'] - домашняя директория для правой панели.
         "INSERT INTO config(key, value) VALUES('HOME_DIR_RIGHT', '".HOME_DIR."');".
 
         // $_config['ask_delete'] - если 'on', то перед удалением файлов
@@ -65,7 +65,7 @@ function create_database($combo, $window)
         // $_config['addressbar_view'] - если 'on', то будет показана адресная панель.
         "INSERT INTO config(key, value) VALUES('ADDRESSBAR_VIEW', 'on');".
 
-        // $_config['statusbar_view'] - если 'on', то будет показана строка состояния
+        // $_config['statusbar_view'] - если 'on', то будет показана строка состояния.
         "INSERT INTO config(key, value) VALUES('STATUSBAR_VIEW', 'on');".
 
         // $_config['partbar_view'] - если 'on', то будет показана панель разделов.
@@ -77,7 +77,7 @@ function create_database($combo, $window)
         // $_config['language'] - язык программы.
         "INSERT INTO config(key, value) VALUES('LANGUAGE', '$language');".
 
-        // $_config['maximize'] - если 'on', то при запуске главное окно будет развёрнуто на весь экран
+        // $_config['maximize'] - если 'on', то при запуске главное окно будет развёрнуто на весь экран.
         "INSERT INTO config(key, value) VALUES('MAXIMIZE', 'off');".
 
         // $_config['terminal'] - адрес программы-консоли.
@@ -103,14 +103,23 @@ function create_database($combo, $window)
         // открыты папки из предыдущей сессии.
         "INSERT INTO config(key, value) VALUES('SAVE_FOLDERS', 'on');".
 
-        // $_config['mtime_format'] - формат даты для колонки "Изменён".
+        // $_config['mtime_format'] - формат даты для колонки "Изменён"..
         "INSERT INTO config(key, value) VALUES('MTIME_FORMAT', 'd.m.Y G:i');".
         
-        // $_config['addressbar_left'] - внешний вид левой адресной панели
+        // $_config['addressbar_left'] - внешний вид левой адресной панели.
         "INSERT INTO config(key, value) VALUES('ADDRESSBAR_LEFT', 'entry');".
         
-        // $_config['addressbar_right'] - внешний вид правой адресной панели
-        "INSERT INTO config(key, value) VALUES('ADDRESSBAR_RIGHT', 'entry');"
+        // $_config['addressbar_right'] - внешний вид правой адресной панели.
+        "INSERT INTO config(key, value) VALUES('ADDRESSBAR_RIGHT', 'entry');".
+
+        // $_config['extension_column'] - если 'on', то колонка "Расширение" будет видимой.
+        "INSERT INTO config(key, value) VALUES('EXTENSION_COLUMN', 'on');".
+
+        // $_config['size_column'] - если 'on', то колонка "Размер" будет видимой.
+        "INSERT INTO config(key, value) VALUES('SIZE_COLUMN', 'on');".
+
+        // $_config['mtime_column'] - если 'on', то колонка "Дата изменения" будет видимой.
+        "INSERT INTO config(key, value) VALUES('MTIME_COLUMN', 'on');"
     );
    $window->destroy();
 }
@@ -154,31 +163,31 @@ function on_key($view, $event, $type)
     {
         if(is_dir($filename))
         {
-			if (!is_readable($filename))
-			{
-				alert_window($lang['alert']['chmod_read_dir']);
-				return FALSE;
-			}
-			else
-			{
-				change_dir('open', $file);
-			}
+            if (!is_readable($filename))
+            {
+                alert_window($lang['alert']['chmod_read_dir']);
+                return FALSE;
+            }
+            else
+            {
+                change_dir('open', $file);
+            }
         }
         elseif (is_file($filename))
         {
-			if (!is_readable($filename))
-			{
-				alert_window($lang['alert']['chmod_read_file']);
-				return FALSE;
-			}
-			if (OS == 'Windows') 
-			{
-				open_in_system($filename);
-			} 
-			else
-			{
-				return FALSE; // Linux заглушка
-			}
+            if (!is_readable($filename))
+            {
+                alert_window($lang['alert']['chmod_read_file']);
+                return FALSE;
+            }
+            if (OS == 'Windows')
+            {
+                open_in_system($filename);
+            }
+            else
+            {
+                return FALSE; // Linux заглушка
+            }
         }
     } 
 //    else
@@ -1661,7 +1670,7 @@ function panel_view($widget, $param)
  */
 function columns($tree_view, $cell_renderer)
 {
-    global $lang;
+    global $lang, $columns, $_config;
 
     $render = new GtkCellRendererPixbuf();
     $column_image = new GtkTreeViewColumn();
@@ -1685,19 +1694,31 @@ function columns($tree_view, $cell_renderer)
     $column_file = new GtkTreeViewColumn($lang['column']['title'], $cell_renderer, 'text', 0);
     $column_file->set_visible(FALSE);
 
-    $column_ext = new GtkTreeViewColumn($lang['column']['ext'], $cell_renderer, 'text', 1);
-    $column_ext->set_resizable(TRUE);
-    $column_ext->set_sort_column_id(1);
+    $columns['extension'] = new GtkTreeViewColumn($lang['column']['ext'], $cell_renderer, 'text', 1);
+    $columns['extension']->set_resizable(TRUE);
+    $columns['extension']->set_sort_column_id(1);
+    if ($_config['extension_column'] == 'off')
+    {
+        $columns['extension']->set_visible(FALSE);
+    }
 
-    $column_size = new GtkTreeViewColumn($lang['column']['size'], $cell_renderer, 'text', 2);
-    $column_size->set_resizable(TRUE);
-    $column_size->set_sort_column_id(2);
+    $columns['size'] = new GtkTreeViewColumn($lang['column']['size'], $cell_renderer, 'text', 2);
+    $columns['size']->set_resizable(TRUE);
+    $columns['size']->set_sort_column_id(2);
+    if ($_config['size_column'] == 'off')
+    {
+        $columns['size']->set_visible(FALSE);
+    }
 
-    $column_mtime = new GtkTreeViewColumn($lang['column']['mtime'], $cell_renderer, 'text', 3);
-    $column_mtime->set_sizing(Gtk::TREE_VIEW_COLUMN_FIXED);
-    $column_mtime->set_fixed_width(100);
-    $column_mtime->set_resizable(TRUE);
-    $column_mtime->set_sort_column_id(3);
+    $columns['mtime'] = new GtkTreeViewColumn($lang['column']['mtime'], $cell_renderer, 'text', 3);
+    $columns['mtime']->set_sizing(Gtk::TREE_VIEW_COLUMN_FIXED);
+    $columns['mtime']->set_fixed_width(100);
+    $columns['mtime']->set_resizable(TRUE);
+    $columns['mtime']->set_sort_column_id(3);
+    if ($_config['mtime_column'] == 'off')
+    {
+        $columns['mtime']->set_visible(FALSE);
+    }
 
     $column_df = new GtkTreeViewColumn('', $cell_renderer, 'text', 4);
     $column_df->set_visible(FALSE);
@@ -1707,11 +1728,28 @@ function columns($tree_view, $cell_renderer)
 
     $tree_view->append_column($column_image);
     $tree_view->append_column($column_file);
-    $tree_view->append_column($column_ext);
-    $tree_view->append_column($column_size);
-    $tree_view->append_column($column_mtime);
+    $tree_view->append_column($columns['extension']);
+    $tree_view->append_column($columns['size']);
+    $tree_view->append_column($columns['mtime']);
     $tree_view->append_column($column_df);
     $tree_view->append_column($column_null);
+}
+
+/**
+ * Скрывает или показывает колонку списка файлов, указанную в $key.
+ * @global array $columns
+ * @global resource $sqlite
+ * @param GtkToggleAction $widget Переключатель
+ * @param string $key Колонка, для которой необходимо произвести операцию
+ */
+function columns_view($widget, $key)
+{
+    global $columns, $sqlite;
+
+    $value = $widget->get_active() ? 'on' : 'off';
+    $columns[$key]->set_visible($widget->get_active());
+    $key = strtoupper($key) . '_COLUMN';
+    sqlite_query($sqlite, "UPDATE config SET value = '$value' WHERE key = '$key'");
 }
 
 /**
