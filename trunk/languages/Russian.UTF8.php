@@ -182,6 +182,14 @@ $lang['preference']['button_ok']        = 'Ok';
 $lang['preference']['button_cancel']    = 'Отменить';
 $lang['preference']['change_program_hint'] = 'Изменить программу';
 $lang['preference']['change_font_hint'] = 'Изменить шрифт';
+$lang['preference']['toolbar_style']    = 'Тип панели инструментов:';
+$lang['preference']['toolbar_style_hint'] = 'Выберите наиболее удобный для Вас тип отображения панели инструментов';
+$lang['preference']['toolbar_icons']    = 'Только иконки';
+$lang['preference']['toolbar_icons_hint'] = 'На панели инструментов будут отображены только иконки, без текста';
+$lang['preference']['toolbar_text']     = 'Только текст';
+$lang['preference']['toolbar_text_hint'] = 'На панели инструментов будет отбражён только текст, без иконок';
+$lang['preference']['toolbar_both']     = 'Иконки и текст';
+$lang['preference']['toolbar_both_hint'] = 'На панели инструментов будут отображены и иконки, и текст';
 
 $lang['properties']['properties']       = 'Свойства';
 $lang['properties']['title']            = 'FlightFiles :: Свойства :: %s';

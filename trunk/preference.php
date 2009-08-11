@@ -23,13 +23,13 @@ function preference()
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $window->set_resizable(FALSE);
     $window->set_title($lang['preference']['title']);
-    $window->set_size_request(340, 400);
+//    $window->set_size_request(340, 400);
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
     
-    $layout = new GtkLayout();
+//    $layout = new GtkLayout();
     
     $notebook = new GtkNotebook();
-	$notebook->set_size_request(320, 380);
+//    $notebook->set_size_request(320, 380);
     
     /**
      * Вкладка "Основные".
@@ -203,6 +203,34 @@ function preference()
     $vbox->pack_start($hbox = new GtkHBox(), FALSE, FALSE);
     $hbox->pack_start($label_mtime, TRUE, TRUE);
     $hbox->pack_start($entry_mtime, TRUE, TRUE);
+
+    $vbox->pack_start(new GtkHSeparator, FALSE, FALSE);
+
+    // Тип панели инструментов
+    $label = new GtkLabel($lang['preference']['toolbar_style']);
+    $label->set_tooltip_text($lang['preference']['toolbar_style_hint']);
+    $label->set_alignment(0, 0.5);
+
+    $radio_icons = new GtkRadioButton(NULL, $lang['preference']['toolbar_icons']);
+    $radio_icons->set_tooltip_text($lang['preference']['toolbar_icons_hint']);
+    $radio_icons->connect_simple('toggled', 'toolbar_style', 'icons');
+
+    $radio_text = new GtkRadioButton($radio_icons, $lang['preference']['toolbar_text']);
+    $radio_text->set_tooltip_text($lang['preference']['toolbar_text_hint']);
+    $radio_text->connect_simple('toggled', 'toolbar_style', 'text');
+
+    $radio_both = new GtkRadioButton($radio_icons, $lang['preference']['toolbar_both']);
+    $radio_both->set_tooltip_text($lang['preference']['toolbar_both_hint']);
+    $radio_both->connect_simple('toggled', 'toolbar_style', 'both');
+
+    $radio = 'radio_' . $_config['toolbar_style'];
+    $$radio->set_active(TRUE);
+
+    $vbox->pack_start($label, FALSE, FALSE);
+    $vbox->pack_start($hbox = new GtkHBox(), FALSE, FALSE);
+    $hbox->pack_start($radio_icons, TRUE, TRUE);
+    $hbox->pack_start($radio_text, TRUE, TRUE);
+    $hbox->pack_start($radio_both, TRUE, TRUE);
     
     /**
      * Вкладка "Шрифты".
@@ -279,11 +307,19 @@ function preference()
     $hbox_terminal->pack_start($btn_terminal, FALSE, FALSE);
 
     ///////////////////////
-    $layout->put($notebook , 10, 10);
-    $window->add($layout);
-    //$window->add($notebook);
+//    $layout->put($notebook, 10, 10);
+//    $window->add($layout);
+    $window->add($notebook);
     $window->show_all();
     Gtk::main();
+}
+
+function toolbar_style($style)
+{
+    global $sqlite, $toolbar;
+
+    sqlite_query($sqlite, "UPDATE config SET value = '$style' WHERE key = 'TOOLBAR_STYLE'");
+    $toolbar->set_property('toolbar-style', $style);
 }
 
 /**

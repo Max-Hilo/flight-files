@@ -349,7 +349,7 @@ foreach ($array_menubar as $value)
 
 /**
  * [0] => Имя меню, к которому прикрепляется пункт (берётся из $array_menubar)
- * [1] => Тип пункта ('separator' - разделитель, 'toggle' - переключатель, '' - обычный)
+ * [1] => Тип пункта ('separator' - разделитель, 'toggle' - флажок, 'radio' - радио-кнопка '' - обычный)
  * [2] => Имя пункта меню на английском языке
  * [3] => Ярлык
  * [4] => Иконка
@@ -427,7 +427,7 @@ foreach ($array_menuitem as $value)
         bookmarks_menu();
         continue;
     }
-    // Переключатели
+    // Флажки
     elseif ($value[1] == 'toggle')
     {
         $action_menu[$value[2]] = new GtkToggleAction($value[2], $value[3], '', '');
@@ -495,6 +495,20 @@ $vbox->pack_start($menubar, FALSE, FALSE, 0);
 ///////////////////////////////
 
 $toolbar = new GtkToolBar();
+switch ($_config['toolbar_style'])
+{
+    case 'text':
+        $toolbar->set_property('toolbar-style', Gtk::TOOLBAR_TEXT);
+        break;
+    case 'icons':
+        $toolbar->set_property('toolbar-style', Gtk::TOOLBAR_ICONS);
+        break;
+    case 'both':
+        $toolbar->set_property('toolbar-style', Gtk::TOOLBAR_BOTH);
+        break;
+    default:
+        $toolbar->set_property('toolbar-style', Gtk::TOOLBAR_BOTH);
+}
 
 /**
  * [0] => Имя элемента на английском языке
