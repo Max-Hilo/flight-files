@@ -119,7 +119,10 @@ function create_database($combo, $window)
         "INSERT INTO config(key, value) VALUES('SIZE_COLUMN', 'on');".
 
         // $_config['mtime_column'] - если 'on', то колонка "Дата изменения" будет видимой.
-        "INSERT INTO config(key, value) VALUES('MTIME_COLUMN', 'on');"
+        "INSERT INTO config(key, value) VALUES('MTIME_COLUMN', 'on');".
+
+        // $_config['toolbar_type'] - тип панели инструментов.
+        "INSERT INTO config(key, value) VALUES('TOOLBAR_STYLE', 'both');"
     );
    $window->destroy();
 }
