@@ -190,6 +190,9 @@ $lang['preference']['toolbar_text']     = 'Только текст';
 $lang['preference']['toolbar_text_hint'] = 'На панели инструментов будет отбражён только текст, без иконок';
 $lang['preference']['toolbar_both']     = 'Иконки и текст';
 $lang['preference']['toolbar_both_hint'] = 'На панели инструментов будут отображены и иконки, и текст';
+$lang['preference']['export_settings']  = 'Экспорт настроек';
+$lang['preference']['export_settings_title'] = 'Экспорт настроек';
+$lang['preference']['import_settings']  = 'Импорт настроек';
 
 $lang['properties']['properties']       = 'Свойства';
 $lang['properties']['title']            = 'FlightFiles :: Свойства :: %s';
