@@ -231,6 +231,15 @@ function preference()
     $hbox->pack_start($radio_icons, TRUE, TRUE);
     $hbox->pack_start($radio_text, TRUE, TRUE);
     $hbox->pack_start($radio_both, TRUE, TRUE);
+
+    // Экспорт настроек
+    $button = new GtkButton($lang['preference']['export_settings']);
+    $button->connect_simple('clicked', 'export_settings');
+    $vbox->pack_start($button, FALSE, FALSE);
+
+    // Импорт настроек
+    $button = new GtkButton($lang['preference']['import_settings']);
+    $vbox->pack_start($button, FALSE, FALSE);
     
     /**
      * Вкладка "Шрифты".
@@ -314,6 +323,54 @@ function preference()
     Gtk::main();
 }
 
+/**
+ * Отображает диалог выбора файла для экспорта настроек и
+ * сохраняет текущие настройки в указанный файл.
+ * @global resource $sqlite
+ * @global array $lang
+ */
+function export_settings()
+{
+    global $sqlite, $lang;
+
+    $dialog = new GtkFileChooserDialog(
+        $lang['preference']['export_settings_title'],
+        NULL,
+        Gtk::FILE_CHOOSER_ACTION_SAVE,
+        array(
+            Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL,
+            Gtk::STOCK_OK, Gtk::RESPONSE_OK
+        )
+    );
+    $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+    $dialog->set_current_folder(HOME_DIR);
+    $dialog->show_all();
+    $result = $dialog->run();
+    if ($result == Gtk::RESPONSE_OK)
+    {
+        $filename = $dialog->get_filename();
+        if (!empty($filename))
+        {
+            $fopen = fopen($filename, 'w+');
+            fwrite($fopen, "<FlightFiles>\n    <preference>\n");
+            $query = sqlite_query($sqlite, "SELECT * FROM config");
+            while ($sfa = sqlite_fetch_array($query))
+            {
+                fwrite($fopen, '        <' . strtolower($sfa['key'] . '>' . $sfa['value'] . '</' . strtolower($sfa['key'] . ">\n")));
+            }
+            fwrite($fopen, "    </preference>\n</FlightFiles>");
+            fclose($fopen);
+        }
+    }
+    $dialog->destroy();
+}
+
+/**
+ * Изменяет настройки внешнего вида панели инструментов.
+ * @global resource $sqlite
+ * @global GtkToolBar $toolbar
+ * @param string $style Стиль панели инструментов
+ */
 function toolbar_style($style)
 {
     global $sqlite, $toolbar;
