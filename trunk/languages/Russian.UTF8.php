@@ -193,6 +193,9 @@ $lang['preference']['toolbar_both_hint'] = 'На панели инструмен
 $lang['preference']['export_settings']  = 'Экспорт настроек';
 $lang['preference']['export_settings_title'] = 'Экспорт настроек';
 $lang['preference']['import_settings']  = 'Импорт настроек';
+$lang['preference']['import_settings_title'] = 'Импорт настроек';
+$lang['preference']['versions_not_match'] = 'В указанном файле содержатся настройки от другой версии программы.'.
+' Импорт может завершиться неудачно. Продолжить?';
 
 $lang['properties']['properties']       = 'Свойства';
 $lang['properties']['title']            = 'FlightFiles :: Свойства :: %s';
