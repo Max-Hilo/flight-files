@@ -239,6 +239,7 @@ function preference()
 
     // Импорт настроек
     $button = new GtkButton($lang['preference']['import_settings']);
+    $button->connect_simple('clicked', 'import_settings', $window);
     $vbox->pack_start($button, FALSE, FALSE);
     
     /**
@@ -344,6 +345,10 @@ function export_settings()
     );
     $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $dialog->set_current_folder(HOME_DIR);
+    $dialog->set_current_name('settings.flight-files');
+    $filter = new GtkFileFilter();
+    $filter->add_pattern('*.flight-files');
+    $dialog->set_filter($filter);
     $dialog->show_all();
     $result = $dialog->run();
     if ($result == Gtk::RESPONSE_OK)
@@ -351,18 +356,105 @@ function export_settings()
         $filename = $dialog->get_filename();
         if (!empty($filename))
         {
+            $explode = explode('.', basename($filename));
+            $count = count($explode);
+            $ext = $explode[$count - 1];
+            if ($count == 1 OR $ext != 'flight-files')
+            {
+                $filename .= '.flight-files';
+            }
             $fopen = fopen($filename, 'w+');
-            fwrite($fopen, "<FlightFiles>\n    <preference>\n");
+            fwrite($fopen, "<FlightFiles>\n");
+            fwrite($fopen, "    <version>" . VERSION_PROGRAM . "</version>\n");
+            fwrite($fopen, "    <preference>\n");
             $query = sqlite_query($sqlite, "SELECT * FROM config");
             while ($sfa = sqlite_fetch_array($query))
             {
-                fwrite($fopen, '        <' . strtolower($sfa['key'] . '>' . $sfa['value'] . '</' . strtolower($sfa['key'] . ">\n")));
+                fwrite($fopen, '        <item key="' . strtolower($sfa['key']) . '">' . $sfa['value'] . "</item>\n");
             }
             fwrite($fopen, "    </preference>\n</FlightFiles>");
             fclose($fopen);
         }
     }
     $dialog->destroy();
+}
+
+/**
+ * Импортирует настройки из файла в базу данных программы.
+ * @global resource $sqlite
+ * @global array $lang
+ * @param GtkWindow $window Окно настроек
+ */
+function import_settings($window)
+{
+    global $sqlite, $lang;
+
+    $dialog = new GtkFileChooserDialog(
+        $lang['preference']['import_settings_title'],
+        NULL,
+        Gtk::FILE_CHOOSER_ACTION_OPEN,
+        array(
+            Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL,
+            Gtk::STOCK_OK, Gtk::RESPONSE_OK
+        )
+    );
+    $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+    $dialog->set_current_folder(HOME_DIR);
+    $filter = new GtkFileFilter();
+    $filter->add_pattern('*.flight-files');
+    $dialog->set_filter($filter);
+    $dialog->show_all();
+    $result = $dialog->run();
+    if ($result == Gtk::RESPONSE_OK)
+    {
+        $filename = $dialog->get_filename();
+        if (!empty($filename))
+        {
+            $xml = new SimpleXMLElement(file_get_contents($filename));
+
+            // Предупреждаем пользователя, если версии не совпадают
+            if (VERSION_PROGRAM != $xml->version)
+            {
+                $dlg = new GtkDialog(
+                    $lang['alert']['title'],
+                    $dialog,
+                    Gtk::DIALOG_MODAL,
+                    array(
+                        Gtk::STOCK_YES, Gtk::RESPONSE_YES,
+                        Gtk::STOCK_NO, Gtk::RESPONSE_NO
+                    )
+                );
+                $dlg->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+                $dlg->set_has_separator(FALSE);
+                $label = new GtkLabel($lang['preference']['versions_not_match']);
+                $label->set_line_wrap(TRUE);
+                $hbox = new GtkHBox();
+                $hbox->pack_start($label, FALSE, FALSE, 20);
+                $dlg->vbox->add($hbox);
+                $dlg->show_all();
+                $result = $dlg->run();
+                if ($result != Gtk::RESPONSE_YES)
+                {
+                    $dlg->destroy();
+                    $dialog->destroy();
+                    return FALSE;
+                }
+                $dlg->destroy();
+            }
+            foreach ($xml->preference->item as $item)
+            {
+                $key = strtoupper($item['key']);
+                sqlite_query($sqlite, "UPDATE config SET value = '$item' WHERE key = '$key'");
+            }
+            $dialog->destroy();
+            $window->destroy();
+            preference();
+        }
+    }
+    else
+    {
+        $dialog->destroy();
+    }
 }
 
 /**
