@@ -658,6 +658,7 @@ $hbox->set_homogeneous(TRUE);
 ////////////////////////
 ///// Левая панель /////
 ////////////////////////
+$panel = 'left';
 
 $left = new GtkFrame;
 $left->set_shadow_type(Gtk::SHADOW_IN);
@@ -711,6 +712,8 @@ $left->add($scroll_left);
 /////////////////////////
 ///// Правая панель /////
 /////////////////////////
+$panel = 'right';
+
 $right = new GtkFrame;
 $right->set_shadow_type(Gtk::SHADOW_IN);
 
