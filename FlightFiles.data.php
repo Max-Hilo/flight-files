@@ -1673,7 +1673,7 @@ function panel_view($widget, $param)
  */
 function columns($tree_view, $cell_renderer)
 {
-    global $lang, $columns, $_config;
+    global $lang, $columns, $_config, $panel;
 
     $render = new GtkCellRendererPixbuf();
     $column_image = new GtkTreeViewColumn();
@@ -1697,30 +1697,30 @@ function columns($tree_view, $cell_renderer)
     $column_file = new GtkTreeViewColumn($lang['column']['title'], $cell_renderer, 'text', 0);
     $column_file->set_visible(FALSE);
 
-    $columns['extension'] = new GtkTreeViewColumn($lang['column']['ext'], $cell_renderer, 'text', 1);
-    $columns['extension']->set_resizable(TRUE);
-    $columns['extension']->set_sort_column_id(1);
+    $columns[$panel]['extension'] = new GtkTreeViewColumn($lang['column']['ext'], $cell_renderer, 'text', 1);
+    $columns[$panel]['extension']->set_resizable(TRUE);
+    $columns[$panel]['extension']->set_sort_column_id(1);
     if ($_config['extension_column'] == 'off')
     {
-        $columns['extension']->set_visible(FALSE);
+        $columns[$panel]['extension']->set_visible(FALSE);
     }
 
-    $columns['size'] = new GtkTreeViewColumn($lang['column']['size'], $cell_renderer, 'text', 2);
-    $columns['size']->set_resizable(TRUE);
-    $columns['size']->set_sort_column_id(2);
+    $columns[$panel]['size'] = new GtkTreeViewColumn($lang['column']['size'], $cell_renderer, 'text', 2);
+    $columns[$panel]['size']->set_resizable(TRUE);
+    $columns[$panel]['size']->set_sort_column_id(2);
     if ($_config['size_column'] == 'off')
     {
-        $columns['size']->set_visible(FALSE);
+        $columns[$panel]['size']->set_visible(FALSE);
     }
 
-    $columns['mtime'] = new GtkTreeViewColumn($lang['column']['mtime'], $cell_renderer, 'text', 3);
-    $columns['mtime']->set_sizing(Gtk::TREE_VIEW_COLUMN_FIXED);
-    $columns['mtime']->set_fixed_width(100);
-    $columns['mtime']->set_resizable(TRUE);
-    $columns['mtime']->set_sort_column_id(3);
+    $columns[$panel]['mtime'] = new GtkTreeViewColumn($lang['column']['mtime'], $cell_renderer, 'text', 3);
+    $columns[$panel]['mtime']->set_sizing(Gtk::TREE_VIEW_COLUMN_FIXED);
+    $columns[$panel]['mtime']->set_fixed_width(100);
+    $columns[$panel]['mtime']->set_resizable(TRUE);
+    $columns[$panel]['mtime']->set_sort_column_id(3);
     if ($_config['mtime_column'] == 'off')
     {
-        $columns['mtime']->set_visible(FALSE);
+        $columns[$panel]['mtime']->set_visible(FALSE);
     }
 
     $column_df = new GtkTreeViewColumn('', $cell_renderer, 'text', 4);
@@ -1731,9 +1731,9 @@ function columns($tree_view, $cell_renderer)
 
     $tree_view->append_column($column_image);
     $tree_view->append_column($column_file);
-    $tree_view->append_column($columns['extension']);
-    $tree_view->append_column($columns['size']);
-    $tree_view->append_column($columns['mtime']);
+    $tree_view->append_column($columns[$panel]['extension']);
+    $tree_view->append_column($columns[$panel]['size']);
+    $tree_view->append_column($columns[$panel]['mtime']);
     $tree_view->append_column($column_df);
     $tree_view->append_column($column_null);
 }
@@ -1750,7 +1750,10 @@ function columns_view($widget, $key)
     global $columns, $sqlite;
 
     $value = $widget->get_active() ? 'on' : 'off';
-    $columns[$key]->set_visible($widget->get_active());
+
+    $columns['left'][$key]->set_visible($widget->get_active());
+    $columns['right'][$key]->set_visible($widget->get_active());
+    
     $key = strtoupper($key) . '_COLUMN';
     sqlite_query($sqlite, "UPDATE config SET value = '$value' WHERE key = '$key'");
 }
