@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Файл русской локализации, кодировка UTF8.
+ * Файл русской локализации, кодировка CP1251.
  *
  * @copyright Copyright (C) 2009, Вавилов Егор (Shecspi)
  * @license http://www.opensource.org/licenses/mit-license.php MIT License
@@ -89,7 +89,7 @@ $lang['column']['ext']                  = 'Расш.';
 $lang['statusbar']['label']             = 'Количество элементов: %c (файлов: %f, папок: %d)          '.
     '%s из %t свободно';
 
-$lang['bookmarks']['title']             = 'FlightFiles :: Изменить закладки';
+$lang['bookmarks']['title']             = 'Управление закладками';
 $lang['bookmarks']['name']              = 'Название:';
 $lang['bookmarks']['path']              = 'Адрес:';
 $lang['bookmarks']['save']              = '_Сохранить изменения';
@@ -104,7 +104,7 @@ $lang['bookmarks']['bookmarks']         = 'Закладки';
 $lang['bookmarks']['root']              = 'Корень';
 $lang['bookmarks']['new']               = 'Новая закладка';
 
-$lang['about']['title']                 = 'FlightFiles :: О программе ';
+$lang['about']['title']                 = 'О программе';
 $lang['about']['about']                 = 'О программе';
 $lang['about']['authors']               = 'О разработчиках';
 $lang['about']['license']               = 'О лицензии';
@@ -115,7 +115,7 @@ $lang['about']['license_text']               = "Программа FlightFiles �
     "Разработчик не предоставляет каких-либо гарантий\nна программу. Вы используете её на свой страх и риск.\n\n".
     "Ниже приведён оригинальный текст лицензии MIT:\n\n";
 
-$lang['shortcuts']['title']             = 'FlightFiles :: Сочетания клавиш';
+$lang['shortcuts']['title']             = 'Сочетания клавиш';
 $lang['shortcuts']['action_column']     = 'Действие';
 $lang['shortcuts']['shortcuts_column']  = 'Комбинация клавиш';
 $lang['shortcuts']['new_file']          = 'Создать файл';
@@ -141,7 +141,7 @@ $lang['shortcuts']['back']              = 'Назад';
 $lang['shortcuts']['forward']           = 'Вперёд';
 $lang['shortcuts']['refresh']           = 'Обновить';
 
-$lang['preference']['title']            = 'FlightFiles :: Настройки';
+$lang['preference']['title']            = 'Настройки';
 $lang['preference']['hidden_files']     = 'Показывать скрытые файлы и папки';
 $lang['preference']['hidden_files_hint'] = 'Скрытыми считаются файлы, имя которых начинается с точки';
 $lang['preference']['ask_delete']       = 'Требовать подтверждение при удаления файлов/папок';
@@ -198,7 +198,7 @@ $lang['preference']['versions_not_match'] = 'В указанном файле с
 ' Импорт может завершиться неудачно. Продолжить?';
 
 $lang['properties']['properties']       = 'Свойства';
-$lang['properties']['title']            = 'FlightFiles :: Свойства :: %s';
+$lang['properties']['title']            = 'Свойства: %s';
 $lang['properties']['name']             = 'Имя:';
 $lang['properties']['type']             = 'Тип:';
 $lang['properties']['dir']              = 'Папка';
@@ -210,6 +210,11 @@ $lang['properties']['mtime_file']       = 'Дата изменения:';
 $lang['properties']['atime_file']       = 'Дата доступа:';
 $lang['properties']['mtime_dir']        = 'Дата создания:';
 $lang['properties']['atime_dir']        = 'Дата доступа:';
+$lang['properties']['attributes']       = 'Атрибуты:';
+$lang['properties']['read_only']        = 'Только чтение';
+$lang['properties']['hidden']           = 'Скрытый';
+$lang['properties']['archive']          = 'Архивный';
+$lang['properties']['system']           = 'Системный';
 $lang['properties']['general']          = 'Основные';
 $lang['properties']['owner']            = 'Владелец:';
 $lang['properties']['group']            = 'Группа:';
@@ -223,7 +228,7 @@ $lang['properties']['perms_read']       = 'Чтение';
 $lang['properties']['perms_write']      = 'Запись';
 $lang['properties']['perms_run']        = 'Выполнение';
 
-$lang['alert']['title']                 = 'FlightFiles :: Внимание';
+$lang['alert']['title']                 = 'Внимание';
 $lang['alert']['button_ok']             = 'Ok';
 $lang['alert']['bufer_clear']           = 'Буфер обмена очищен';
 $lang['alert']['chmod_read_dir']        = 'У вас недостаточно прав для просмотра указанной директории!';
@@ -284,7 +289,7 @@ $lang['size']['gib']                    = 'ГиБ';
 $lang['new']['file']                    = 'Новый файл';
 $lang['new']['dir']                     = 'Новая папка';
 
-$lang['font']['title']                  = 'FlightFiles :: Выбрать шрифт';
+$lang['font']['title']                  = 'Выбрать шрифт';
 $lang['font']['preview']                = 'Файловый менеджер FlightFiles';
 
 $lang['text_view']['file']              = 'Файл';
@@ -322,7 +327,7 @@ $lang['checksum']['title']              = 'Контрольная сумма - %
 $lang['checksum']['text']               = 'Файл - %s';
 $lang['checksum']['button_ok']          = 'Ok';
 
-$lang['close']['title']                 = 'FlightFiles :: Закрыть';
+$lang['close']['title']                 = 'Закрыть';
 $lang['close']['text']                  = 'Действительно закрыть FlightFiles?';
 $lang['close']['button_yes']            = 'Да, закрыть';
 $lang['close']['button_no']             = 'Нет, не закрывать';
@@ -357,7 +362,7 @@ $lang['bulk_rename']['hidden_hint']     = 'Скрытыми считаются �
 $lang['bulk_rename']['cancel']          = '_Отменить';
 $lang['bulk_rename']['rename']          = '_Переименовать';
 
-$lang['file_ass']['title']              = 'FlightFiles :: Файловые ассоциации';
+$lang['file_ass']['title']              = 'Файловые ассоциации';
 $lang['file_ass']['add_type']           = '_Добавить';
 $lang['file_ass']['edit_type']          = '_Изменить';
 $lang['file_ass']['remove_type']        = '_Удалить';
@@ -376,7 +381,7 @@ $lang['file_ass']['button_cancel']      = '_Отменить';
 $lang['file_ass']['edit_type_title']    = 'Изменить тип файлов';
 $lang['file_ass']['edit_ext_title']     = 'Изменить расширение';
 
-$lang['image']['title']                 = 'FlightFiles :: Просмотр изображений :: %s';
+$lang['image']['title']                 = 'Просмотр изображения: %s';
 $lang['image']['zoom_in']               = 'Увеличить';
 $lang['image']['zoom_in_hint']          = 'Увеличить изображение на 10%';
 $lang['image']['zoom_out']              = 'Уменьшить';
