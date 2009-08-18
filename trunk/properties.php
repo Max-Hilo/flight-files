@@ -21,13 +21,13 @@ function properties_window($filename)
     $window->set_position(Gtk::WIN_POS_CENTER);
     $window->set_title(str_replace('%s', basename($filename), $lang['properties']['title']));
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
-    $window->set_size_request(500, 225);
+    $window->set_size_request(500, 260);
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
     
     $layout = new GtkLayout();
     
     $notebook = new GtkNotebook();
-	$notebook->set_size_request(482, 205);
+	$notebook->set_size_request(482, 240);
 
     //////////////////////////////
     ///// Вкладка "Основные" /////
@@ -41,7 +41,6 @@ function properties_window($filename)
     $label_name->modify_font(new PangoFontDescription('Bold'));
     $table->attach($label_name, 0, 1, 0, 1, Gtk::FILL, Gtk::FILL, 10);
 
-    //$name = new GtkEntry(preg_replace ('#'.DS.'+#', DS, $filename));
     $name = new GtkEntry(str_replace(DS.DS, DS, basename($filename)));
     $name->set_editable(FALSE);
     $table->attach($name, 1, 2, 0, 1, Gtk::FILL, Gtk::FILL);
@@ -164,7 +163,88 @@ function properties_window($filename)
 	    $table->attach($atime, 1, 2, 9, 10);
     }
     
-    $table->set_col_spacing(0, 5);
+    // Атрибуты файла/папки
+    if (OS == 'Windows')
+    {
+	    $table->attach(new GtkHSeparator, 0, 2, 10, 11);
+	    
+	    $hbox = new GtkHBox();
+		
+		$get_attributes = shell_exec('start /B ATTRIB "' . $filename . '"');
+		$get_attributes = preg_split('#[A-Z]\:#',  $get_attributes);
+		$attributes = $get_attributes[0];
+
+		$is_archive  = false;
+		$is_hidden   = false;
+		$is_readonly = false;
+		$is_system   = false;
+
+		foreach(str_split($attributes) as $attribute)
+		{
+			switch ($attribute) {
+		    	case 'A':
+		    		$is_archive = true;
+		    		break;
+		    	case 'H':
+		    		$is_hidden = true;
+		    		break;
+		    	case 'R':
+		    		$is_readonly = true;
+		    		break;
+		    	case 'S':
+		    		$is_system = true;
+		    		break;
+		    }
+		}
+
+		$label_attr = new GtkLabel($lang['properties']['attributes']);
+	    $label_attr->set_alignment(0, 0.5);
+	    $label_attr->modify_font(new PangoFontDescription('Bold'));
+	    
+	   	$is_read = new GtkCheckButton($lang['properties']['read_only']);
+	    $is_read->set_alignment(0, 0);
+	    //$is_read->connect('toggled', 'check_button_write', 'is_read');
+	    if ($is_readonly == true)
+	    {
+	        $is_read->set_active(TRUE);
+	    }
+	    
+	    $is_hid = new GtkCheckButton($lang['properties']['hidden']);
+	    $is_hid->set_alignment(0, 0);
+	    //$is_hid->connect('toggled', 'check_button_write', 'is_hid');
+	   	if ($is_hidden == true)
+	    {
+	        $is_hid->set_active(TRUE);
+	    }
+	    
+	    $is_arch = new GtkCheckButton($lang['properties']['archive']);
+	    $is_arch->set_alignment(0, 0);
+	    //$is_arch->connect('toggled', 'check_button_write', 'is_arch');
+	    if ($is_archive == true)
+	    {
+	        $is_arch->set_active(TRUE);
+	    }
+	    
+	    $is_sys = new GtkCheckButton($lang['properties']['system']);
+	    $is_sys->set_alignment(0, 0);
+	    //$is_sys->connect('toggled', 'check_button_write', 'is_sys');
+	    if ($is_system == true)
+	    {
+	        $is_sys->set_active(TRUE);
+	    }
+	    
+	    $label_attr->set_alignment(0, 0.5);
+	    $table->attach($label_attr, 0, 2, 11, 12, Gtk::FILL, Gtk::FILL);
+	    
+	    $hbox->pack_start($is_read, FALSE, FALSE);
+	    $hbox->pack_start($is_hid, FALSE, FALSE);
+	    $hbox->pack_start($is_arch, FALSE, FALSE);
+	    $hbox->pack_start($is_sys, FALSE, FALSE);
+	    
+	    $table->attach($hbox, 1, 2, 11, 12);
+    }
+    
+//    $table->set_col_spacing(0, 5);
     
     $notebook->append_page($table, new GtkLabel($lang['properties']['general']));
     

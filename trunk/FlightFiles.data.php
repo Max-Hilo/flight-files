@@ -157,12 +157,15 @@ function on_key($view, $event, $type)
 
     $filename = $start[$panel] . DS . $file;
    
-    if (empty($file))
-    {
-    	return FALSE;
-    }
+//    if (empty($file))
+//    {
+//    	return FALSE;
+//    }
    
-    if ($event->keyval == Gdk::KEY_Return)
+	$keyval = $event->keyval;
+	$state  = $event->state;
+	
+    if ($keyval == Gdk::KEY_Return)
     {
         if(is_dir($filename))
         {
@@ -193,10 +196,22 @@ function on_key($view, $event, $type)
             }
         }
     } 
-//    else
-//    {
-//    	return FALSE;
-//    }
+    elseif ($state & Gdk::CONTROL_MASK && $keyval == Gdk::KEY_x) //cut
+    {
+    	bufer_file('cut');
+    }
+    elseif ($state & Gdk::CONTROL_MASK && $keyval == Gdk::KEY_c) //copy
+    {
+    	bufer_file('copy');
+    }
+    elseif ($state & Gdk::CONTROL_MASK && $keyval == Gdk::KEY_v) //paste
+    {
+		paste_file();
+    }
+    elseif ($keyval == Gdk::KEY_BackSpace) //backspace
+    {
+    	change_dir($start[$panel], ROOT_DIR);
+    }
     return FALSE;
 }
 
@@ -309,11 +324,7 @@ function on_button($view, $event, $type)
     }
 
     $filename = $start[$panel] . DS . $file;
-
-//    if (function_exists('mime_content_type'))
-//    {
-        $mime = mime_content_type($filename);
-//    }
+	$mime = mime_content_type($filename);
 
     // Если нажата левая кнопка, то...
     if ($event->button == 1)
@@ -385,11 +396,7 @@ function on_button($view, $event, $type)
                 // Открыть встроенным текстовым редактором
                 elseif ($mime == 'text/plain' OR $mime == 'text/html')
                 {
-                    //$mime = mime_content_type($start[$panel]. DS .$file);
-                    //if ($mime == 'text/plain' OR $mime == 'text/html')
-                    //{
-                        text_editor_window($start[$panel] . DS . $file);
-                    //}
+                    text_editor_window($start[$panel] . DS . $file);
                 }
             }
         }
@@ -521,6 +528,12 @@ function on_button($view, $event, $type)
                 $rename->set_sensitive(FALSE);
                 $delete->set_sensitive(FALSE);
             }
+   
+	    	if ($file == '..')
+	    	{
+	    		$copy->set_sensitive(FALSE);
+	    		$properties->set_sensitive(FALSE);
+	    	}
 
             $menu->append($open);
             $menu->append(new GtkSeparatorMenuItem());
