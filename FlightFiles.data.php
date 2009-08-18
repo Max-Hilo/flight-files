@@ -1649,7 +1649,8 @@ function clear_bufer()
  */
 function panel_view($widget, $param)
 {
-    global $toolbar, $partbar, $addressbar, $statusbar, $sqlite;
+    global $toolbar, $partbar, $addressbar, $statusbar, $sqlite, $right,
+           $address_right, $partbar_right;
 
     $value = $widget->get_active() ? 'on' : 'off';
     $key = strtoupper($param).'_VIEW';
@@ -1662,6 +1663,14 @@ function panel_view($widget, $param)
     else
     {
         $$param->hide();
+    }
+
+    // Если программа работает в однопанельном режиме,
+    // то скрываем адресную панель и панель разделов.
+    if ($right->is_visible() === FALSE)
+    {
+        $address_right->hide();
+        $partbar_right->hide();
     }
 }
 
