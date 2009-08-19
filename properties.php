@@ -172,14 +172,14 @@ function properties_window($filename)
 		
 		$get_attributes = shell_exec('start /B ATTRIB "' . $filename . '"');
 		$get_attributes = preg_split('#[A-Z]\:#',  $get_attributes);
-		$attributes = $get_attributes[0];
+		$attributes     = str_split($get_attributes[0]);
 
 		$is_archive  = false;
 		$is_hidden   = false;
 		$is_readonly = false;
 		$is_system   = false;
 
-		foreach(str_split($attributes) as $attribute)
+		foreach($attributes as $attribute)
 		{
 			switch ($attribute) {
 		    	case 'A':
@@ -203,7 +203,7 @@ function properties_window($filename)
 	    
 	   	$is_read = new GtkCheckButton($lang['properties']['read_only']);
 	    $is_read->set_alignment(0, 0);
-	    //$is_read->connect('toggled', 'check_button_write', 'is_read');
+	    $is_read->connect('toggled', 'change_attributes', $filename, 'R');
 	    if ($is_readonly == true)
 	    {
 	        $is_read->set_active(TRUE);
@@ -211,7 +211,7 @@ function properties_window($filename)
 	    
 	    $is_hid = new GtkCheckButton($lang['properties']['hidden']);
 	    $is_hid->set_alignment(0, 0);
-	    //$is_hid->connect('toggled', 'check_button_write', 'is_hid');
+	    $is_hid->connect('toggled', 'change_attributes', $filename, 'H');
 	   	if ($is_hidden == true)
 	    {
 	        $is_hid->set_active(TRUE);
@@ -219,7 +219,7 @@ function properties_window($filename)
 	    
 	    $is_arch = new GtkCheckButton($lang['properties']['archive']);
 	    $is_arch->set_alignment(0, 0);
-	    //$is_arch->connect('toggled', 'check_button_write', 'is_arch');
+	    $is_arch->connect('toggled', 'change_attributes', $filename, 'A');
 	    if ($is_archive == true)
 	    {
 	        $is_arch->set_active(TRUE);
@@ -227,7 +227,7 @@ function properties_window($filename)
 	    
 	    $is_sys = new GtkCheckButton($lang['properties']['system']);
 	    $is_sys->set_alignment(0, 0);
-	    //$is_sys->connect('toggled', 'check_button_write', 'is_sys');
+	    $is_sys->connect('toggled', 'change_attributes', $filename, 'S');
 	    if ($is_system == true)
 	    {
 	        $is_sys->set_active(TRUE);
@@ -491,4 +491,18 @@ function my_chmod($check, $filename, $num, $act, $label_int, $label_text)
     exec("chmod $new_perm '$filename'");
     $label_int->set_text($new_perm);
     $label_text->set_text(permissons_text($new_perm, $filename));
+}
+
+function change_attributes($check, $filename, $attribute)
+{
+	$value = $check->get_active() ? 'on' : 'off';
+	
+	if ($value == 'on')
+	{
+		shell_exec('start /B ATTRIB "'.$filename.'" +'.$attribute.'');
+	}
+	elseif ($value == 'off')
+	{
+		shell_exec('start /B ATTRIB "'.$filename.'" -'.$attribute.'');
+	}
 }
