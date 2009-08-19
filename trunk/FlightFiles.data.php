@@ -196,15 +196,15 @@ function on_key($view, $event, $type)
             }
         }
     } 
-    elseif ($state & Gdk::CONTROL_MASK && $keyval == Gdk::KEY_x) //cut
+    elseif ($state & Gdk::CONTROL_MASK AND $keyval == 120 OR $keyval == 88 OR $keyval == 1758 OR $keyval == 790) //cut CTRL+X
     {
     	bufer_file('cut');
     }
-    elseif ($state & Gdk::CONTROL_MASK && $keyval == Gdk::KEY_c) //copy
+    elseif ($state & Gdk::CONTROL_MASK AND $keyval == 99 OR $keyval == 67 OR $keyval == 1747 OR $keyval == 1779) //copy CTRL+C
     {
     	bufer_file('copy');
     }
-    elseif ($state & Gdk::CONTROL_MASK && $keyval == Gdk::KEY_v) //paste
+    elseif ($state & Gdk::CONTROL_MASK AND $keyval == 118 OR $keyval == 86 OR $keyval == 1741 OR $keyval == 1773) //paste CTRL+V
     {
 		paste_file();
     }
@@ -533,6 +533,9 @@ function on_button($view, $event, $type)
 	    	{
 	    		$copy->set_sensitive(FALSE);
 	    		$properties->set_sensitive(FALSE);
+	    		$cut->set_sensitive(FALSE);
+                $rename->set_sensitive(FALSE);
+                $delete->set_sensitive(FALSE);
 	    	}
 
             $menu->append($open);
