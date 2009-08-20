@@ -21,13 +21,17 @@ function properties_window($filename)
     $window->set_position(Gtk::WIN_POS_CENTER);
     $window->set_title(str_replace('%s', basename($filename), $lang['properties']['title']));
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
-    $window->set_size_request(500, 260);
+    //$window->set_size_request(500, 260);
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
     
-    $layout = new GtkLayout();
-    
+//  $layout = new GtkLayout();
+//    
+//  $notebook = new GtkNotebook();
+//	$notebook->set_size_request(482, 240);
+
+    $alignment = new GtkAlignment();
     $notebook = new GtkNotebook();
-	$notebook->set_size_request(482, 240);
+    $alignment->set_padding(10, 10, 10, 10);
 
     //////////////////////////////
     ///// Вкладка "Основные" /////
@@ -39,7 +43,7 @@ function properties_window($filename)
     $label_name = new GtkLabel($lang['properties']['name']);
     $label_name->set_alignment(0, 0.5);
     $label_name->modify_font(new PangoFontDescription('Bold'));
-    $table->attach($label_name, 0, 1, 0, 1, Gtk::FILL, Gtk::FILL, 10);
+    $table->attach($label_name, 0, 1, 0, 1, Gtk::FILL, Gtk::FILL);
 
     $name = new GtkEntry(str_replace(DS.DS, DS, basename($filename)));
     $name->set_editable(FALSE);
@@ -49,7 +53,7 @@ function properties_window($filename)
     $label_type = new GtkLabel($lang['properties']['type']);
     $label_type->set_alignment(0, 0);
     $label_type->modify_font(new PangoFontDescription('Bold'));
-    $table->attach($label_type, 0, 1, 1, 2, Gtk::FILL, Gtk::FILL, 10);
+    $table->attach($label_type, 0, 1, 1, 2, Gtk::FILL, Gtk::FILL);
 
     $type = new GtkLabel((is_dir($filename)) ? $lang['properties']['dir'] :
         ((is_link($filename)) ? $lang['properties']['simlink'] : $lang['properties']['file']));
@@ -170,7 +174,7 @@ function properties_window($filename)
 	    
 	    $hbox = new GtkHBox();
 		
-		$get_attributes = shell_exec('start /B ATTRIB "' . $filename . '"');
+		$get_attributes = shell_exec('start /B ATTRIB ' . fix_spaces($filename) . '');
 		$get_attributes = preg_split('#[A-Z]\:#',  $get_attributes);
 		$attributes     = str_split($get_attributes[0]);
 
@@ -385,9 +389,12 @@ function properties_window($filename)
 
 //    $vbox = new GtkVBox();
 //    $vbox->pack_start($notebook, FALSE, FALSE);
-    //$window->add($vbox);
-    $layout->put($notebook , 10, 10);
-    $window->add($layout);
+//    $window->add($vbox);
+//    $layout->put($notebook , 10, 10);
+//    $window->add($layout);
+
+	$alignment->add($notebook);
+    $window->add($alignment);
     $window->show_all();
     Gtk::main();
 }
@@ -499,10 +506,10 @@ function change_attributes($check, $filename, $attribute)
 	
 	if ($value == 'on')
 	{
-		shell_exec('start /B ATTRIB "'.$filename.'" +'.$attribute.'');
+		shell_exec('start /B ATTRIB ' . fix_spaces($filename) . ' +' . $attribute . '');
 	}
 	elseif ($value == 'off')
 	{
-		shell_exec('start /B ATTRIB "'.$filename.'" -'.$attribute.'');
+		shell_exec('start /B ATTRIB ' . fix_spaces($filename) . ' -' . $attribute . '');
 	}
 }

@@ -196,7 +196,7 @@ function on_key($view, $event, $type)
             }
         }
     } 
-    elseif ($state & Gdk::CONTROL_MASK AND $keyval == 120 OR $keyval == 88 OR $keyval == 1758 OR $keyval == 790) //cut CTRL+X
+    elseif ($state & Gdk::CONTROL_MASK AND $keyval == 120 OR $keyval == 88 OR $keyval == 1758 OR $keyval == 790) //cut CTRL+X and in_array($keyval, array())
     {
     	bufer_file('cut');
     }
@@ -376,7 +376,7 @@ function on_button($view, $event, $type)
                     }
                     elseif (OS == 'Windows')
                     {
-                        pclose(popen('start /B "'.fix_spaces($sfa['command']).'" '.fix_spaces($filename), "r"));
+                        pclose(popen('start /B '.fix_spaces($sfa['command']).' '.fix_spaces($filename), "r"));
                     }
                     else
                     {
@@ -463,6 +463,8 @@ function on_button($view, $event, $type)
                     $open->connect_simple('activate', 'open_file', $filename, $command);
                     $menu->append($open);
                 }
+//                echo $command."\n";
+//                echo $filename."\n";
             }
             elseif (OS == 'Windows')
             {
@@ -628,7 +630,14 @@ function jump_to_folder($widget, $side, $path = '')
  */
 function open_file($filename, $command)
 {
-    exec("'$command' '$filename' > /dev/null &");
+	if (OS == 'Linux')
+	{
+    	exec("'$command' '$filename' > /dev/null &");
+    }
+    else
+    {
+    	pclose(popen('start /B ' . fix_spaces($command) . ' ' . fix_spaces($filename), 'r'));
+    }
 }
 
 /**
@@ -2255,20 +2264,21 @@ function tray_menu()
         $show = new GtkImageMenuItem($lang['tray']['show']);
         $show->set_image(GtkImage::new_from_stock(Gtk::STOCK_YES, Gtk::ICON_SIZE_MENU));
     }
+    
     $show->connect_simple('activate', 'window_hide');
-    $menu->append($show);
 
     $close = new GtkImageMenuItem($lang['tray']['close']);
     $close->set_image(GtkImage::new_from_stock(Gtk::STOCK_CLOSE, Gtk::ICON_SIZE_MENU));
     $close->connect_simple('activate', 'close_window');
-    $menu->append($close);
-    
-    $menu->append(new GtkSeparatorMenuItem());
-    
+
     $about = new GtkImageMenuItem($lang['tray']['about']);
     $about->set_image(GtkImage::new_from_stock(Gtk::STOCK_ABOUT, Gtk::ICON_SIZE_MENU));
     $about->connect_simple('activate', 'about_window');
+    
+    $menu->append($show);
     $menu->append($about);
+    $menu->append(new GtkSeparatorMenuItem());
+    $menu->append($close);
 
     $menu->show_all();
     $menu->popup();
@@ -2458,7 +2468,7 @@ function open_in_system($filename)
 {
     if (OS == 'Windows')
     {
-        pclose(popen('start ' . fix_spaces($filename), 'r'));
+        pclose(popen('start /B ' . fix_spaces($filename), 'r'));
     }
 }
 
@@ -2466,9 +2476,9 @@ function open_in_system($filename)
  * Функция обрамляет строку с пробелами в кавычки.
  */
 function find_spaces($var) {
-        return (strpos($var, ' ') == true)
-                ? '"' . $var . '"'
-                : $var;
+   return (strpos($var, ' ') == true)
+       ? '"' . $var . '"'
+       : $var;
 }
 
 /**
@@ -2477,9 +2487,9 @@ function find_spaces($var) {
  * @param string $filename Адрес файла
  */
 function fix_spaces($filename) {
-        return (strpos($filename, ' ') == false)
-                ? $filename
-                : implode('\\', array_map('find_spaces', explode('\\', $filename)));
+    return (strpos($filename, ' ') == false)
+       ? $filename
+       : implode('\\', array_map('find_spaces', explode('\\', $filename)));
 }
 
 /**
@@ -2581,8 +2591,7 @@ function addressbar($side)
             {
                 $path .= DS . $value;
             }
-			//$path = preg_replace('#[\\'. DS . ']{2,}#', DS, $path);
-			$path = str_replace(DS.DS, DS, $path);
+			$path = str_replace(DS . DS, DS, $path);
             if (mb_strlen($value, $charset) > 13)
             {
                 $value = mb_substr($value, 0, 13, $charset) . '...';
