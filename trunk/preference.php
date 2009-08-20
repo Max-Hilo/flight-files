@@ -20,6 +20,7 @@ function preference()
     $window = new GtkWindow();
     $window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
     $window->set_position(Gtk::WIN_POS_CENTER);
+    $window->set_transient_for($main_window);
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $window->set_resizable(FALSE);
     $window->set_title($lang['preference']['title']);
@@ -27,8 +28,9 @@ function preference()
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
     
 //    $layout = new GtkLayout();
-    
+    $alignment = new GtkAlignment();
     $notebook = new GtkNotebook();
+    $alignment->set_padding(10, 10, 10, 10);
 //    $notebook->set_size_request(320, 380);
     
     /**
@@ -319,7 +321,8 @@ function preference()
     ///////////////////////
 //    $layout->put($notebook, 10, 10);
 //    $window->add($layout);
-    $window->add($notebook);
+	$alignment->add($notebook);
+    $window->add($alignment);
     $window->show_all();
     Gtk::main();
 }
