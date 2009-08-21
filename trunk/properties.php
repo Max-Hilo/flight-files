@@ -21,13 +21,7 @@ function properties_window($filename)
     $window->set_position(Gtk::WIN_POS_CENTER);
     $window->set_title(str_replace('%s', basename($filename), $lang['properties']['title']));
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
-    //$window->set_size_request(500, 260);
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
-    
-//  $layout = new GtkLayout();
-//    
-//  $notebook = new GtkNotebook();
-//	$notebook->set_size_request(482, 240);
 
     $alignment = new GtkAlignment();
     $notebook = new GtkNotebook();
@@ -387,12 +381,6 @@ function properties_window($filename)
         $notebook->append_page($table, new GtkLabel($lang['properties']['perms_tab']));
     }
 
-//    $vbox = new GtkVBox();
-//    $vbox->pack_start($notebook, FALSE, FALSE);
-//    $window->add($vbox);
-//    $layout->put($notebook , 10, 10);
-//    $window->add($layout);
-
 	$alignment->add($notebook);
     $window->add($alignment);
     $window->show_all();
@@ -500,7 +488,7 @@ function my_chmod($check, $filename, $num, $act, $label_int, $label_text)
     $label_text->set_text(permissons_text($new_perm, $filename));
 }
 
-function change_attributes($check, $filename, $attribute)
+function change_attributes($check, $filename, $attribute) // Добавить проверку на наличие прав
 {
 	$value = $check->get_active() ? 'on' : 'off';
 	

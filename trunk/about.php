@@ -28,11 +28,9 @@ function about_window()
     $window->set_transient_for($main_window);
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
 
-//  $layout = new GtkLayout();
     $alignment = new GtkAlignment();
     $notebook = new GtkNotebook();
     $alignment->set_padding(10, 10, 10, 10);
-//	$notebook->set_size_request(430, 280);
 
     $vbox = new GtkVBox();
     $title = new GtkLabel('FlightFiles - ' . VERSION_PROGRAM);
@@ -64,8 +62,6 @@ function about_window()
     $scroll->add($view);
     $notebook->append_page($scroll, new GtkLabel($lang['about']['license']));
 
-//	$layout->put($notebook , 10, 10);
-//  $window->add($layout);
 	$alignment->add($notebook);
     $window->add($alignment);
     $window->show_all();

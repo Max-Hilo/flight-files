@@ -24,14 +24,11 @@ function preference()
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $window->set_resizable(FALSE);
     $window->set_title($lang['preference']['title']);
-//    $window->set_size_request(340, 400);
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
     
-//    $layout = new GtkLayout();
     $alignment = new GtkAlignment();
     $notebook = new GtkNotebook();
     $alignment->set_padding(10, 10, 10, 10);
-//    $notebook->set_size_request(320, 380);
     
     /**
      * Вкладка "Основные".
@@ -318,9 +315,6 @@ function preference()
     $hbox_terminal->pack_start($entry_terminal, TRUE, TRUE);
     $hbox_terminal->pack_start($btn_terminal, FALSE, FALSE);
 
-    ///////////////////////
-//    $layout->put($notebook, 10, 10);
-//    $window->add($layout);
 	$alignment->add($notebook);
     $window->add($alignment);
     $window->show_all();
@@ -342,8 +336,8 @@ function export_settings()
         NULL,
         Gtk::FILE_CHOOSER_ACTION_SAVE,
         array(
-            Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL,
-            Gtk::STOCK_OK, Gtk::RESPONSE_OK
+            Gtk::STOCK_OK, Gtk::RESPONSE_OK,
+        	Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL
         )
     );
     $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
@@ -397,8 +391,8 @@ function import_settings($window)
         NULL,
         Gtk::FILE_CHOOSER_ACTION_OPEN,
         array(
-            Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL,
-            Gtk::STOCK_OK, Gtk::RESPONSE_OK
+            Gtk::STOCK_OK, Gtk::RESPONSE_OK,
+        	Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL
         )
     );
     $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
@@ -499,6 +493,7 @@ function select_file_window($entry, $type)
 
     $dialog = new GtkFileChooserDialog($title, NULL, $type);
     $dialog->set_position(Gtk::WIN_POS_CENTER);
+    $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $dialog->add_button($lang['preference']['button_ok'], Gtk::RESPONSE_OK);
     $dialog->add_button($lang['preference']['button_cancel'], Gtk::RESPONSE_CANCEL);
     $value = $entry->get_text();
@@ -634,6 +629,7 @@ function select_font_window($entry)
 
     $dialog = new GtkFontSelectionDialog($lang['font']['title']);
     $dialog->set_position(Gtk::WIN_POS_CENTER_ALWAYS);
+    $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $dialog->set_preview_text($lang['font']['preview']);
     if ($_config['font_list'])
     {
