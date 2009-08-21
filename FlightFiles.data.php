@@ -196,7 +196,7 @@ function on_key($view, $event, $type)
             }
         }
     } 
-    elseif ($state & Gdk::CONTROL_MASK AND $keyval == 120 OR $keyval == 88 OR $keyval == 1758 OR $keyval == 790) //cut CTRL+X and in_array($keyval, array())
+    elseif ($state & Gdk::CONTROL_MASK AND $keyval == 120 OR $keyval == 88 OR $keyval == 1758 OR $keyval == 790) //cut CTRL+X
     {
     	bufer_file('cut');
     }
@@ -463,8 +463,6 @@ function on_button($view, $event, $type)
                     $open->connect_simple('activate', 'open_file', $filename, $command);
                     $menu->append($open);
                 }
-//                echo $command."\n";
-//                echo $filename."\n";
             }
             elseif (OS == 'Windows')
             {
@@ -630,11 +628,11 @@ function jump_to_folder($widget, $side, $path = '')
  */
 function open_file($filename, $command)
 {
-	if (OS == 'Linux')
+	if (OS == 'Unix')
 	{
     	exec("'$command' '$filename' > /dev/null &");
     }
-    else
+    elseif (OS == 'Windows')
     {
     	pclose(popen('start /B ' . fix_spaces($command) . ' ' . fix_spaces($filename), 'r'));
     }
@@ -1182,6 +1180,7 @@ function convert_size($filename)
 	    	$file = $fsobj->GetFile($filename);
 	    }
 	    $size_byte = $file->Size;
+	    unset($fsobj);
     }
     return conversion_size(trim($size_byte));   
 }
@@ -1810,7 +1809,8 @@ function image_column($column, $render, $model, $iter)
     }
     else
     {
-        $render->set_property('stock-id', 'gtk-file');
+        //$render->set_property('stock-id', 'gtk-file');
+        $render->set_property('pixbuf', GdkPixbuf::new_from_file('./themes/silk/image.png'));
     }
 }
 
@@ -1841,8 +1841,9 @@ function open_terminal()
 
     if (OS == 'Windows')
     {
-        $wscript = new COM('wscript.shell');
-        $wscript->run('cmd /k cd /D ' . $start[$panel]);
+        $shell = new COM('wscript.shell');
+        $cmd = $shell->run('cmd /k cd /D ' . $start[$panel]);
+        unset($shell);
     }
     elseif (empty($_config['terminal']))
     {
@@ -1863,7 +1864,7 @@ function open_terminal()
         {
             $command = $_config['terminal'];
         }
-        exec($command.' > /dev/null &');
+        exec($command.' > /dev/null &'); //Добавить поддержку Windows
     }
 }
 
