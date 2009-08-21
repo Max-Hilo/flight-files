@@ -1809,8 +1809,8 @@ function image_column($column, $render, $model, $iter)
     }
     else
     {
-        //$render->set_property('stock-id', 'gtk-file');
-        $render->set_property('pixbuf', GdkPixbuf::new_from_file('./themes/silk/image.png'));
+        $render->set_property('stock-id', 'gtk-file');
+        //$render->set_property('pixbuf', GdkPixbuf::new_from_file('./themes/silk/image.png'));
     }
 }
 
