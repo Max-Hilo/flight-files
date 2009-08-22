@@ -186,14 +186,8 @@ function on_key($view, $event, $type)
                 alert_window($lang['alert']['chmod_read_file']);
                 return FALSE;
             }
-            if (OS == 'Windows')
-            {
-                open_in_system($filename);
-            }
-            else
-            {
-                return FALSE; // Linux заглушка
-            }
+            
+            open_in_system($filename);
         }
     } 
     elseif ($state & Gdk::CONTROL_MASK AND $keyval == 120 OR $keyval == 88 OR $keyval == 1758 OR $keyval == 790) //cut CTRL+X
@@ -383,11 +377,6 @@ function on_button($view, $event, $type)
                         exec('"'.$sfa['command'].'" "'.$filename.'" > /dev/null &');
                     }
                 }
-                // Открыть "системной" программой
-                elseif (OS == 'Windows')
-                {
-                    open_in_system($filename);
-                }
                 // Открыть встроенным просмотрщиком изображений
                 elseif ($mime == 'image/jpeg' OR $mime == 'image/x-png' OR $mime == 'image/gif')
                 {
@@ -396,9 +385,15 @@ function on_button($view, $event, $type)
                 // Открыть встроенным текстовым редактором
                 elseif ($mime == 'text/plain' OR $mime == 'text/html')
                 {
-                    text_editor_window($start[$panel] . DS . $file);
+                    text_editor_window($filename);
+                } 
+                // Открыть "системной" программой
+                else
+                {
+                    open_in_system($filename);
                 }
-            }
+            }                
+           
         }
         return FALSE;
     }
@@ -464,7 +459,7 @@ function on_button($view, $event, $type)
                     $menu->append($open);
                 }
             }
-            elseif (OS == 'Windows')
+            else
             {
                 $open = new GtkMenuItem($lang['popup']['open_in_system']);
                 $open->connect_simple('activate', 'open_in_system', $filename);
@@ -1837,6 +1832,7 @@ function image_column($column, $render, $model, $iter)
 		/* Exe and dll*/
 		'exe' => 'cog.png',
 		'msi' => 'cog.png',
+		'sh' => 'cog.png',
 		'dll' => 'brick.png',
 		'so'  => 'brick.png',
 		/* dvd and cd images */
@@ -1848,6 +1844,7 @@ function image_column($column, $render, $model, $iter)
 		'txt'  => 'page_white_text.png',
 		'php'  => 'page_white_php.png',
 		'js'   => 'script.png',
+		'xml'  => 'script_code.png',
 		'doc'  => 'page_word.png',
 		'xls'  => 'page_excel.png',
 		'ppt'  => 'page_white_powerpoint.png',
@@ -1855,6 +1852,9 @@ function image_column($column, $render, $model, $iter)
 		'htm'  => 'page_world.png',
 		'html'   => 'page_world.png',
 		'xhtml'  => 'page_world.png',
+		/* ini, cfg, log etc. */
+		'ini'  => 'page_gear.png',
+		'cfg'  => 'page_gear.png',
 		/* todo: 
 		plugin, scripts
 		*/
