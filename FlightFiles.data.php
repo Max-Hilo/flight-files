@@ -1803,14 +1803,82 @@ function image_column($column, $render, $model, $iter)
     $path = $model->get_path($iter);
     $type = $model->get_value($iter, 4);
     $file = $model->get_value($iter, 0);
+    
+    $ext_icons = array(
+    	/* default */
+    	'def' => 'page_white.png',
+		/* Video */
+		'avi'  => 'film.png',
+		'mpeg' => 'film.png',
+		'wmv'  => 'film.png',
+		'mkv'  => 'film.png',
+		'mov'  => 'film.png',
+		'vob'  => 'dvd.png',
+		'flv' => 'page_white_flash.png',
+		/* Audio */
+		'mp3'  => 'music.png',
+		'ogg'  => 'music.png',
+		'wav'  => 'music.png',
+		'flac' => 'music.png',
+		/* Image */
+		'jpg' => 'picture.png',
+		'png' => 'picture.png',
+		'bmp' => 'picture.png',
+		'gif' => 'picture.png',
+		'psd' => 'picture.png',
+		'raw' => 'camera.png',
+		/* Archive */
+		'rar' => 'package.png',
+		'zip' => 'package.png',
+		'7z'  => 'package.png',
+		'bz'  => 'package.png',
+		'bz2' => 'package.png',
+		'cab' => 'package.png',
+		/* Exe and dll*/
+		'exe' => 'cog.png',
+		'msi' => 'cog.png',
+		'dll' => 'brick.png',
+		'so'  => 'brick.png',
+		/* dvd and cd images */
+		'iso'  => 'cd.png',
+		'mdf'  => 'cd.png',
+		'mds'  => 'cd.png',
+		'nrg'  => 'cd.png',
+		/* docs, html etc. */
+		'txt'  => 'page_white_text.png',
+		'php'  => 'page_white_php.png',
+		'js'   => 'script.png',
+		'doc'  => 'page_word.png',
+		'xls'  => 'page_excel.png',
+		'ppt'  => 'page_white_powerpoint.png',
+		'pdf'  => 'page_white_acrobat.png',
+		'htm'  => 'page_world.png',
+		'html'   => 'page_world.png',
+		'xhtml'  => 'page_world.png',
+		/* todo: 
+		plugin, scripts
+		*/
+	);
+    
     if ($type == '<DIR>')
     {
-        $render->set_property('stock-id', 'gtk-directory');
+        $render->set_property('pixbuf', GdkPixbuf::new_from_file('./themes/silk/folder.png'));
     }
     else
     {
-        $render->set_property('stock-id', 'gtk-file');
-        //$render->set_property('pixbuf', GdkPixbuf::new_from_file('./themes/silk/image.png'));
+        $ext = substr(strrchr(strtolower($file), '.'), 1);
+        if ($ext == '') // Если файл без расширения
+        {
+        	$ext = 'def';
+        }
+        if (array_key_exists($ext, $ext_icons)) {
+			$render->set_property('pixbuf', GdkPixbuf::new_from_file('./themes/silk/' . $ext_icons[$ext]));
+		}
+		else 
+		{
+			$render->set_property('pixbuf', GdkPixbuf::new_from_file('./themes/silk/page_white.png'));
+		}
+
     }
 }
 
@@ -2469,7 +2537,18 @@ function open_in_system($filename)
 {
     if (OS == 'Windows')
     {
-        pclose(popen('start /B ' . fix_spaces($filename), 'r'));
+        pclose(popen('"' . $filename . '"', 'r'));
+    }
+    elseif (OS == 'Unix')
+    {
+    	if (file_exists('/usr/bin/gnome-open'))
+    	{
+    		exec('gnome-open "' . $filename . '" > /dev/null &');
+    	}
+    	elseif (file_exists('/usr/bin/kde-open'))
+    	{
+    		exec('kde-open "' . $filename . '" > /dev/null &');
+    	}
     }
 }
 
