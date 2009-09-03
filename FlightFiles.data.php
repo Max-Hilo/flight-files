@@ -165,7 +165,7 @@ function on_key($view, $event, $type)
 	$keyval = $event->keyval;
 	$state  = $event->state;
 	
-    if ($keyval == Gdk::KEY_Return)
+    if ($keyval == Gdk::KEY_Return) // enter
     {
         if(is_dir($filename))
         {
@@ -190,21 +190,29 @@ function on_key($view, $event, $type)
             open_in_system($filename);
         }
     } 
-    elseif ($state & Gdk::CONTROL_MASK AND $keyval == 120 OR $keyval == 88 OR $keyval == 1758 OR $keyval == 790) //cut CTRL+X
+    elseif ($state & Gdk::CONTROL_MASK AND $keyval == 120 OR $keyval == 88 OR $keyval == 1758 OR $keyval == 790) // cut CTRL+X
     {
     	bufer_file('cut');
     }
-    elseif ($state & Gdk::CONTROL_MASK AND $keyval == 99 OR $keyval == 67 OR $keyval == 1747 OR $keyval == 1779) //copy CTRL+C
+    elseif ($state & Gdk::CONTROL_MASK AND $keyval == 99 OR $keyval == 67 OR $keyval == 1747 OR $keyval == 1779) // copy CTRL+C
     {
     	bufer_file('copy');
     }
-    elseif ($state & Gdk::CONTROL_MASK AND $keyval == 118 OR $keyval == 86 OR $keyval == 1741 OR $keyval == 1773) //paste CTRL+V
+    elseif ($state & Gdk::CONTROL_MASK AND $keyval == 118 OR $keyval == 86 OR $keyval == 1741 OR $keyval == 1773) // paste CTRL+V
     {
 		paste_file();
     }
-    elseif ($keyval == Gdk::KEY_BackSpace) //backspace
+    elseif($state & Gdk::CONTROL_MASK AND $keyval == 97 OR $keyval == 65 OR $keyval == 1732 OR $keyval == 1766) // select all CTRL+A
+    {
+    	active_all('all');
+    }
+    elseif ($keyval == Gdk::KEY_BackSpace) // backspace
     {
     	change_dir($start[$panel], ROOT_DIR);
+    }
+	elseif ($keyval == Gdk::KEY_Delete) // delete
+    {
+    	delete_window();
     }
     return FALSE;
 }
@@ -348,8 +356,9 @@ function on_button($view, $event, $type)
                     alert_window($lang['alert']['chmod_read_file']);
                     return FALSE;
                 }
-                $explode = explode('.', basename($filename));
-                $ext = '.'.$explode[count($explode) - 1];
+                //$explode = explode('.', basename($filename));
+                //$ext = '.'.$explode[count($explode) - 1];
+                $ext = substr(strrchr($filename, '.'), 1);
                 $query = sqlite_query($sqlite, "SELECT id_type, ext FROM ext_files WHERE ext = '$ext'");
                 $snr = sqlite_num_rows($query);
 
@@ -370,7 +379,7 @@ function on_button($view, $event, $type)
                     }
                     elseif (OS == 'Windows')
                     {
-                        pclose(popen('start /B '.fix_spaces($sfa['command']).' '.fix_spaces($filename), "r"));
+                        pclose(popen('"'.$sfa['command'].'" "'.$filename.'"', "r"));
                     }
                     else
                     {
@@ -496,8 +505,8 @@ function on_button($view, $event, $type)
             $cut->connect_simple('activate', 'bufer_file', 'cut');
             $rename->connect_simple('activate', 'rename_window');
             $delete->connect_simple('activate', 'delete_window');
-            $md5->connect_simple('activate', 'checksum_window', $start[$panel]. DS .$file, 'MD5');
-            $sha1->connect_simple('activate', 'checksum_window', $start[$panel]. DS .$file, 'SHA1');
+            $md5->connect_simple('activate', 'checksum_window',   $start[$panel]. DS .$file, 'MD5');
+            $sha1->connect_simple('activate', 'checksum_window',  $start[$panel]. DS .$file, 'SHA1');
             $crc32->connect_simple('activate', 'checksum_window', $start[$panel]. DS .$file, 'CRC32');
             $properties->connect_simple('activate', 'properties_window', $start[$panel]. DS .$file);
             $terminal->connect_simple('activate', 'open_terminal');
@@ -646,15 +655,15 @@ function rename_window()
 
     list($model, $rows) = $selection[$panel]->get_selected_rows();
 
-    // На данный момент переименовать можно только один файл
-    if (count($rows) != 1)
-    {
-        return FALSE;
-    }
-
     $iter = $store[$panel]->get_iter($rows[0][0]);
     $file = $store[$panel]->get_value($iter, 0);
     $filename = $start[$panel] . DS . $file;
+    
+    // На данный момент переименовать можно только один файл
+    if (count($rows) != 1 OR $file == '..')
+    {
+        return FALSE;
+    }
 
     $dialog = new GtkDialog($lang['rename']['title'], NULL, Gtk::DIALOG_MODAL);
     $dialog->set_has_separator(FALSE);
@@ -729,6 +738,50 @@ function on_rename($entry, $filename, $window)
     }
     change_dir('none', '', 'all');
 }
+
+
+function interactive_rename($render, $path, $new_name)
+{
+    global $start, $store, $panel, $lang;
+
+    @$iter = $store[$panel]->get_iter($path);
+    @$filename = $store[$panel]->get_value($iter, 0);
+    
+    if ($filename == '..')
+    {
+    	return FALSE;
+    }
+    
+    // Если не указано имя
+    if (empty($new_name))
+    {
+        alert_window($lang['alert']['empty_name']);
+        return FALSE;
+    }
+    elseif (file_exists($start[$panel] . DS . $new_name) AND $new_name != $filename)
+    {
+        $str = str_replace('%s', $new_name, $lang['alert']['file_exists_rename']);
+        alert_window($str);
+        return FALSE;
+    }
+    // Если всё хорошо
+    else
+    {
+        // Запрещённые символы
+        if (OS == 'Windows')
+        {
+            $array = array('/', '\\', ':', '*', '?', '"', '<', '>', '|');
+        }
+        elseif (OS == 'Unix')
+        {
+            $array = array('/');
+        }
+        $new_name = str_replace($array, '_', $new_name);
+        rename($start[$panel] . DS . $filename, $start[$panel] . DS . $new_name);
+    }
+    change_dir('none', '', 'all');
+}
+
 
 /**
  * Функция помещает адреса выбранных файлов/каталогов в буфера обмена.
@@ -1708,12 +1761,17 @@ function columns($tree_view, $cell_renderer)
     $column_image->pack_start($render, FALSE);
     $column_image->set_cell_data_func($render, "image_column");
 
-    $render = new GtkCellRendererText();
+    $render = new GtkCellRendererText();    
+    $render->set_property('editable', true);
+	$render->connect('edited', 'interactive_rename', $view, $path, $file);
+	
     $column_image->pack_start($render, TRUE);
     $column_image->set_attributes($render, 'text', 0);
     $column_image->set_cell_data_func($render, 'file_column');
+    
     $label = new GtkLabel($lang['column']['title']);
     $label->show_all();
+    
     $column_image->set_widget($label);
     $column_image->set_expand(TRUE);
     $column_image->set_resizable(TRUE);
@@ -1734,6 +1792,8 @@ function columns($tree_view, $cell_renderer)
     }
 
     $columns[$panel]['size'] = new GtkTreeViewColumn($lang['column']['size'], $cell_renderer, 'text', 2);
+    $columns[$panel]['size']->set_sizing(Gtk::TREE_VIEW_COLUMN_FIXED);
+    $columns[$panel]['size']->set_fixed_width(70);
     $columns[$panel]['size']->set_resizable(TRUE);
     $columns[$panel]['size']->set_sort_column_id(2);
     if ($_config['size_column'] == 'off')
@@ -1800,8 +1860,6 @@ function image_column($column, $render, $model, $iter)
     $file = $model->get_value($iter, 0);
     
     $ext_icons = array(
-    	/* default */
-    	'def' => 'page_white.png',
 		/* Video */
 		'avi'  => 'film.png',
 		'mpeg' => 'film.png',
@@ -1809,7 +1867,7 @@ function image_column($column, $render, $model, $iter)
 		'mkv'  => 'film.png',
 		'mov'  => 'film.png',
 		'vob'  => 'dvd.png',
-		'flv' => 'page_white_flash.png',
+		'flv'  => 'page_white_flash.png',
 		/* Audio */
 		'mp3'  => 'music.png',
 		'ogg'  => 'music.png',
@@ -1828,11 +1886,12 @@ function image_column($column, $render, $model, $iter)
 		'7z'  => 'package.png',
 		'bz'  => 'package.png',
 		'bz2' => 'package.png',
+		'tgz' => 'package.png',
 		'cab' => 'package.png',
 		/* Exe and dll*/
 		'exe' => 'cog.png',
 		'msi' => 'cog.png',
-		'sh' => 'cog.png',
+		'sh'  => 'cog.png',
 		'dll' => 'brick.png',
 		'so'  => 'brick.png',
 		/* dvd and cd images */
@@ -1850,11 +1909,12 @@ function image_column($column, $render, $model, $iter)
 		'ppt'  => 'page_white_powerpoint.png',
 		'pdf'  => 'page_white_acrobat.png',
 		'htm'  => 'page_world.png',
-		'html'   => 'page_world.png',
-		'xhtml'  => 'page_world.png',
+		'html' => 'page_world.png',
+		'xhtml'=> 'page_world.png',
 		/* ini, cfg, log etc. */
 		'ini'  => 'page_gear.png',
 		'cfg'  => 'page_gear.png',
+		'bat'  => 'page_gear.png',
 		/* todo: 
 		plugin, scripts
 		*/
@@ -1869,9 +1929,10 @@ function image_column($column, $render, $model, $iter)
         $ext = substr(strrchr(strtolower($file), '.'), 1);
         if ($ext == '') // Если файл без расширения
         {
-        	$ext = 'def';
+        	$render->set_property('pixbuf', GdkPixbuf::new_from_file('./themes/silk/page_white.png'));
         }
-        if (array_key_exists($ext, $ext_icons)) {
+        elseif (array_key_exists($ext, $ext_icons)) 
+        {
 			$render->set_property('pixbuf', GdkPixbuf::new_from_file('./themes/silk/' . $ext_icons[$ext]));
 		}
 		else 
@@ -1895,6 +1956,7 @@ function file_column($column, $render, $model, $iter)
     $file = $model->get_value($iter, 0);
     $render->set_property('text', $file);
 }
+
 
 /**
  * Открытие терминала в текущей директории.
@@ -1932,7 +1994,7 @@ function open_terminal()
         {
             $command = $_config['terminal'];
         }
-        exec($command.' > /dev/null &'); //Добавить поддержку Windows
+        exec($command.' > /dev/null &');
     }
 }
 
@@ -1999,7 +2061,7 @@ function open_comparison($type)
 
         if (OS == 'Windows')
         {
-            pclose(popen('start ' . fix_spaces($_config['comparison']) . ' ' . fix_spaces($par), 'r'));
+            pclose(popen('start /C ' . fix_spaces($_config['comparison']) . ' ' . fix_spaces($par), 'r'));
         }
         else
         {

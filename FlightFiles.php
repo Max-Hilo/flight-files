@@ -286,7 +286,7 @@ $clp = array('action' => '', 'files' => array());
  * @name $addressbar_type
  */
 $addressbar_type = array(
-    'left' => $_config['addressbar_left'],
+    'left'  => $_config['addressbar_left'],
     'right' => $_config['addressbar_right']
 );
 
@@ -367,23 +367,25 @@ $array_menuitem = array(
     array('file', '', 'comparison_file', $lang['menu']['comparison_file'], '', 'open_comparison', 'file', '', '', ''),
     array('file', '', 'comparison_dir', $lang['menu']['comparison_dir'], '', 'open_comparison', 'dir', '', '', ''),
     array('file', 'separator'),
-    array('file', '', 'active_all', $lang['menu']['active_all'], '', 'active_all', 'all', '', '', '<control>A'),
+    array('file', '', 'active_all', $lang['menu']['active_all'], '', 'active_all', 'all', '', '', '<control>*'),//изменить
     array('file', '', 'active_template', $lang['menu']['active_template'], '', 'enter_template_window', '', '', '', '<control><alt>A'),
     array('file', '', 'active_all_none', $lang['menu']['active_all_none'], '', 'active_all', 'none', '', '', '<control><shift>A'),
     array('file', 'separator'),
     array('file', '', 'close', $lang['menu']['close'], Gtk::STOCK_CLOSE, 'close_window', '', '', '', '<control>Q'),
+    
     array('edit', '', 'copy', $lang['menu']['copy'], Gtk::STOCK_COPY, 'bufer_file', 'copy', '', 'false', ''), //изменить
     array('edit', '', 'cut', $lang['menu']['cut'], Gtk::STOCK_CUT, 'bufer_file', 'cut', '', 'false', ''), // изменить
     array('edit', '', 'paste', $lang['menu']['paste'], Gtk::STOCK_PASTE, 'paste_file', '', '', 'false', ''), // изменить
     array('edit', 'separator'),
     array('edit', '', 'delete', $lang['menu']['delete'], Gtk::STOCK_DELETE, 'delete_window'
-    , '', '', 'false', 'Delete'),
+    , '', '', 'false', ''), //изменить
     array('edit', 'separator'),
     array('edit', '', 'rename', $lang['menu']['rename'], '', 'rename_window', '', '', 'false', 'F2'),
     array('edit', '', 'mass_rename', $lang['menu']['mass_rename'], '', 'bulk_rename_window', '', '', 'write', '<control>F2'),
     array('edit', 'separator'),
     array('edit', '', 'files_associations', $lang['menu']['files_ass'], '', 'files_associations_window', '', '', '', ''),
     array('edit', '', 'preference', $lang['menu']['preference'], Gtk::STOCK_PROPERTIES, 'preference'),
+    
     array('view', 'toggle', 'one_panel', $lang['menu']['one_panel'], '', 'one_panel', '', '', 'false', 'F4'),
     array('view', 'separator'),
     array('view', 'toggle', 'toolbar_view', $lang['menu']['toolbar_view'], '',
@@ -404,12 +406,15 @@ $array_menuitem = array(
         'columns_view', 'size', '', array($_config['size_column'], 'on'), ''),
     array('view', 'toggle', 'mtime_column', $lang['menu']['mtime_column'], '',
         'columns_view', 'mtime', '', array($_config['mtime_column'], 'on'), ''),
+   
     array('go', '', 'up', $lang['menu']['up'], Gtk::STOCK_GO_UP, 'change_dir', '', '', array($start[$panel], ROOT_DIR), '<control>Up'),
     array('go', '', 'back', $lang['menu']['back'], Gtk::STOCK_GO_BACK, 'history', 'back', '', 'false', '<control>Left'),
     array('go', '', 'forward', $lang['menu']['forward'], Gtk::STOCK_GO_FORWARD, 'history', 'forward', '', 'false', '<control>Right'),
     array('go', 'separator'),
     array('go', '', 'refresh', $lang['menu']['refresh'], Gtk::STOCK_REFRESH, 'change_dir', 'none', '', '', '<control>R'),
+    
     array('bookmarks', 'bookmarks'),
+    
     array('help', '', 'shortcuts', $lang['menu']['shortcuts'], Gtk::STOCK_INFO, 'shortcuts_window'),
     array('help', 'separator'),
     array('help', '', 'about', $lang['menu']['about'], Gtk::STOCK_ABOUT, 'about_window', 'none', '', '', 'F1')
@@ -603,7 +608,7 @@ $partbar_right = partbar('right');
 
 if ($_config['partbar_refresh'] == 'on')
 {
-    $refresh_id_left = Gtk::timeout_add(1000, 'partbar', 'left');
+    $refresh_id_left  = Gtk::timeout_add(1000, 'partbar', 'left');
     $refresh_id_right = Gtk::timeout_add(1000, 'partbar', 'right');
 }
 
@@ -671,7 +676,7 @@ $selection['left'] = $tree_view['left']->get_selection();
 $selection['left']->set_mode(Gtk::SELECTION_MULTIPLE);
 $tree_view['left']->set_enable_search(FALSE);
 $tree_view['left']->drag_dest_set(Gtk::DEST_DEFAULT_ALL, array(array('text/plain', 0, 0)), Gdk::ACTION_COPY);
-$tree_view['left']->drag_source_set(Gdk::BUTTON1_MASK, array(array('text/plain', 0, 0)), Gdk::ACTION_COPY);
+$tree_view['left']->drag_source_set(Gdk::BUTTON1_MASK,   array(array('text/plain', 0, 0)), Gdk::ACTION_COPY);
 $tree_view['left']->connect('drag-data-get', 'on_drag');
 $tree_view['left']->connect('drag-data-received', 'on_drop', 'left');
 $tree_view['left']->connect('button-press-event', 'on_button', 'left');
@@ -728,7 +733,7 @@ $selection['right'] = $tree_view['right']->get_selection();
 $selection['right']->set_mode(Gtk::SELECTION_MULTIPLE);
 $tree_view['right']->set_enable_search(FALSE);
 $tree_view['right']->drag_dest_set(Gtk::DEST_DEFAULT_ALL, array(array('text/plain', 0, 0)), Gdk::ACTION_COPY);
-$tree_view['right']->drag_source_set(Gdk::BUTTON1_MASK, array(array('text/plain', 0, 0)), Gdk::ACTION_COPY);
+$tree_view['right']->drag_source_set(Gdk::BUTTON1_MASK,   array(array('text/plain', 0, 0)), Gdk::ACTION_COPY);
 $tree_view['right']->connect('drag-data-get', 'on_drag');
 $tree_view['right']->connect('drag-data-received', 'on_drop', 'right');
 $tree_view['right']->connect('button-press-event', 'on_button', 'right');

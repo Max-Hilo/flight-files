@@ -20,10 +20,11 @@ function preference()
     $window = new GtkWindow();
     $window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
     $window->set_position(Gtk::WIN_POS_CENTER);
-    $window->set_transient_for($main_window);
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $window->set_resizable(FALSE);
     $window->set_title($lang['preference']['title']);
+    $window->set_modal(TRUE);
+    $window->set_transient_for($main_window);
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
     
     $alignment = new GtkAlignment();
@@ -340,6 +341,7 @@ function export_settings()
         	Gtk::STOCK_CANCEL, Gtk::RESPONSE_CANCEL
         )
     );
+    $dialog->set_modal(TRUE);
     $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $dialog->set_current_folder(HOME_DIR);
     $dialog->set_current_name('settings.flight-files');
@@ -396,6 +398,7 @@ function import_settings($window)
         )
     );
     $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+    $dialog->set_modal(TRUE);
     $dialog->set_current_folder(HOME_DIR);
     $filter = new GtkFileFilter();
     $filter->add_pattern('*.flight-files');
@@ -494,6 +497,7 @@ function select_file_window($entry, $type)
     $dialog = new GtkFileChooserDialog($title, NULL, $type);
     $dialog->set_position(Gtk::WIN_POS_CENTER);
     $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+    $dialog->set_modal(TRUE);
     $dialog->add_button($lang['preference']['button_ok'], Gtk::RESPONSE_OK);
     $dialog->add_button($lang['preference']['button_cancel'], Gtk::RESPONSE_CANCEL);
     $value = $entry->get_text();
@@ -630,6 +634,7 @@ function select_font_window($entry)
     $dialog = new GtkFontSelectionDialog($lang['font']['title']);
     $dialog->set_position(Gtk::WIN_POS_CENTER_ALWAYS);
     $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+    $dialog->set_modal(TRUE);
     $dialog->set_preview_text($lang['font']['preview']);
     if ($_config['font_list'])
     {

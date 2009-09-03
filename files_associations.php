@@ -22,6 +22,8 @@ function files_associations_window()
     $window->set_position(Gtk::WIN_POS_CENTER);
     $window->set_title($lang['file_ass']['title']);
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+    $window->set_modal(TRUE);
+    $window->set_transient_for($main_window);
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
 
     $hbox = new GtkHBox();
