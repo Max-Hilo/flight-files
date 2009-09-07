@@ -109,7 +109,7 @@ $lang['about']['about']                 = 'О программе';
 $lang['about']['authors']               = 'О разработчиках';
 $lang['about']['license']               = 'О лицензии';
 $lang['about']['description']           = "Небольшой файловый менеджер, написанный на языке PHP с использованием библиотеки PHP-GTK2.";
-$lang['about']['license_text']               = "Программа FlightFiles является свободным программным\n".
+$lang['about']['license_text']          = "Программа FlightFiles является свободным программным\n".
     "обеспечением. Вы вправе распространять ее и/или\n".
     "модифицировать в соответствии с условиями лицензии MIT.\n\n".
     "Разработчик не предоставляет каких-либо гарантий\nна программу. Вы используете её на свой страх и риск.\n\n".
@@ -153,8 +153,8 @@ $lang['preference']['ask_close_hint']   = 'При закрытии программы появится диало
 $lang['preference']['general']          = 'Основные';
 $lang['preference']['font_list']        = ' Шрифт в списке:';
 $lang['preference']['change']           = '_Сменить';
+$lang['preference']['interface']        = 'Интерфейс';
 $lang['preference']['system_font']      = 'Использовать системный шрифт';
-$lang['preference']['fonts']            = 'Шрифты';
 $lang['preference']['lang']             = ' Язык программы:';
 $lang['preference']['maximize']         = 'Разворачивать на весь экран при запуске';
 $lang['preference']['maximize_hint']    = 'При запуске главное окно FlightFiles будет развёрнуто на весь экран';

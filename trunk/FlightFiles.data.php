@@ -605,91 +605,71 @@ function on_button($view, $event, $type)
 }
 
 /**
- * Функция получает текст из строки ввода адреса
- * и вызывает change_dir() для этого адреса.
- * @global string $panel
- * @param GtkEntry $widget
- * @param string $side
- * @param string $path
- */
-function jump_to_folder($widget, $side, $path = '')
-{
-    global $panel, $addressbar_type;
-
-    if ($addressbar_type[$side] == 'entry')
-    {
-        $path = $widget->get_text();
-    }
-
-    $panel = $side;
-    change_dir('bookmarks', $path);
-}
-
-/**
- * Открывает файл $filename в программе $command.
- * @param string $filename Открываемый файл
- * @param string $command Программа для открытия
- */
-function open_file($filename, $command)
-{
-	if (OS == 'Unix')
-	{
-    	exec("'$command' '$filename' > /dev/null &");
-    }
-    elseif (OS == 'Windows')
-    {
-    	pclose(popen('start /B ' . fix_spaces($command) . ' ' . fix_spaces($filename), 'r'));
-    }
-}
-
-/**
- * Создание окна для ввода нового имени файла/папки.
- * @global array $lang
+ * Заносит перетаскиваемые файлы в $data.
  * @global array $start
  * @global string $panel
- * @global object $selection
+ * @global array $selection
+ * @global array $store
+ * @param GtkTreeView $widget
+ * @param GdkDragContext $context
+ * @param GtkSelectionData $data
  */
-function rename_window()
+function on_drag($widget, $context, $data)
 {
-    global $lang, $start, $panel, $selection, $main_window, $store;
+    global $start, $panel, $selection, $store;
 
     list($model, $rows) = $selection[$panel]->get_selected_rows();
+    foreach ($rows as $value)
+    {
+        $iter = $store[$panel]->get_iter($value[0]);
+        $file = $store[$panel]->get_value($iter, 0);
+        $filename = $start[$panel] . DS . $file;
+    }
+    $data->set_text($filename);
+}
 
-    $iter = $store[$panel]->get_iter($rows[0][0]);
-    $file = $store[$panel]->get_value($iter, 0);
-    $filename = $start[$panel] . DS . $file;
-    
-    // На данный момент переименовать можно только один файл
-    if (count($rows) != 1 OR $file == '..')
+/**
+ * Создаёт контекстное меню в момент отпускания перетаскиваемого файла.
+ * @global string $panel
+ * @global array $lang
+ * @param GtkTreeView $widget
+ * @param GdkDragContext $context
+ * @param int $x
+ * @param int $y
+ * @param GtkSelectionData $data
+ * @param int $info
+ * @param int $time
+ * @param string $panel_source
+ */
+function on_drop($widget, $context, $x, $y, $data, $info, $time, $panel_source)
+{
+    global $panel, $lang;
+
+    if ($panel_source == $panel)
     {
         return FALSE;
     }
 
-    $dialog = new GtkDialog($lang['rename']['title'], NULL, Gtk::DIALOG_MODAL);
-    $dialog->set_has_separator(FALSE);
-    $dialog->set_position(Gtk::WIN_POS_CENTER);
-    $dialog->set_transient_for($main_window);
-    $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
-
-    $dialog->add_button($lang['rename']['rename_yes'], Gtk::RESPONSE_YES);
-    $dialog->add_button($lang['rename']['rename_no'], Gtk::RESPONSE_NO);
-
-    $vbox = $dialog->vbox;
-
-    $vbox->pack_start($hbox = new GtkHBox());
-    $hbox->pack_start($entry = new GtkEntry(basename($filename)));
-    $entry->connect('activate', 'on_rename', $filename, $dialog);
-
-    $dialog->show_all();
-    $result = $dialog->run();
-    if ($result == Gtk::RESPONSE_YES)
+    $filename = $data->data;
+    foreach ($lang['letters'] as $key => $value)
     {
-        on_rename($entry, $filename, $dialog);
+        $filename = str_replace($key, $value, $filename);
     }
-    else
-    {
-        $dialog->destroy();
-    }
+
+    $menu = new GtkMenu();
+
+    $copy = new GtkImageMenuItem($lang['drag-drop']['copy']);
+    $copy->set_image(GtkImage::new_from_stock(Gtk::STOCK_COPY, Gtk::ICON_SIZE_MENU));
+    $copy->connect_simple('activate', 'drag_drop_action', $filename, 'copy');
+    $menu->append($copy);
+
+    $rename = new GtkImageMenuItem($lang['drag-drop']['rename']);
+    $rename->set_image(GtkImage::new_from_stock(Gtk::STOCK_CUT, Gtk::ICON_SIZE_MENU));
+    $rename->connect_simple('activate', 'drag_drop_action', $filename, 'rename');
+    $menu->append($rename);
+
+    $menu->show_all();
+    $menu->popup();
 }
 
 /**
@@ -739,6 +719,26 @@ function on_rename($entry, $filename, $window)
     change_dir('none', '', 'all');
 }
 
+/**
+ * Функция получает текст из строки ввода адреса
+ * и вызывает change_dir() для этого адреса.
+ * @global string $panel
+ * @param GtkEntry $widget
+ * @param string $side
+ * @param string $path
+ */
+function jump_to_folder($widget, $side, $path = '')
+{
+    global $panel, $addressbar_type;
+
+    if ($addressbar_type[$side] == 'entry')
+    {
+        $path = $widget->get_text();
+    }
+
+    $panel = $side;
+    change_dir('bookmarks', $path);
+}
 
 function interactive_rename($render, $path, $new_name)
 {
@@ -949,87 +949,6 @@ function my_copy($source, $dest)
 }
 
 /**
- * Функция удаляет выбранные файлы/папки,
- * предварительно спросив подтверждения у пользователя.
- * @global array $_config
- * @global array $lang
- * @global array $selection
- * @global string $panel
- * @global array $start
- * @global GtkWindow $main_window
- * @global array $store
- * @return <type>
- */
-function delete_window()
-{
-    global $_config, $lang, $selection, $panel, $start, $main_window, $store;
-
-    if ($_config['ask_delete'] == 'on')
-    {
-        list($model, $rows) = $selection[$panel]->get_selected_rows();
-
-        $dialog = new GtkDialog($lang['delete']['title'], NULL, Gtk::DIALOG_MODAL);
-        $dialog->set_has_separator(FALSE);
-        $dialog->set_resizable(FALSE);
-        $dialog->set_position(Gtk::WIN_POS_CENTER);
-        $dialog->set_transient_for($main_window);
-
-        $dialog->add_button($lang['delete']['button_yes'], Gtk::RESPONSE_YES);
-        $dialog->add_button($lang['delete']['button_no'], Gtk::RESPONSE_NO);
-        
-        $vbox = $dialog->vbox;
-
-        $vbox->pack_start($hbox = new GtkHBox());
-        $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
-        if (count($rows) == 1)
-        {
-            $iter = $store[$panel]->get_iter($rows[0][0]);
-            $file = $store[$panel]->get_value($iter, 0);
-            $filename = $start[$panel] . DS . $file;
-            if (is_dir($filename))
-            {
-                $str = str_replace('%s', basename($filename), $lang['delete']['one_dir']);
-            }
-            else
-            {
-                $str = str_replace('%s', basename($filename), $lang['delete']['one_file']);
-            }
-        }
-        else
-        {
-            $str = str_replace('%s', basename($filename), $lang['delete']['actives']);
-        }
-        $label = new GtkLabel($str);
-        $label->set_line_wrap(TRUE);
-        $hbox->pack_start($label, TRUE, TRUE, 20);
-
-        $dialog->show_all();
-        $result = $dialog->run();
-        $dialog->destroy();
-
-        if ($result != Gtk::RESPONSE_YES)
-        {
-            return FALSE;
-        }
-    }
-
-    foreach ($rows as $value)
-    {
-        $iter = $store[$panel]->get_iter($value[0]);
-        $file = $store[$panel]->get_value($iter, 0);
-        $filename = $start[$panel] . DS . $file;
-        my_rmdir($filename);
-    }
-
-    if (!empty($dialog))
-    {
-        $dialog->destroy();
-    }
-
-    change_dir('none', '', 'all');
-}
-
-/**
  * Удаление файлов и рекурсивное удаление директорий.
  * @param string $filename Файл/директория, которую необходимо удалить
  */
@@ -1079,6 +998,36 @@ function my_rmdir($filename)
         rmdir($filename);
         return TRUE;
     }
+}
+
+/**
+ * Определяет свободное место на текущем разделе жёсткого диска
+ * и возвращает результат в удобном для восприятия виде.
+ * @global array $start
+ * @global string $panel
+ * @return string Возвращает свободное дисковое пространство
+ */
+function my_free_space()
+{
+    global $start, $panel;
+
+    $free = disk_free_space($start[$panel]);
+    return conversion_size($free);
+}
+
+/**
+ * Определяет общий объём текущего раздела жёсткого диска
+ * и возвращает результат в удобном для восприятия виде.
+ * @global array $start
+ * @global string $panel
+ * @return string Возвращает общий объём раздела
+ */
+function my_total_space()
+{
+    global $start, $panel;
+
+    $total = disk_total_space($start[$panel]);
+    return conversion_size($total);
 }
 
 /**
@@ -1531,36 +1480,6 @@ function status_bar()
 }
 
 /**
- * Определяет свободное место на текущем разделе жёсткого диска
- * и возвращает результат в удобном для восприятия виде.
- * @global array $start
- * @global string $panel
- * @return string Возвращает свободное дисковое пространство
- */
-function my_free_space()
-{
-    global $start, $panel;
-
-    $free = disk_free_space($start[$panel]);
-    return conversion_size($free);
-}
-
-/**
- * Определяет общий объём текущего раздела жёсткого диска
- * и возвращает результат в удобном для восприятия виде.
- * @global array $start
- * @global string $panel
- * @return string Возвращает общий объём раздела
- */
-function my_total_space()
-{
-    global $start, $panel;
-
-    $total = disk_total_space($start[$panel]);
-    return conversion_size($total);
-}
-
-/**
  * Функция создаёт файлы и папки в текущей директории при достаточных правах.
  * @global array $start
  * @global array $lang
@@ -1626,6 +1545,235 @@ function new_element($type)
         }
     }
     change_dir('none');
+}
+
+/**
+ * Функция удаляет выбранные файлы/папки,
+ * предварительно спросив подтверждения у пользователя.
+ * @global array $_config
+ * @global array $lang
+ * @global array $selection
+ * @global string $panel
+ * @global array $start
+ * @global GtkWindow $main_window
+ * @global array $store
+ * @return <type>
+ */
+function delete_window()
+{
+    global $_config, $lang, $selection, $panel, $start, $main_window, $store;
+
+    if ($_config['ask_delete'] == 'on')
+    {
+        list($model, $rows) = $selection[$panel]->get_selected_rows();
+
+        $dialog = new GtkDialog($lang['delete']['title'], NULL, Gtk::DIALOG_MODAL);
+        $dialog->set_has_separator(FALSE);
+        $dialog->set_resizable(FALSE);
+        $dialog->set_position(Gtk::WIN_POS_CENTER);
+        $dialog->set_transient_for($main_window);
+
+        $dialog->add_button($lang['delete']['button_yes'], Gtk::RESPONSE_YES);
+        $dialog->add_button($lang['delete']['button_no'], Gtk::RESPONSE_NO);
+        
+        $vbox = $dialog->vbox;
+
+        $vbox->pack_start($hbox = new GtkHBox());
+        $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG));
+        if (count($rows) == 1)
+        {
+            $iter = $store[$panel]->get_iter($rows[0][0]);
+            $file = $store[$panel]->get_value($iter, 0);
+            $filename = $start[$panel] . DS . $file;
+            if (is_dir($filename))
+            {
+                $str = str_replace('%s', basename($filename), $lang['delete']['one_dir']);
+            }
+            else
+            {
+                $str = str_replace('%s', basename($filename), $lang['delete']['one_file']);
+            }
+        }
+        else
+        {
+            $str = str_replace('%s', basename($filename), $lang['delete']['actives']);
+        }
+        $label = new GtkLabel($str);
+        $label->set_line_wrap(TRUE);
+        $hbox->pack_start($label, TRUE, TRUE, 20);
+
+        $dialog->show_all();
+        $result = $dialog->run();
+        $dialog->destroy();
+
+        if ($result != Gtk::RESPONSE_YES)
+        {
+            return FALSE;
+        }
+    }
+
+    foreach ($rows as $value)
+    {
+        $iter = $store[$panel]->get_iter($value[0]);
+        $file = $store[$panel]->get_value($iter, 0);
+        $filename = $start[$panel] . DS . $file;
+        my_rmdir($filename);
+    }
+
+    if (!empty($dialog))
+    {
+        $dialog->destroy();
+    }
+
+    change_dir('none', '', 'all');
+}
+
+/**
+ * Создание окна для ввода нового имени файла/папки.
+ * @global array $lang
+ * @global array $start
+ * @global string $panel
+ * @global object $selection
+ */
+function rename_window()
+{
+    global $lang, $start, $panel, $selection, $main_window, $store;
+
+    list($model, $rows) = $selection[$panel]->get_selected_rows();
+
+    $iter = $store[$panel]->get_iter($rows[0][0]);
+    $file = $store[$panel]->get_value($iter, 0);
+    $filename = $start[$panel] . DS . $file;
+    
+    // На данный момент переименовать можно только один файл
+    if (count($rows) != 1 OR $file == '..')
+    {
+        return FALSE;
+    }
+
+    $dialog = new GtkDialog($lang['rename']['title'], NULL, Gtk::DIALOG_MODAL);
+    $dialog->set_has_separator(FALSE);
+    $dialog->set_position(Gtk::WIN_POS_CENTER);
+    $dialog->set_transient_for($main_window);
+    $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+
+    $dialog->add_button($lang['rename']['rename_yes'], Gtk::RESPONSE_YES);
+    $dialog->add_button($lang['rename']['rename_no'], Gtk::RESPONSE_NO);
+
+    $vbox = $dialog->vbox;
+
+    $vbox->pack_start($hbox = new GtkHBox());
+    $hbox->pack_start($entry = new GtkEntry(basename($filename)));
+    $entry->connect('activate', 'on_rename', $filename, $dialog);
+
+    $dialog->show_all();
+    $result = $dialog->run();
+    if ($result == Gtk::RESPONSE_YES)
+    {
+        on_rename($entry, $filename, $dialog);
+    }
+    else
+    {
+        $dialog->destroy();
+    }
+}
+
+/**
+ * Создаёт диалоговое окно, информирующее пользователя о том,
+ * что файл/папка с таким именем уже существует в данной директории
+ * и предлагает его заменить.
+ * @global array $lang
+ * @global GtkWindow $main_window
+ * @param string $filename Адрес файла
+ * @return bool Возвращает TRUE, если пользователь попросил заменить файл, иначе FALSE
+ */
+function file_exists_window($filename)
+{
+    global $lang, $main_window;
+
+    $dialog = new GtkDialog($lang['alert']['title'], NULL, Gtk::DIALOG_MODAL);
+    $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+    $dialog->set_position(Gtk::WIN_POS_CENTER);
+    $dialog->set_skip_taskbar_hint(TRUE);
+    $dialog->set_resizable(FALSE);
+    $dialog->set_has_separator(FALSE);
+    $dialog->set_transient_for($main_window);
+
+    $dialog->add_button($lang['alert']['replace_yes'], Gtk::RESPONSE_YES);
+    $dialog->add_button($lang['alert']['replace_no'], Gtk::RESPONSE_NO);
+
+    $vbox = $dialog->vbox;
+
+    $vbox->pack_start($hbox = new GtkHBox());
+    $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG), FALSE, FALSE, 10);
+    $str = str_replace('%s', basename($filename), $lang['alert']['file_exists_paste']);
+    $label = new GtkLabel($str);
+    $label->set_line_wrap(TRUE);
+    $label->set_justify(Gtk::JUSTIFY_CENTER);
+    $hbox->pack_start($label, TRUE, TRUE, 10);
+
+    $dialog->show_all();
+    $result = $dialog->run();
+    $dialog->destroy();
+
+    // Если нажата кнопка "Да", то удаляем существующий файл/папку
+    if ($result == Gtk::RESPONSE_YES)
+    {
+        my_rmdir($dest);
+        return TRUE;
+    }
+    else
+    {
+        return FALSE;
+    }
+}
+
+/**
+ * Создаёт окно для ввода шаблона выделения.
+ * @global array $lang
+ * @global GtkWindow $main_window
+ */
+function enter_template_window()
+{
+    global $lang, $main_window;
+    
+    $dialog = new GtkDialog($lang['tmp_window']['title'], NULL, Gtk::DIALOG_MODAL);
+    $dialog->set_position(Gtk::WIN_POS_CENTER);
+    $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+    $dialog->set_skip_taskbar_hint(TRUE);
+    $dialog->set_resizable(FALSE);
+    $dialog->set_has_separator(FALSE);
+    $dialog->set_transient_for($main_window);
+    
+    $dialog->add_button($lang['tmp_window']['button_yes'], Gtk::RESPONSE_OK);
+    $dialog->add_button($lang['tmp_window']['button_no'], Gtk::RESPONSE_CANCEL);
+
+    $vbox = $dialog->vbox;
+
+    $vbox->pack_start($entry = new GtkEntry());
+    $vbox->pack_start($check = new GtkCheckButton($lang['tmp_window']['register']));
+    $entry->connect_simple('changed', 'active_online', $entry, $check);
+    $entry->connect_simple('activate', 'redirect_template', $entry, $check, $dialog);
+    $check->connect_simple('toggled', 'active_online', $entry, $check);
+    
+    $vbox->pack_start($label = new GtkLabel(), FALSE, FALSE, 10);
+    $label->set_markup('<i>'.$lang['tmp_window']['hint'].'</i>');
+    $label->set_line_wrap(TRUE);
+    $label->set_justify(Gtk::JUSTIFY_RIGHT);
+
+    $dialog->show_all();
+    $result = $dialog->run();
+
+    if ($result == Gtk::RESPONSE_OK)
+    {
+        redirect_template($entry, $check, $dialog);
+    }
+    elseif ($result == Gtk::RESPONSE_CANCEL)
+    {
+        active_all('none');
+    }
+
+    $dialog->destroy();
 }
 
 /**
@@ -1922,22 +2070,22 @@ function image_column($column, $render, $model, $iter)
     
     if ($type == '<DIR>')
     {
-        $render->set_property('pixbuf', GdkPixbuf::new_from_file('./themes/silk/folder.png'));
+        $render->set_property('pixbuf', GdkPixbuf::new_from_file(THEME . 'folder.png'));
     }
     else
     {
         $ext = substr(strrchr(strtolower($file), '.'), 1);
         if ($ext == '') // Если файл без расширения
         {
-        	$render->set_property('pixbuf', GdkPixbuf::new_from_file('./themes/silk/page_white.png'));
+        	$render->set_property('pixbuf', GdkPixbuf::new_from_file(THEME . 'page_white.png'));
         }
         elseif (array_key_exists($ext, $ext_icons)) 
         {
-			$render->set_property('pixbuf', GdkPixbuf::new_from_file('./themes/silk/' . $ext_icons[$ext]));
+			$render->set_property('pixbuf', GdkPixbuf::new_from_file(THEME . $ext_icons[$ext]));
 		}
 		else 
 		{
-			$render->set_property('pixbuf', GdkPixbuf::new_from_file('./themes/silk/page_white.png'));
+			$render->set_property('pixbuf', GdkPixbuf::new_from_file(THEME . 'page_white.png'));
 		}
 
     }
@@ -1952,11 +2100,56 @@ function image_column($column, $render, $model, $iter)
  */
 function file_column($column, $render, $model, $iter)
 {
+	global $_config;
+	
     $path = $model->get_path($iter);
     $file = $model->get_value($iter, 0);
+    if (!empty($_config['font_list']))
+	{
+    	$render->set_property('font',  $_config['font_list']);
+    }
     $render->set_property('text', $file);
 }
 
+/**
+ * Открывает файл $filename в программе $command.
+ * @param string $filename Открываемый файл
+ * @param string $command Программа для открытия
+ */
+function open_file($filename, $command)
+{
+	if (OS == 'Unix')
+	{
+    	exec("'$command' '$filename' > /dev/null &");
+    }
+    elseif (OS == 'Windows')
+    {
+    	pclose(popen('start /B ' . fix_spaces($command) . ' ' . fix_spaces($filename), 'r'));
+    }
+}
+
+/**
+ * Открывает файл в программе по-умолчанию.
+ * @param string $filename Адрес файла, который необходимо открыть
+ */
+function open_in_system($filename)
+{
+    if (OS == 'Windows')
+    {
+        pclose(popen('"' . $filename . '"', 'r'));
+    }
+    elseif (OS == 'Unix')
+    {
+    	if (file_exists('/usr/bin/gnome-open'))
+    	{
+    		exec('gnome-open "' . $filename . '" > /dev/null &');
+    	}
+    	elseif (file_exists('/usr/bin/kde-open'))
+    	{
+    		exec('kde-open "' . $filename . '" > /dev/null &');
+    	}
+    }
+}
 
 /**
  * Открытие терминала в текущей директории.
@@ -2298,61 +2491,13 @@ function jump_to_part($side, $disk)
 }
 
 /**
- * Создаёт окно для ввода шаблона выделения.
- * @global array $lang
- * @global GtkWindow $main_window
- */
-function enter_template_window()
-{
-    global $lang, $main_window;
-    
-    $dialog = new GtkDialog($lang['tmp_window']['title'], NULL, Gtk::DIALOG_MODAL);
-    $dialog->set_position(Gtk::WIN_POS_CENTER);
-    $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
-    $dialog->set_skip_taskbar_hint(TRUE);
-    $dialog->set_resizable(FALSE);
-    $dialog->set_has_separator(FALSE);
-    $dialog->set_transient_for($main_window);
-    
-    $dialog->add_button($lang['tmp_window']['button_yes'], Gtk::RESPONSE_OK);
-    $dialog->add_button($lang['tmp_window']['button_no'], Gtk::RESPONSE_CANCEL);
-
-    $vbox = $dialog->vbox;
-
-    $vbox->pack_start($entry = new GtkEntry());
-    $vbox->pack_start($check = new GtkCheckButton($lang['tmp_window']['register']));
-    $entry->connect_simple('changed', 'active_online', $entry, $check);
-    $entry->connect_simple('activate', 'redirect_template', $entry, $check, $dialog);
-    $check->connect_simple('toggled', 'active_online', $entry, $check);
-    
-    $vbox->pack_start($label = new GtkLabel(), FALSE, FALSE, 10);
-    $label->set_markup('<i>'.$lang['tmp_window']['hint'].'</i>');
-    $label->set_line_wrap(TRUE);
-    $label->set_justify(Gtk::JUSTIFY_RIGHT);
-
-    $dialog->show_all();
-    $result = $dialog->run();
-
-    if ($result == Gtk::RESPONSE_OK)
-    {
-        redirect_template($entry, $check, $dialog);
-    }
-    elseif ($result == Gtk::RESPONSE_CANCEL)
-    {
-        active_all('none');
-    }
-
-    $dialog->destroy();
-}
-
-/**
  * Производит выделение по шаблону
  * @global array $selection
  * @global string $panel
  * @param GtkEntry $entry Поле ввода шаблона
  * @param GtkCheckButton $check Флажок, устанавливающий регистрозависимость
  */
-function active_online($entry, $check)
+function active_online($entry, $check) // rename: interactive_select()
 {
     global $selection, $panel;
 
@@ -2434,74 +2579,6 @@ function window_hide()
 }
 
 /**
- * Заносит перетаскиваемые файлы в $data.
- * @global array $start
- * @global string $panel
- * @global array $selection
- * @global array $store
- * @param GtkTreeView $widget
- * @param GdkDragContext $context
- * @param GtkSelectionData $data
- */
-function on_drag($widget, $context, $data)
-{
-    global $start, $panel, $selection, $store;
-
-    list($model, $rows) = $selection[$panel]->get_selected_rows();
-    foreach ($rows as $value)
-    {
-        $iter = $store[$panel]->get_iter($value[0]);
-        $file = $store[$panel]->get_value($iter, 0);
-        $filename = $start[$panel] . DS . $file;
-    }
-    $data->set_text($filename);
-}
-
-/**
- * Создаёт контекстное меню в момент отпускания перетаскиваемого файла.
- * @global string $panel
- * @global array $lang
- * @param GtkTreeView $widget
- * @param GdkDragContext $context
- * @param int $x
- * @param int $y
- * @param GtkSelectionData $data
- * @param int $info
- * @param int $time
- * @param string $panel_source
- */
-function on_drop($widget, $context, $x, $y, $data, $info, $time, $panel_source)
-{
-    global $panel, $lang;
-
-    if ($panel_source == $panel)
-    {
-        return FALSE;
-    }
-
-    $filename = $data->data;
-    foreach ($lang['letters'] as $key => $value)
-    {
-        $filename = str_replace($key, $value, $filename);
-    }
-
-    $menu = new GtkMenu();
-
-    $copy = new GtkImageMenuItem($lang['drag-drop']['copy']);
-    $copy->set_image(GtkImage::new_from_stock(Gtk::STOCK_COPY, Gtk::ICON_SIZE_MENU));
-    $copy->connect_simple('activate', 'drag_drop_action', $filename, 'copy');
-    $menu->append($copy);
-
-    $rename = new GtkImageMenuItem($lang['drag-drop']['rename']);
-    $rename->set_image(GtkImage::new_from_stock(Gtk::STOCK_CUT, Gtk::ICON_SIZE_MENU));
-    $rename->connect_simple('activate', 'drag_drop_action', $filename, 'rename');
-    $menu->append($rename);
-
-    $menu->show_all();
-    $menu->popup();
-}
-
-/**
  * Копирует/перемещает перетаскиваемый файл.
  * @global array $start
  * @global string $panel
@@ -2542,82 +2619,10 @@ function drag_drop_action($filename, $action)
 }
 
 /**
- * Создаёт диалоговое окно, информирующее пользователя о том,
- * что файл/папка с таким именем уже существует в данной директории
- * и предлагает его заменить.
- * @global array $lang
- * @global GtkWindow $main_window
- * @param string $filename Адрес файла
- * @return bool Возвращает TRUE, если пользователь попросил заменить файл, иначе FALSE
- */
-function file_exists_window($filename)
-{
-    global $lang, $main_window;
-
-    $dialog = new GtkDialog($lang['alert']['title'], NULL, Gtk::DIALOG_MODAL);
-    $dialog->set_position(Gtk::WIN_POS_CENTER);
-    $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
-    $dialog->set_skip_taskbar_hint(TRUE);
-    $dialog->set_resizable(FALSE);
-    $dialog->set_has_separator(FALSE);
-    $dialog->set_transient_for($main_window);
-
-    $dialog->add_button($lang['alert']['replace_yes'], Gtk::RESPONSE_YES);
-    $dialog->add_button($lang['alert']['replace_no'], Gtk::RESPONSE_NO);
-
-    $vbox = $dialog->vbox;
-
-    $vbox->pack_start($hbox = new GtkHBox());
-    $hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_DIALOG_QUESTION, Gtk::ICON_SIZE_DIALOG), FALSE, FALSE, 10);
-    $str = str_replace('%s', basename($filename), $lang['alert']['file_exists_paste']);
-    $label = new GtkLabel($str);
-    $label->set_line_wrap(TRUE);
-    $label->set_justify(Gtk::JUSTIFY_CENTER);
-    $hbox->pack_start($label, TRUE, TRUE, 10);
-
-    $dialog->show_all();
-    $result = $dialog->run();
-    $dialog->destroy();
-
-    // Если нажата кнопка "Да", то удаляем существующий файл/папку
-    if ($result == Gtk::RESPONSE_YES)
-    {
-        my_rmdir($dest);
-        return TRUE;
-    }
-    else
-    {
-        return FALSE;
-    }
-}
-
-/**
- * Открывает файл во внешней программе.
- * @param string $filename Адрес файла, который необходимо открыть
- */
-function open_in_system($filename)
-{
-    if (OS == 'Windows')
-    {
-        pclose(popen('"' . $filename . '"', 'r'));
-    }
-    elseif (OS == 'Unix')
-    {
-    	if (file_exists('/usr/bin/gnome-open'))
-    	{
-    		exec('gnome-open "' . $filename . '" > /dev/null &');
-    	}
-    	elseif (file_exists('/usr/bin/kde-open'))
-    	{
-    		exec('kde-open "' . $filename . '" > /dev/null &');
-    	}
-    }
-}
-
-/**
  * Функция обрамляет строку с пробелами в кавычки.
  */
-function find_spaces($var) {
+function find_spaces($var) 
+{
    return (strpos($var, ' ') == true)
        ? '"' . $var . '"'
        : $var;
@@ -2628,7 +2633,8 @@ function find_spaces($var) {
  * нет пробелов, отдаёт строку без изменений.
  * @param string $filename Адрес файла
  */
-function fix_spaces($filename) {
+function fix_spaces($filename) 
+{
     return (strpos($filename, ' ') == false)
        ? $filename
        : implode('\\', array_map('find_spaces', explode('\\', $filename)));
