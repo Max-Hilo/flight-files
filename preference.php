@@ -19,10 +19,10 @@ function preference()
     
     $window = new GtkWindow();
     $window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
-    $window->set_position(Gtk::WIN_POS_CENTER);
-    $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
-    $window->set_resizable(FALSE);
     $window->set_title($lang['preference']['title']);
+    $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+    $window->set_position(Gtk::WIN_POS_CENTER);
+    $window->set_resizable(FALSE);
     $window->set_modal(TRUE);
     $window->set_transient_for($main_window);
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
@@ -88,26 +88,6 @@ function preference()
         $partbar_refresh->set_active(TRUE);
     }
     $vbox->pack_start($partbar_refresh, FALSE, FALSE);
-
-    // Показывать линии между файлами
-    $view_lines_files = new GtkCheckButton($lang['preference']['view_lines_files']);
-    $view_lines_files->set_tooltip_text($lang['preference']['vlf_hint']);
-    $view_lines_files->connect('toggled', 'check_button_write', 'view_lines_files');
-    if ($_config['view_lines_files'] == 'on')
-    {
-        $view_lines_files->set_active(TRUE);
-    }
-    $vbox->pack_start($view_lines_files, FALSE, FALSE);
-
-    // Показывать линии между колонками
-    $view_lines_columns = new GtkCheckButton($lang['preference']['view_lines_columns']);
-    $view_lines_columns->set_tooltip_text($lang['preference']['vlc_hint']);
-    $view_lines_columns->connect('toggled', 'check_button_write', 'view_lines_columns');
-    if ($_config['view_lines_columns'] == 'on')
-    {
-        $view_lines_columns->set_active(TRUE);
-    }
-    $vbox->pack_start($view_lines_columns, FALSE, FALSE);
 
     // Показывать иконку в трее
     $status_icon = new GtkCheckButton($lang['preference']['status_icon']);
@@ -206,6 +186,44 @@ function preference()
 
     $vbox->pack_start(new GtkHSeparator, FALSE, FALSE);
 
+    // Экспорт настроек
+    $button = new GtkButton($lang['preference']['export_settings']);
+    $button->connect_simple('clicked', 'export_settings');
+    $vbox->pack_start($button, FALSE, FALSE);
+
+    // Импорт настроек
+    $button = new GtkButton($lang['preference']['import_settings']);
+    $button->connect_simple('clicked', 'import_settings', $window);
+    $vbox->pack_start($button, FALSE, FALSE);
+    
+    /**
+     * Вкладка "Интерфейс".
+     */
+    $vbox = new GtkVBox;
+    $notebook->append_page($vbox, new GtkLabel($lang['preference']['interface']));
+
+	// Показывать линии между файлами
+    $view_lines_files = new GtkCheckButton($lang['preference']['view_lines_files']);
+    $view_lines_files->set_tooltip_text($lang['preference']['vlf_hint']);
+    $view_lines_files->connect('toggled', 'check_button_write', 'view_lines_files');
+    if ($_config['view_lines_files'] == 'on')
+    {
+        $view_lines_files->set_active(TRUE);
+    }
+    $vbox->pack_start($view_lines_files, FALSE, FALSE);
+
+    // Показывать линии между колонками
+    $view_lines_columns = new GtkCheckButton($lang['preference']['view_lines_columns']);
+    $view_lines_columns->set_tooltip_text($lang['preference']['vlc_hint']);
+    $view_lines_columns->connect('toggled', 'check_button_write', 'view_lines_columns');
+    if ($_config['view_lines_columns'] == 'on')
+    {
+        $view_lines_columns->set_active(TRUE);
+    }
+    $vbox->pack_start($view_lines_columns, FALSE, FALSE);
+    
+    $vbox->pack_start(new GtkHSeparator, FALSE, FALSE);
+
     // Тип панели инструментов
     $label = new GtkLabel($lang['preference']['toolbar_style']);
     $label->set_tooltip_text($lang['preference']['toolbar_style_hint']);
@@ -231,23 +249,9 @@ function preference()
     $hbox->pack_start($radio_icons, TRUE, TRUE);
     $hbox->pack_start($radio_text, TRUE, TRUE);
     $hbox->pack_start($radio_both, TRUE, TRUE);
-
-    // Экспорт настроек
-    $button = new GtkButton($lang['preference']['export_settings']);
-    $button->connect_simple('clicked', 'export_settings');
-    $vbox->pack_start($button, FALSE, FALSE);
-
-    // Импорт настроек
-    $button = new GtkButton($lang['preference']['import_settings']);
-    $button->connect_simple('clicked', 'import_settings', $window);
-    $vbox->pack_start($button, FALSE, FALSE);
     
-    /**
-     * Вкладка "Шрифты".
-     */
-    $vbox = new GtkVBox;
-    $notebook->append_page($vbox, new GtkLabel($lang['preference']['fonts']));
-
+    $vbox->pack_start(new GtkHSeparator, FALSE, FALSE);
+    
     // Шрифт в списке
     $label_text_list = new GtkLabel($lang['preference']['font_list']);
     $label_text_list->modify_font(new PangoFontDescription('Bold'));
@@ -279,7 +283,7 @@ function preference()
     $vbox->pack_start($hbox = new GtkHBox, FALSE, FALSE);
     $hbox->pack_start($entry_font_select, TRUE, TRUE);
     $hbox->pack_start($button_font_select, FALSE, FALSE);
-
+    
     /**
      * Вкладка "Внешние программы"
      */

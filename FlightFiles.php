@@ -1,6 +1,6 @@
 #!/usr/bin/php
 <?php
-
+	
 /**
  * Файловый менеджер FlightFiles.
  * 
@@ -72,6 +72,11 @@ define('VERSION_PROGRAM', trim(file_get_contents(SHARE_DIR . DS . 'VERSION')));
  */
 define('ICON_PROGRAM', SHARE_DIR . DS . 'logo_program.png');
 
+/**
+ * Папка с темой иконок.
+ */
+define('THEME',  SHARE_DIR . DS . 'themes/silk/');
+
 // Файлы с функциями программы
 include SHARE_DIR . DS . 'FlightFiles.data.php';
 include SHARE_DIR . DS . 'about.php';
@@ -88,7 +93,7 @@ include SHARE_DIR . DS . 'text_editor.php';
 
 if (!extension_loaded('php-gtk'))
 {
-    if ((OS == 'Windows' AND @!dl('php_gtk2.dll')) OR (OS == 'Unix' AND @!dl('php_gtk2.so')))
+    if (@!dl('php_gtk2.' . PHP_SHLIB_SUFFIX))
     {
         echo "\r\nFatal Error: Unable to load dynamic library 'php_gtk2'\r\n\r\n";
         exit();
@@ -96,7 +101,7 @@ if (!extension_loaded('php-gtk'))
 }
 if (!extension_loaded('pdo'))
 {
-    if ((OS == 'Windows' AND @!dl('php_pdo.dll')) OR (OS == 'Unix' AND @!dl('php_pdo.so')))
+    if (@!dl('php_pdo.' . PHP_SHLIB_SUFFIX))
     {
         echo "\r\nFatal Error: Unable to load dynamic library 'pdo'\r\n\r\n";
         exit();
@@ -104,7 +109,7 @@ if (!extension_loaded('pdo'))
 }
 if (!extension_loaded('sqlite'))
 {
-    if ((OS == 'Windows' AND @!dl('php_sqlite.dll')) OR (OS == 'Unix' AND @!dl('php_sqlite.so')))
+    if (@!dl('php_sqlite.' . PHP_SHLIB_SUFFIX))
     {
         echo "\r\nFatal Error: Unable to load dynamic library 'php_sqlite'\r\n\r\n";
         exit();
@@ -112,21 +117,21 @@ if (!extension_loaded('sqlite'))
 }
 if (!extension_loaded('gd'))
 {
-    if ((OS == 'Windows' AND @!dl('php_gd2.dll')) OR (OS == 'Unix' AND @!dl('php_gd2.so')))
+    if (@!dl('php_gd2.' . PHP_SHLIB_SUFFIX))
     {
         echo "\r\nWarning: Unable to load dinamic library 'php_gd2'\r\n\r\n";
     }
 }
 if (!extension_loaded('mime_magic'))
 {
-    if ((OS == 'Windows' AND @!dl('php_mime_magic.dll')) OR (OS == 'Unix' AND @!dl('php_mime_magic.so')))
+    if (@!dl('php_mime_magic.' . PHP_SHLIB_SUFFIX))
     {
         echo "\r\nWarning: Unable to load dinamic library 'php_mime_magic'\r\n\r\n";
     }
 }
 if (!extension_loaded('mbstring'))
 {
-    if ((OS == 'Windows' AND @!dl('php_mbstring.dll')) OR (OS == 'Unix' AND @!dl('php_mbstring.so')))
+    if (@!dl('php_mbstring.' . PHP_SHLIB_SUFFIX))
     {
         echo "\r\nWarning: Unable to load dinamic library 'php_mbstring'\r\n\r\n";
     }
@@ -148,11 +153,11 @@ if (!file_exists(LANG_DIR))
 if (!file_exists(DATABASE))
 {
     $start_window = new GtkWindow();
-    $start_window->set_position(Gtk::WIN_POS_CENTER);
+    $start_window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
     $start_window->set_title('FlightFiles :: Start');
     $start_window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+    $start_window->set_position(Gtk::WIN_POS_CENTER);
     $start_window->set_resizable(FALSE);
-    $start_window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
     $start_window->set_deletable(FALSE);
     $start_window->connect_simple('destroy', 'Gtk::main_quit');
 
@@ -291,10 +296,11 @@ $addressbar_type = array(
 );
 
 $main_window = new GtkWindow();
-$main_window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
-$main_window->set_default_size(1100, 700);
-$main_window->set_position(Gtk::WIN_POS_CENTER);
 $main_window->set_title($lang['title_program']);
+$main_window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+$main_window->set_position(Gtk::WIN_POS_CENTER);
+$main_window->set_default_size(1100, 700);
+
 if ($_config['maximize'] == 'on')
 {
     $main_window->maximize();
@@ -332,12 +338,12 @@ $menubar = new GtkMenuBar();
  * [1] => Ярлык
  */
 $array_menubar = array(
-    array('file', $lang['menu']['file']),
-    array('edit', $lang['menu']['edit']),
-    array('view', $lang['menu']['view']),
-    array('go', $lang['menu']['go']),
+    array('file',      $lang['menu']['file']),
+    array('edit',      $lang['menu']['edit']),
+    array('view',      $lang['menu']['view']),
+    array('go',        $lang['menu']['go']),
     array('bookmarks', $lang['menu']['bookmarks']),
-    array('help', $lang['menu']['help'])
+    array('help',      $lang['menu']['help'])
 );
 foreach ($array_menubar as $value)
 {

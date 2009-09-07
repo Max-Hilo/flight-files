@@ -14,13 +14,15 @@ function shortcuts_window()
 {
     global $lang;
     
-    $window = new GtkWindow;
-    $window->set_position(Gtk::WIN_POS_CENTER);
+    $window = new GtkWindow; 
     $window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
-    $window->set_title($lang['shortcuts']['title']);
-    $window->set_resizable(FALSE);
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+    $window->set_title($lang['shortcuts']['title']);
+    $window->set_position(Gtk::WIN_POS_CENTER);
+    $window->set_resizable(FALSE);
     $window->set_skip_taskbar_hint(TRUE);
+    $window->set_modal(TRUE);
+    $window->set_transient_for($main_window);
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
 
     $shr = $lang['shortcuts'];
@@ -29,7 +31,7 @@ function shortcuts_window()
     $array = array(
         array($shr['new_file'], 'Ctrl+N'),
         array($shr['new_dir'], 'Shift+Ctrl+N'),
-        array($shr['select_all'], 'Ctrl+A'),
+        array($shr['select_all'], 'Ctrl+*'),
         array($shr['select_template'], 'Ctrl+Alt+A'),
         array($shr['unselect_all'], 'Shift+Ctrl+A'),
         array($shr['quit'], 'Ctrl+Q'),
