@@ -19,6 +19,7 @@ $lang['menu']['help']                   = '_Справка';
 $lang['menu']['new_file']               = 'Создать файл';
 $lang['menu']['new_dir']                = 'Создать папку';
 $lang['menu']['open']                   = 'Открыть';
+$lang['menu']['quick_view']             = 'Быстрый просмотр';
 $lang['menu']['clear_bufer']            = 'Очистить буфер обмена';
 $lang['menu']['comparison_file']        = 'Сравнить файлы';
 $lang['menu']['comparison_dir']         = 'Сравнить папки';
@@ -248,6 +249,7 @@ $lang['alert']['copy_file_not_found']   = 'Копируемого файла не существует';
 $lang['alert']['rename_dir_not_found']  = 'Перемещаемой папки не существует';
 $lang['alert']['rename_file_not_found'] = 'Перемещаемого файла не существует';
 $lang['alert']['not_folder']            = 'Указанный адрес не является папкой';
+$lang['alert']['unsupported']           = 'Выбранный файл не поддерживается встроенными редакторами';
 
 $lang['popup']['copy_file']             = 'Копировать';
 $lang['popup']['cut_file']              = 'Вырезать';

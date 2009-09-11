@@ -27,9 +27,10 @@ function preference()
     $window->set_transient_for($main_window);
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
     
-    $alignment = new GtkAlignment();
+//    $alignment = new GtkAlignment();
     $notebook = new GtkNotebook();
-    $alignment->set_padding(10, 10, 10, 10);
+    $notebook->set_border_width(10);
+//    $alignment->set_padding(10, 10, 10, 10);
     
     /**
      * Вкладка "Основные".
@@ -320,8 +321,8 @@ function preference()
     $hbox_terminal->pack_start($entry_terminal, TRUE, TRUE);
     $hbox_terminal->pack_start($btn_terminal, FALSE, FALSE);
 
-	$alignment->add($notebook);
-    $window->add($alignment);
+//	$alignment->add($notebook);
+    $window->add($notebook);
     $window->show_all();
     Gtk::main();
 }

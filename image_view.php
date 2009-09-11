@@ -1,13 +1,11 @@
 <?php
-
+	
 /**
- * Файл локализации, используемый по умолчанию.
- *
  * @copyright Copyright (C) 2009, Вавилов Егор (Shecspi)
  * @license http://www.opensource.org/licenses/mit-license.php MIT License
  * @link http://code.google.com/p/flight-files/ Домашняя страница проекта
- */
-
+ */	
+	
 /**
  * Создание окна для просмотра изображения.
  * @global int $pixbuf_width
@@ -166,11 +164,13 @@ function image_view($filename)
     $toolbar->insert(new GtkSeparatorToolItem(), -1);
 
     $rotate_left = new GtkToolButton();
+    $rotate_left->set_stock_id(Gtk::STOCK_UNDO);
     $rotate_left->set_label($lang['image']['rotate_left']);
     $rotate_left->set_tooltip_text($lang['image']['rotate_left_hint']);
     $toolbar->insert($rotate_left, -1);
 
-    $rotate_right = new GtkToolButton();;
+    $rotate_right = new GtkToolButton();
+    $rotate_right->set_stock_id(Gtk::STOCK_REDO);
     $rotate_right->set_label($lang['image']['rotate_right']);
     $rotate_right->set_tooltip_text($lang['image']['rotate_right_hint']);
     $toolbar->insert($rotate_right, -1);
@@ -246,6 +246,7 @@ function rotate_image($action, $filename, $image)
 
     $image_size = getimagesize($filename);
     $type = $image_size[2];
+
     switch ($type)
     {
         case 1:
@@ -267,15 +268,16 @@ function rotate_image($action, $filename, $image)
     {
         case 1:
             $img_file = CONFIG_DIR . DS . 'tmp_image.gif';
-            $img = imagegif($img, $img_file);
+            imagegif($img, $img_file);
             break;
         case 2:
             $img_file = CONFIG_DIR . DS . 'tmp_image.jpeg';
-            $img = imagejpeg($img, $img_file);
+            imagejpeg($img, $img_file);
             break;
         case 3:
             $img_file = CONFIG_DIR . DS . 'tmp_image.png';
-            $img = imagepng($img, $img_file);
+        	imagesavealpha($img, true);
+            imagepng($img, $img_file);
             break;
         default:
             return FALSE;

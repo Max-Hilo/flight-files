@@ -16,9 +16,10 @@ function alert_window($msg)
     global $lang;
 
     $dialog = new GtkDialog($lang['alert']['title'], NULL, Gtk::DIALOG_MODAL);
-    $dialog->set_has_separator(FALSE);
-    $dialog->set_position(Gtk::WIN_POS_CENTER);
     $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+    $dialog->set_position(Gtk::WIN_POS_CENTER);
+    $dialog->set_size_request(300, -1);
+    $dialog->set_has_separator(FALSE);
     
     $dialog->add_button($lang['alert']['button_ok'], Gtk::RESPONSE_YES);
 
