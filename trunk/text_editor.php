@@ -20,8 +20,7 @@ function text_editor_window($filename)
 
     $clipboard = new GtkClipboard();
 
-    //$text_editor['filename'] = preg_replace ('#'.DS.'+#', DS, $filename);
-    $text_editor['filename'] = str_replace(DS.DS, DS, $filename);
+    $text_editor['filename'] = str_replace(DS . DS, DS, $filename);
     $text_editor['old_text'] = trim(file_get_contents($text_editor['filename']));
 
     $text_editor['window'] = new GtkWindow();

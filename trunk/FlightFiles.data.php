@@ -103,11 +103,11 @@ function create_database($combo, $window)
         // открыты папки из предыдущей сессии.
         "INSERT INTO config(key, value) VALUES('SAVE_FOLDERS', 'on');".
 
-        // $_config['mtime_format'] - формат даты для колонки "Изменён"..
+        // $_config['mtime_format'] - формат даты для колонки "Изменён".
         "INSERT INTO config(key, value) VALUES('MTIME_FORMAT', 'd.m.Y G:i');".
         
         // $_config['addressbar_left'] - внешний вид левой адресной панели.
-        "INSERT INTO config(key, value) VALUES('ADDRESSBAR_LEFT', 'entry');".
+        "INSERT INTO config(key, value) VALUES('ADDRESSBAR_LEFT', 'buttons');".
         
         // $_config['addressbar_right'] - внешний вид правой адресной панели.
         "INSERT INTO config(key, value) VALUES('ADDRESSBAR_RIGHT', 'entry');".
@@ -185,8 +185,7 @@ function on_key($view, $event, $type)
             {
                 alert_window($lang['alert']['chmod_read_file']);
                 return FALSE;
-            }
-            
+            }         
             open_in_system($filename);
         }
     } 
@@ -214,6 +213,10 @@ function on_key($view, $event, $type)
     {
     	delete_window();
     }
+    elseif ($keyval == Gdk::KEY_F3) // quick edit F3
+    {
+		open_in_builtin();
+    }
     return FALSE;
 }
 
@@ -232,8 +235,6 @@ function on_button($view, $event, $type)
 
     $action_menu['new_file']->set_sensitive(TRUE);
     $action_menu['new_dir']->set_sensitive(TRUE);
-//    $action_menu['comparison_file']->set_sensitive(FALSE);
-//    $action_menu['comparison_dir']->set_sensitive(FALSE);
 
     $action_menu['copy']->set_sensitive(TRUE);
     $action_menu['cut']->set_sensitive(TRUE);
@@ -318,6 +319,7 @@ function on_button($view, $event, $type)
     // Если щелчок был произведён в пустое место списка файлов
     if (empty($file))
     {
+//    	$action_menu['builtin']->set_sensitive(FALSE);
         $action_menu['copy']->set_sensitive(FALSE);
         $action_menu['cut']->set_sensitive(FALSE);
         $action_menu['delete']->set_sensitive(FALSE);
@@ -340,6 +342,7 @@ function on_button($view, $event, $type)
                 if (!is_readable($filename))
                 {
                     alert_window($lang['alert']['chmod_read_dir']);
+                    return FALSE;
                 }
                 else
                 {
@@ -386,16 +389,16 @@ function on_button($view, $event, $type)
                         exec('"'.$sfa['command'].'" "'.$filename.'" > /dev/null &');
                     }
                 }
-                // Открыть встроенным просмотрщиком изображений
-                elseif ($mime == 'image/jpeg' OR $mime == 'image/x-png' OR $mime == 'image/gif')
-                {
-                    image_view($filename);
-                }
-                // Открыть встроенным текстовым редактором
-                elseif ($mime == 'text/plain' OR $mime == 'text/html')
-                {
-                    text_editor_window($filename);
-                } 
+//                // Открыть встроенным просмотрщиком изображений
+//                elseif ($mime == 'image/jpeg' OR $mime == 'image/x-png' OR $mime == 'image/gif' OR $mime == 'image/x-bmp')
+//                {
+//                    image_view($filename);
+//                }
+//                // Открыть встроенным текстовым редактором
+//                elseif ($mime == 'text/plain' OR $mime == 'text/html')
+//                {
+//                    text_editor_window($filename);
+//                } 
                 // Открыть "системной" программой
                 else
                 {
@@ -421,13 +424,21 @@ function on_button($view, $event, $type)
         {
             $copy = new GtkImageMenuItem($lang['popup']['copy_file']);
             $copy->set_image(GtkImage::new_from_stock(Gtk::STOCK_COPY, Gtk::ICON_SIZE_MENU));
+            
             $cut = new GtkImageMenuItem($lang['popup']['cut_file']);
             $cut->set_image(GtkImage::new_from_stock(Gtk::STOCK_COPY, Gtk::ICON_SIZE_MENU));
+            
             $rename = new GtkImageMenuItem($lang['popup']['rename_file']);
+            $rename->set_image(GtkImage::new_from_file(THEME . 'page_white_edit.png'));
+            
             $delete = new GtkImageMenuItem($lang['popup']['delete']);
             $delete->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_MENU));
+            
             $checksum = new GtkMenuItem($lang['popup']['checksum']);
-            $terminal = new GtkMenuItem($lang['popup']['open_terminal']);
+            
+            $terminal = new GtkImageMenuItem($lang['popup']['open_terminal']);
+            $terminal->set_image(GtkImage::new_from_file(THEME . 'application_xp_terminal.png'));
+            
             $properties = new GtkImageMenuItem($lang['properties']['properties']);
             $properties->set_image(GtkImage::new_from_stock(Gtk::STOCK_PROPERTIES, Gtk::ICON_SIZE_MENU));
 
@@ -474,7 +485,7 @@ function on_button($view, $event, $type)
                 $open->connect_simple('activate', 'open_in_system', $filename);
                 $menu->append($open);
             }
-            if ($mime == 'image/jpeg' OR $mime == 'image/x-png' OR $mime == 'image/gif')
+            if ($mime == 'image/jpeg' OR $mime == 'image/x-png' OR $mime == 'image/gif' OR $mime == 'image/x-bmp')
             {
                 $open = new GtkMenuItem($lang['popup']['open_image']);
                 $menu->append($open);
@@ -515,14 +526,22 @@ function on_button($view, $event, $type)
         {
             $open = new GtkImageMenuItem($lang['popup']['open_dir']);
             $open->set_image(GtkImage::new_from_stock(Gtk::STOCK_OPEN, Gtk::ICON_SIZE_MENU));
+            
             $copy = new GtkImageMenuItem($lang['popup']['copy_dir']);
             $copy->set_image(GtkImage::new_from_stock(Gtk::STOCK_COPY, Gtk::ICON_SIZE_MENU));
+            
             $cut = new GtkImageMenuItem($lang['popup']['cut_dir']);
             $cut->set_image(GtkImage::new_from_stock(Gtk::STOCK_CUT, Gtk::ICON_SIZE_MENU));
-            $rename = new GtkMenuItem($lang['popup']['rename_dir']);
+            
+            $rename = new GtkImageMenuItem($lang['popup']['rename_dir']);
+            $rename->set_image(GtkImage::new_from_file(THEME . 'page_white_edit.png'));
+            
             $delete = new GtkImageMenuItem($lang['popup']['delete']);
             $delete->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_MENU));
-            $terminal = new GtkMenuItem($lang['popup']['open_terminal']);
+            
+            $terminal = new GtkImageMenuItem($lang['popup']['open_terminal']);
+            $terminal->set_image(GtkImage::new_from_file(THEME . 'application_xp_terminal.png'));
+            
             $properties = new GtkImageMenuItem($lang['properties']['properties']);
             $properties->set_image(GtkImage::new_from_stock(Gtk::STOCK_PROPERTIES, Gtk::ICON_SIZE_MENU));
 
@@ -1337,8 +1356,6 @@ function change_dir($act = '', $dir = '', $all = FALSE)
 
     $action_menu['new_file']->set_sensitive(TRUE);
     $action_menu['new_dir']->set_sensitive(TRUE);
-//  $action_menu['comparison_file']->set_sensitive(FALSE);
-//  $action_menu['comparison_dir']->set_sensitive(FALSE);
 
     $action_menu['copy']->set_sensitive(FALSE);
     $action_menu['cut']->set_sensitive(FALSE);
@@ -1444,12 +1461,7 @@ function change_dir($act = '', $dir = '', $all = FALSE)
     }
 
     status_bar();
-
-    // Устанавливаем новое значение в адресную строку
-//    $cur = 'current_dir_' . $panel;
-//    $$cur->set_text($start[$panel]);
     addressbar($panel);
-    
 }
 
 /**
@@ -2027,6 +2039,9 @@ function image_column($column, $render, $model, $iter)
 		'bmp' => 'picture.png',
 		'gif' => 'picture.png',
 		'psd' => 'picture.png',
+		'ico' => 'picture.png',
+		'tif' => 'picture.png',
+		'tga' => 'picture.png',
 		'raw' => 'camera.png',
 		/* Archive */
 		'rar' => 'package.png',
@@ -2148,6 +2163,59 @@ function open_in_system($filename)
     	{
     		exec('kde-open "' . $filename . '" > /dev/null &');
     	}
+    }
+}
+
+/**
+ * Функция открывает выбранный файл во встроенных вьюверах.
+ */
+function open_in_builtin()
+{
+	global $lang, $start, $panel, $selection, $main_window, $store;
+
+    list($model, $rows) = $selection[$panel]->get_selected_rows();
+
+    $iter = $store[$panel]->get_iter($rows[0][0]);
+    $file = $store[$panel]->get_value($iter, 0);
+    $filename = $start[$panel] . DS . $file;
+    
+    if(is_dir($filename))
+    {
+        if (!is_readable($filename))
+        {
+            alert_window($lang['alert']['chmod_read_dir']);
+            return FALSE;
+        }
+        else
+        {
+            change_dir('open', $file);
+        }
+    }
+    elseif (is_file($filename))
+    {
+        if (!is_readable($filename))
+        {
+            alert_window($lang['alert']['chmod_read_file']);
+            return FALSE;
+        }         
+        
+        $mime = mime_content_type($filename);
+        
+	    if ($mime == 'image/jpeg' OR $mime == 'image/x-png' OR 
+			$mime == 'image/gif'  OR $mime == 'image/x-bmp' OR
+			$mime == 'image/tiff' OR $mime == 'image/x-ico') // также есть поддеркжа tga, но  mime_content_type() об этом не знает
+	    {
+	        image_view($filename);
+	    }
+	    elseif ($mime == 'text/plain' OR $mime == 'text/html')
+	    {
+	        text_editor_window($filename);
+	    } 
+	    else
+	    {
+	    	alert_window($lang['alert']['unsupported']);
+	    	return FALSE;
+	    }
     }
 }
 

@@ -252,17 +252,17 @@ for ($i = 1; $i < $argc; $i++)
         }
     }
 }
-$start['left'] = (empty($start['left'])) ? $_config['home_dir_left'] : $start['left'];
-$start['right'] = (empty($start['right'])) ? $_config['home_dir_right'] : $start['right'];
+$start['left']  = empty($start['left'])  ? $_config['home_dir_left']  : $start['left'];
+$start['right'] = empty($start['right']) ? $_config['home_dir_right'] : $start['right'];
 
-$start['left'] = ($_config['save_folders'] == 'on') ? $_config['last_dir_left'] : $start['left'];
+$start['left']  = ($_config['save_folders'] == 'on') ? $_config['last_dir_left']  : $start['left'];
 $start['right'] = ($_config['save_folders'] == 'on') ? $_config['last_dir_right'] : $start['right'];
 
-$start['left'] = !file_exists($start['left']) ? ROOT_DIR : $start['left'];
+$start['left']  = !file_exists($start['left'])  ? ROOT_DIR : $start['left'];
 $start['right'] = !file_exists($start['right']) ? HOME_DIR : $start['right'];
 
-$start['left'] = (preg_match("#^[a-z]:$#is", $start[$panel])) ? $start['left'] . DS : $start['left'];
-$start['right'] = (preg_match("#^[a-z]:$#is", $start[$panel])) ? $start['right'] . DS : $start['right'];
+$start['left']  = preg_match("#^[a-z]:$#is", $start[$panel]) ? $start['left']  . DS : $start['left'];
+$start['right'] = preg_match("#^[a-z]:$#is", $start[$panel]) ? $start['right'] . DS : $start['right'];
 
 /**
  * Используется для навигации по истории посещения директорий.
@@ -365,6 +365,8 @@ foreach ($array_menubar as $value)
  * [9] => "Горячие клавиши"
  */
 $array_menuitem = array(
+	array('file', '', 'builtin', $lang['menu']['quick_view'], '', 'open_in_builtin', '', '', '', 'F3'), //изменить
+	array('file', 'separator'),
     array('file', '', 'new_file', $lang['menu']['new_file'], Gtk::STOCK_NEW, 'new_element', 'file', '', 'write', '<control>N'),
     array('file', '', 'new_dir', $lang['menu']['new_dir'], Gtk::STOCK_DIRECTORY, 'new_element', 'dir', '', 'write', '<shift><control>N'),
     array('file', 'separator'),

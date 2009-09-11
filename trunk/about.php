@@ -48,8 +48,12 @@ function about_window()
     $notebook->append_page($vbox, new GtkLabel($lang['about']['about']));
 
     $vbox = new GtkVBox();
-    $authors = new GtkLabel("Vavilov Egor (Shecspi) <shecspi@gmail.com> \n Hilo Maxim (Nemesis) <HiloMax@gmail.com>");
-    $vbox->pack_start($authors);
+    $author_1 = new GtkLinkButton('Vavilov Egor (Shecspi)');
+	$author_1->connect('clicked', 'open_url', 'mailto:Shecspi@gmail.com'); 
+	$author_2 = new GtkLinkButton('Hilo Maxim (Nemesis)');
+	$author_2->connect('clicked', 'open_url', 'mailto:HiloMax@gmail.com');
+    $vbox->pack_start($author_1, FALSE);
+    $vbox->pack_start($author_2, FALSE);
     $notebook->append_page($vbox, new GtkLabel($lang['about']['authors']));
 
     $buffer = new GtkTextBuffer();
@@ -69,16 +73,16 @@ function about_window()
 }
 
 /**
- * Функция открывает ссылку в браузере по-умолчанию
+ * Функция открывает ссылку на страницу или почтовую программу по-умолчанию
  * @param GtkLinkButton $linkbutton
- * @param string        $url Ссылка на страницу
+ * @param string        $url Ссылка на страницу или почтовый адрес
  */
 function open_url($linkbutton, $url)
 {
 	if (OS == 'Windows')
 	{
     	$shell = new COM('WScript.Shell');
-    	$shell->run('cmd /c start /B "' . $url . '"', 0, FALSE);
+    	$shell->run('cmd /c start "" "' . $url . '"', 0, FALSE);
     	unset($shell);
     }
     elseif (OS == 'Unix')
