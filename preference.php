@@ -188,14 +188,15 @@ function preference()
     $vbox->pack_start(new GtkHSeparator, FALSE, FALSE);
 
     // Экспорт настроек
+    $vbox->pack_start($hbox = new GtkHBox(), FALSE, FALSE);
     $button = new GtkButton($lang['preference']['export_settings']);
     $button->connect_simple('clicked', 'export_settings');
-    $vbox->pack_start($button, FALSE, FALSE);
+    $hbox->pack_start($button, TRUE, TRUE);
 
     // Импорт настроек
     $button = new GtkButton($lang['preference']['import_settings']);
     $button->connect_simple('clicked', 'import_settings', $window);
-    $vbox->pack_start($button, FALSE, FALSE);
+    $hbox->pack_start($button, TRUE, TRUE);
     
     /**
      * Вкладка "Интерфейс".
@@ -286,7 +287,7 @@ function preference()
     $hbox->pack_start($button_font_select, FALSE, FALSE);
     
     /**
-     * Вкладка "Внешние программы"
+     * Вкладка "Программы"
      */
     $vbox = new GtkVBox();
     $notebook->append_page($vbox, new GtkLabel($lang['preference']['program']));

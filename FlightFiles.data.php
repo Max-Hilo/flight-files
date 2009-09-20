@@ -85,6 +85,9 @@ function create_database($combo, $window)
 
         // $_config['conparison'] - адрес программы для сравнения файлов.
         "INSERT INTO config(key, value) VALUES('COMPARISON', '');".
+        	
+        // $_config['use_builtin'] - открывать файлы в встроенных редакторах.
+        //"INSERT INTO config(key, value) VALUES('builtin', 'off');".
 
         // $_config['partbar_refresh'] - если 'on', то панель разделов будет обновляться каждую секунду.
         // Не рекомендуется включать, т.к. замечет один очень неприятный баг.
@@ -389,16 +392,6 @@ function on_button($view, $event, $type)
                         exec('"'.$sfa['command'].'" "'.$filename.'" > /dev/null &');
                     }
                 }
-//                // Открыть встроенным просмотрщиком изображений
-//                elseif ($mime == 'image/jpeg' OR $mime == 'image/x-png' OR $mime == 'image/gif' OR $mime == 'image/x-bmp')
-//                {
-//                    image_view($filename);
-//                }
-//                // Открыть встроенным текстовым редактором
-//                elseif ($mime == 'text/plain' OR $mime == 'text/html')
-//                {
-//                    text_editor_window($filename);
-//                } 
                 // Открыть "системной" программой
                 else
                 {
@@ -2149,20 +2142,29 @@ function open_file($filename, $command)
  */
 function open_in_system($filename)
 {
-    if (OS == 'Windows')
+	global $_config;
+	
+    if($use_builtin == 'on')
     {
-        pclose(popen('"' . $filename . '"', 'r'));
+		open_in_builtin();
     }
-    elseif (OS == 'Unix')
+    else
     {
-    	if (file_exists('/usr/bin/gnome-open'))
-    	{
-    		exec('gnome-open "' . $filename . '" > /dev/null &');
-    	}
-    	elseif (file_exists('/usr/bin/kde-open'))
-    	{
-    		exec('kde-open "' . $filename . '" > /dev/null &');
-    	}
+	    if (OS == 'Windows')
+	    {
+	        pclose(popen('"' . $filename . '"', 'r'));
+	    }
+	    elseif (OS == 'Unix')
+	    {
+	    	if (file_exists('/usr/bin/gnome-open'))
+	    	{
+	    		exec('gnome-open "' . $filename . '" > /dev/null &');
+	    	}
+	    	elseif (file_exists('/usr/bin/kde-open'))
+	    	{
+	    		exec('kde-open "' . $filename . '" > /dev/null &');
+	    	}
+	    }
     }
 }
 
@@ -2179,44 +2181,45 @@ function open_in_builtin()
     $file = $store[$panel]->get_value($iter, 0);
     $filename = $start[$panel] . DS . $file;
     
-    if(is_dir($filename))
-    {
-        if (!is_readable($filename))
-        {
-            alert_window($lang['alert']['chmod_read_dir']);
-            return FALSE;
-        }
-        else
-        {
-            change_dir('open', $file);
-        }
-    }
-    elseif (is_file($filename))
-    {
-        if (!is_readable($filename))
-        {
-            alert_window($lang['alert']['chmod_read_file']);
-            return FALSE;
-        }         
-        
-        $mime = mime_content_type($filename);
-        
-	    if ($mime == 'image/jpeg' OR $mime == 'image/x-png' OR 
-			$mime == 'image/gif'  OR $mime == 'image/x-bmp' OR
-			$mime == 'image/tiff' OR $mime == 'image/x-ico') // также есть поддеркжа tga, но  mime_content_type() об этом не знает
-	    {
+//    if(is_dir($filename))
+//    {
+//        if (!is_readable($filename))
+//        {
+//            alert_window($lang['alert']['chmod_read_dir']);
+//            return FALSE;
+//        }
+//        else
+//        {
+//            change_dir('open', $file);
+//        }
+//    }
+//    elseif (is_file($filename))
+//    {
+//        if (!is_readable($filename))
+//        {
+//            alert_window($lang['alert']['chmod_read_file']);
+//            return FALSE;
+//        }         
+//        
+//        $mime = mime_content_type($filename);
+//        
+//	    if ($mime == 'image/jpeg' OR $mime == 'image/x-png' OR 
+//			$mime == 'image/gif'  OR $mime == 'image/x-bmp' OR
+//			$mime == 'image/tiff' OR $mime == 'image/x-ico') // также есть поддеркжа tga, но mime_content_type() об этом не знает
+//	    {
 	        image_view($filename);
-	    }
-	    elseif ($mime == 'text/plain' OR $mime == 'text/html')
-	    {
-	        text_editor_window($filename);
-	    } 
-	    else
-	    {
-	    	alert_window($lang['alert']['unsupported']);
-	    	return FALSE;
-	    }
-    }
+//	    }
+//	    elseif ($mime == 'text/plain' OR $mime == 'text/html')
+//	    {
+//	        text_editor_window($filename);
+//	    } 
+//	    else
+//	    {
+////	    	alert_window($lang['alert']['unsupported']);
+////	    	return FALSE;
+//			open_in_system($filename);
+//	    }
+//    }
 }
 
 /**
