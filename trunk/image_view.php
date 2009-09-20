@@ -8,11 +8,11 @@
 	
 /**
  * Создание окна для просмотра изображения.
- * @global int $pixbuf_width
- * @global int $pixbuf_height
- * @global array $lang
- * @global int $scope_image
- * @param string $filename Адрес изображения
+ * @global int    $pixbuf_width
+ * @global int    $pixbuf_height
+ * @global array  $lang
+ * @global int    $scope_image
+ * @param string  $filename Адрес изображения
  */
 function image_view($filename)
 {
@@ -57,23 +57,55 @@ function image_view($filename)
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $window->set_position(Gtk::WIN_POS_CENTER);
     $window->set_size_request($width, $height);
+    
     $accel_group = new GtkAccelGroup();
     $window->add_accel_group($accel_group);
     
     //////////////////////////////////
     ///// Область с изображением /////
     //////////////////////////////////
-    $pixbuf = GdkPixbuf::new_from_file($filename);
-    $image = GtkImage::new_from_pixbuf($pixbuf);
+    if(mime_content_type($filename) == 'image/gif') //пхп падает, если гиф загрузить через GdkPixbuf::new_from_file_at_size()
+    {
+		$image =  GtkImage::new_from_file($filename);
+//		if($pixbuf_width > $width OR $pixbuf_width > $height)
+//		{
+//			change_size_image('zoom_to_window', $filename, $image, $statusbar);
+//		}
+    } 
+    else 
+    {
+    	if($pixbuf_width > $width OR $pixbuf_height > $height)
+		{
+
+    		if ($pixbuf_width < $pixbuf_height)
+    		{
+    			$pixbuf = GdkPixbuf::new_from_file_at_size($filename, 300, 520);
+    		}
+    		else
+			{
+				$pixbuf = GdkPixbuf::new_from_file_at_size($filename, 520 , 400);
+    		}
+    		$scope_image = ceil(100 / (1 + ($image_size[0] / 520))); // пересчитаем масштаб
+    	}
+    	else
+    	{
+    		$pixbuf = GdkPixbuf::new_from_file($filename);
+    	}
+    	
+    	$image  = GtkImage::new_from_pixbuf($pixbuf);
+//    	$statusbar->push(1, $pixbuf_width . ' x ' . $pixbuf_height . '    ' . convert_size($filename) . '    ' . $scope_image . '%');
+    }
+    
     $scroll = new GtkScrolledWindow();
     $scroll->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
+    $scroll->set_shadow_type(Gtk::SHADOW_NONE);
     $scroll->add_with_viewport($image);
 
     ////////////////////////////
     ///// Строка состояния /////
     ////////////////////////////
     $statusbar = new GtkStatusBar();
-    $statusbar->push(1, $pixbuf_width . ' x ' . $pixbuf_height . '    '.convert_size($filename) . '    ' . $scope_image . '%');
+    $statusbar->push(1, $pixbuf_width . ' x ' . $pixbuf_height . '    ' . convert_size($filename) . '    ' . $scope_image . '%');
 
     ////////////////
     ///// Меню /////
@@ -95,6 +127,14 @@ function image_view($filename)
     $menu->append($file);
     $menu->append($view);
     $menu->append($help);
+
+    $menu_item['exif'] = new GtkImageMenuItem($lang['image']['exif_title']);
+    $menu_item['exif']->set_image(GtkImage::new_from_stock(Gtk::STOCK_INFO, Gtk::ICON_SIZE_MENU));
+    $menu_item['exif']->add_accelerator('activate', $accel_group, Gdk::KEY_E, Gdk::CONTROL_MASK, 1);
+    $menu_item['exif']->connect_simple('activate', 'show_exif', $filename);
+    $sub_file->append($menu_item['exif']);
+
+	$sub_file->append(new GtkSeparatorMenuItem());
 
     $menu_item['close'] = new GtkImageMenuItem($lang['image']['menu_close']);
     $menu_item['close']->set_image(GtkImage::new_from_stock(Gtk::STOCK_CLOSE, Gtk::ICON_SIZE_MENU));
@@ -123,11 +163,13 @@ function image_view($filename)
     $sub_view->append(new GtkSeparatorMenuItem());
 
     $menu_item['rotate_left'] = new GtkImageMenuItem($lang['image']['menu_rotate_left']);
+    $menu_item['rotate_left']->set_image(GtkImage::new_from_stock(Gtk::STOCK_UNDO, Gtk::ICON_SIZE_MENU));
     $menu_item['rotate_left']->add_accelerator('activate', $accel_group, Gdk::KEY_Left, Gdk::CONTROL_MASK, 1);
     $menu_item['rotate_left']->connect_simple('activate', 'rotate_image', 'left', $filename, $image);
     $sub_view->append($menu_item['rotate_left']);
 
     $menu_item['rotate_right'] = new GtkImageMenuItem($lang['image']['menu_rotate_right']);
+    $menu_item['rotate_right']->set_image(GtkImage::new_from_stock(Gtk::STOCK_REDO, Gtk::ICON_SIZE_MENU));
     $menu_item['rotate_right']->add_accelerator('activate', $accel_group, Gdk::KEY_Right, Gdk::CONTROL_MASK, 1);
     $menu_item['rotate_right']->connect_simple('activate', 'rotate_image', 'right', $filename, $image);
     $sub_view->append($menu_item['rotate_right']);
@@ -175,12 +217,20 @@ function image_view($filename)
     $rotate_right->set_tooltip_text($lang['image']['rotate_right_hint']);
     $toolbar->insert($rotate_right, -1);
 
+    $toolbar->insert(new GtkSeparatorToolItem(), -1);
+
+    $exif_info = new GtkToolButton();
+    $exif_info->set_stock_id(Gtk::STOCK_INFO);
+    $exif_info->set_label($lang['image']['exif_title']);
+    $exif_info->set_tooltip_text($lang['image']['exif_title_hint']);
+    $toolbar->insert($exif_info, -1);
+    
     $zoom_in->connect_simple('clicked', 'change_size_image', 'zoom_in', $filename, $image, $statusbar);
     $zoom_out->connect_simple('clicked', 'change_size_image', 'zoom_out', $filename, $image, $statusbar);
     $zoom_source->connect_simple('clicked', 'change_size_image', 'zoom_source', $filename, $image, $statusbar);
     $rotate_left->connect_simple('clicked', 'rotate_image', 'left', $filename, $image);
     $rotate_right->connect_simple('clicked', 'rotate_image', 'right', $filename, $image);
-
+    $exif_info->connect_simple('clicked', 'show_exif', $filename);
     ///////////////////////////////////
 
     $vbox = new GtkVBox();
@@ -240,9 +290,9 @@ function rotate_image($action, $filename, $image)
         $rotate_image -= 90;
     }
 
-    $pixbuf_width = $pixbuf_width + $pixbuf_height;
+    $pixbuf_width  = $pixbuf_width + $pixbuf_height;
     $pixbuf_height = $pixbuf_width - $pixbuf_height;
-    $pixbuf_width = $pixbuf_width - $pixbuf_height;
+    $pixbuf_width  = $pixbuf_width - $pixbuf_height;
 
     $image_size = getimagesize($filename);
     $type = $image_size[2];
@@ -282,7 +332,7 @@ function rotate_image($action, $filename, $image)
         default:
             return FALSE;
     }
-    $pixbuf = GdkPixbuf::new_from_file($img_file);
+    $pixbuf = GdkPixbuf::new_from_file($img_file); //
     $pixbuf = $pixbuf->scale_simple($pixbuf_width, $pixbuf_height, Gdk::INTERP_HYPER);
     $image->set_from_pixbuf($pixbuf);
     unlink($img_file);
@@ -303,35 +353,116 @@ function change_size_image($action, $filename, $image, $statusbar)
 {
     global $pixbuf_width, $pixbuf_height, $scope_image;
 
-    $image_size = getimagesize($filename);
+   $image_size = getimagesize($filename);
+    
     if ($action == 'zoom_in')
     {
-        $width = $pixbuf_width + $pixbuf_width * 0.1;
+        $width  = $pixbuf_width  + $pixbuf_width * 0.1;
         $height = $pixbuf_height + $pixbuf_height * 0.1;
-        $scope = $scope_image * 1.1;
+        $scope  = $scope_image * 1.1;
     }
     elseif ($action == 'zoom_out')
     {
-        $width = $pixbuf_width - $pixbuf_width * 0.1;
+        $width  = $pixbuf_width  - $pixbuf_width * 0.1;
         $height = $pixbuf_height - $pixbuf_height * 0.1;
-        $scope = $scope_image / 1.1;
+        $scope  = $scope_image / 1.1;
     }
     elseif ($action == 'zoom_source')
     {
-        $width = $image_size[0];
+        $width  = $image_size[0];
         $height = $image_size[1];
-        $scope = 100;
+        $scope  = 100;
+    }
+    elseif ($action == 'zoom_to_window')
+    {
+		$ratio  = ($image_size[0] / 600) + 0.5;
+		$width  = floor($image_size[0] / $ratio);
+		$height = floor($image_size[1] / $ratio);
+        $scope  = $scope_image / (1 + $ratio);
     }
 
-    if ($scope <= 30 OR $scope >= 400)
+    if ($scope <= 5 OR $scope >= 400)
     {
         return FALSE;
     }
+    
     $pixbuf_width = $width;
     $pixbuf_height = $height;
     $scope_image = $scope;
-    $pixbuf = GdkPixbuf::new_from_file($filename);
+    $pixbuf = GdkPixbuf::new_from_file($filename); // сделать загрузку с размером через лоад_имадж_ат() ?
     $pixbuf = $pixbuf->scale_simple($pixbuf_width, $pixbuf_height, Gdk::INTERP_HYPER);
     $image->set_from_pixbuf($pixbuf);
-    $statusbar->push(1, $image_size[0] . ' x ' . $image_size[1] . '    '.convert_size($filename) . '    ' . round($scope_image) . '%');
+    $statusbar->push(1, $image_size[0] . ' x ' . $image_size[1] . ' [ ' . round($pixbuf_width, 0) . ' x ' . round($pixbuf_height, 0)  . ' ]    ' . convert_size($filename) . '    ' . floor($scope_image) . '%');
+}
+
+/**
+ * Функция отображает диалог содержащий EXIF теги изображения.
+ * @param  string   $filename Путь к изображению
+ * @global resource $sqlite
+ * @global array    $lang
+ */
+function show_exif($filename)
+{
+    global $lang;
+
+    if (!extension_loaded('exif'))
+    {
+        alert_window($lang['image']['exif_not_found']);
+        return FALSE;
+    }
+
+    $window = new GtkWindow();    
+    $window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
+    $window->set_skip_taskbar_hint(TRUE);
+    $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+    $window->set_title($lang['image']['exif_title'] . ': ' .  basename($filename));
+    $window->set_position(Gtk::WIN_POS_CENTER);
+    $window->set_resizable(FALSE);
+    $window->set_size_request(350, 400);
+    $window->set_modal(TRUE);
+    $window->connect_simple('destroy', array('Gtk', 'main_quit'));
+    
+    $exif = exif_read_data($filename, FILE|IFD0|THUMBNAIL|COMMENT|EXIF, TRUE, FALSE);
+    
+    if ($exif == FALSE)
+    {
+    	alert_window($lang['image']['exif_no_data']);
+    	return FALSE;
+    }
+    
+    $model = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING);
+    
+	foreach ($exif as $key => $section) 
+	{
+	   foreach ($section as $name => $val) 
+	   {
+	       $model->append(array(' ' . $name, ' ' . $val));
+	   }
+	}	
+	
+    $view = new GtkTreeView($model);
+    $view->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_BOTH);
+    $view->set_enable_search(FALSE);
+    
+    $render = new GtkCellRendererText;
+    $render->set_property('ellipsize', Pango::ELLIPSIZE_END);
+    $render->set_property('editable', true);
+    
+    $view->append_column($column_name = new GtkTreeViewColumn($lang['image']['exif_tags'], $render, 'text', 0));
+    $view->append_column($column_data = new GtkTreeViewColumn($lang['image']['exif_value'], $render, 'text', 1));
+    
+    $column_name->set_sizing(Gtk::TREE_VIEW_COLUMN_FIXED);
+    $column_name->set_fixed_width(125);
+    $column_name->set_resizable(TRUE);
+    $column_data->set_resizable(TRUE);
+    
+    
+	$scroll = new GtkScrolledWindow();
+	$scroll->set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
+	$scroll->add($view);
+	$scroll->show_all();
+    
+    $window->add($scroll);
+    $window->show_all();
+    Gtk::main();
 }

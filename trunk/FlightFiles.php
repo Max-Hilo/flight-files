@@ -137,6 +137,14 @@ if (!extension_loaded('mbstring'))
     }
 }
 
+if (!extension_loaded('exif'))
+{
+    if (@!dl('php_exif.' . PHP_SHLIB_SUFFIX))
+    {
+        echo "\r\nWarning: Unable to load dinamic library 'php_exif'\r\n\r\n";
+    }
+}
+
 // Создаём папку с конфигами
 if (!file_exists(CONFIG_DIR))
 {
