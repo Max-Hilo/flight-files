@@ -2181,45 +2181,43 @@ function open_in_builtin()
     $file = $store[$panel]->get_value($iter, 0);
     $filename = $start[$panel] . DS . $file;
     
-//    if(is_dir($filename))
-//    {
-//        if (!is_readable($filename))
-//        {
-//            alert_window($lang['alert']['chmod_read_dir']);
-//            return FALSE;
-//        }
-//        else
-//        {
-//            change_dir('open', $file);
-//        }
-//    }
-//    elseif (is_file($filename))
-//    {
-//        if (!is_readable($filename))
-//        {
-//            alert_window($lang['alert']['chmod_read_file']);
-//            return FALSE;
-//        }         
-//        
-//        $mime = mime_content_type($filename);
-//        
-//	    if ($mime == 'image/jpeg' OR $mime == 'image/x-png' OR 
-//			$mime == 'image/gif'  OR $mime == 'image/x-bmp' OR
-//			$mime == 'image/tiff' OR $mime == 'image/x-ico') // также есть поддеркжа tga, но mime_content_type() об этом не знает
-//	    {
+    if(is_dir($filename))
+    {
+        if (!is_readable($filename))
+        {
+            alert_window($lang['alert']['chmod_read_dir']);
+            return FALSE;
+        }
+        else
+        {
+            change_dir('open', $file);
+        }
+    }
+    elseif (is_file($filename))
+    {
+        if (!is_readable($filename))
+        {
+            alert_window($lang['alert']['chmod_read_file']);
+            return FALSE;
+        }         
+        
+        $mime = mime_content_type($filename);
+        
+	    if ($mime == 'image/jpeg' OR $mime == 'image/x-png' OR 
+			$mime == 'image/gif'  OR $mime == 'image/x-bmp' OR
+			$mime == 'image/tiff' OR $mime == 'image/x-ico') // также есть поддеркжа tga, но mime_content_type() об этом не знает
+	    {
 	        image_view($filename);
-//	    }
-//	    elseif ($mime == 'text/plain' OR $mime == 'text/html')
-//	    {
-//	        text_editor_window($filename);
-//	    } 
-//	    else
-//	    {
-////	    	alert_window($lang['alert']['unsupported']);
-////	    	return FALSE;
-//			open_in_system($filename);
-//	    }
-//    }
+	    }
+	    elseif ($mime == 'text/plain' OR $mime == 'text/html')
+	    {
+	        text_editor_window($filename);
+	    } 
+	    else
+	    {
+			open_in_system($filename);
+	    }
+    }
 }
 
 /**
