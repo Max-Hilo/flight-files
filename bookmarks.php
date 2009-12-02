@@ -56,12 +56,12 @@ function bookmarks_window()
     ///// Кнопки /////
     //////////////////
     
-    $array['button_delete']->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_BUTTON));
+    //$array['button_delete']->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_BUTTON));
     $array['button_delete']->set_sensitive(FALSE);
     $array['button_delete']->connect_simple('clicked', 'bookmarks_delete', $array);
     $array['button_delete']->set_tooltip_text($lang['bookmarks']['delete_hint']);
     
-    $array['button_delete_all']->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_BUTTON));
+    //$array['button_delete_all']->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_BUTTON));
     if (sqlite_num_rows(sqlite_query($sqlite, "SELECT * FROM bookmarks")) == 0)
     {
         $array['button_delete_all']->set_sensitive(FALSE);
@@ -70,7 +70,7 @@ function bookmarks_window()
     $array['button_delete_all']->set_tooltip_text($lang['bookmarks']['delete_all_hint']);
     
     $array['button_add'] = new GtkButton($lang['bookmarks']['add']);
-    $array['button_add']->set_image(GtkImage::new_from_stock(Gtk::STOCK_ADD, Gtk::ICON_SIZE_BUTTON));
+    //$array['button_add']->set_image(GtkImage::new_from_stock(Gtk::STOCK_ADD, Gtk::ICON_SIZE_BUTTON));
     $array['button_add']->connect_simple('clicked', 'bookmark_add', $array, FALSE);
     $array['button_add']->set_tooltip_text($lang['bookmarks']['add_hint']);
 

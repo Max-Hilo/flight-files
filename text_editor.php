@@ -59,6 +59,7 @@ function text_editor_window($filename)
         $source_buffer->connect('changed', 'on_buffer_changed');
         $source = GtkSourceView::new_with_buffer($source_buffer);
         $source->set_show_line_numbers(TRUE);
+        $source->set_show_line_markers(TRUE);
         $source->set_highlight_current_line(TRUE);
         $source->set_smart_home_end(TRUE);
         $source->set_auto_indent(TRUE);

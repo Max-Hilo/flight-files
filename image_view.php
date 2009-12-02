@@ -17,7 +17,7 @@
  */
 function image_view($filename)
 {
-    global $pixbuf_width, $pixbuf_height, $lang, $scope_image, $rotate_image;
+    global $pixbuf_width, $pixbuf_height, $lang, $scope_image, $rotate_image, $pixbuf;
 
     $image_size = getimagesize($filename);
 
@@ -140,8 +140,14 @@ function image_view($filename)
     $menu_item['exif'] = new GtkImageMenuItem($lang['image']['exif_title']);
     $menu_item['exif']->set_image(GtkImage::new_from_stock(Gtk::STOCK_INFO, Gtk::ICON_SIZE_MENU));
     $menu_item['exif']->add_accelerator('activate', $accel_group, Gdk::KEY_E, Gdk::CONTROL_MASK, 1);
-    $menu_item['exif']->connect_simple('activate', 'show_exif', $filename);
+    $menu_item['exif']->connect_simple('activate', 'exif_window', $filename);
     $sub_file->append($menu_item['exif']);
+    
+//    $menu_item['save'] = new GtkImageMenuItem($lang['text_view']['menu_save']);
+//    $menu_item['save']->set_image(GtkImage::new_from_stock(Gtk::STOCK_SAVE, Gtk::ICON_SIZE_MENU));
+//    $menu_item['save']->add_accelerator('activate', $accel_group, Gdk::KEY_S, Gdk::CONTROL_MASK, 1);
+//    $menu_item['save']->connect_simple('activate', 'save_image', $filename);
+//    $sub_file->append($menu_item['save']);
 
 	$sub_file->append(new GtkSeparatorMenuItem());
 
@@ -168,6 +174,12 @@ function image_view($filename)
     $menu_item['zoom_source']->add_accelerator('activate', $accel_group, Gdk::KEY_0, Gdk::CONTROL_MASK, 1);
     $menu_item['zoom_source']->connect_simple('activate', 'change_size_image', 'zoom_source', $filename, $image, $statusbar);
     $sub_view->append($menu_item['zoom_source']);
+
+    $menu_item['zoom_fit'] = new GtkImageMenuItem($lang['image']['menu_zoom_fit']);
+    $menu_item['zoom_fit']->set_image(GtkImage::new_from_stock(Gtk::STOCK_ZOOM_FIT, Gtk::ICON_SIZE_MENU));
+    $menu_item['zoom_fit']->add_accelerator('activate', $accel_group, Gdk::KEY_F, Gdk::CONTROL_MASK, 1);
+    $menu_item['zoom_fit']->connect_simple('activate', 'change_size_image', 'zoom_to_window', $filename, $image, $statusbar);
+    $sub_view->append($menu_item['zoom_fit']);
 
     $sub_view->append(new GtkSeparatorMenuItem());
 
@@ -211,6 +223,12 @@ function image_view($filename)
     $zoom_source->set_label($lang['image']['zoom_source']);
     $zoom_source->set_tooltip_text($lang['image']['zoom_source_hint']);
     $toolbar->insert($zoom_source, -1);
+    
+    $zoom_fit = new GtkToolButton();
+    $zoom_fit->set_stock_id(Gtk::STOCK_ZOOM_FIT);
+    $zoom_fit->set_label($lang['image']['zoom_fit']);
+    $zoom_fit->set_tooltip_text($lang['image']['zoom_fit_hint']);
+    $toolbar->insert($zoom_fit, -1);
 
     $toolbar->insert(new GtkSeparatorToolItem(), -1);
 
@@ -237,9 +255,10 @@ function image_view($filename)
     $zoom_in->connect_simple('clicked', 'change_size_image', 'zoom_in', $filename, $image, $statusbar);
     $zoom_out->connect_simple('clicked', 'change_size_image', 'zoom_out', $filename, $image, $statusbar);
     $zoom_source->connect_simple('clicked', 'change_size_image', 'zoom_source', $filename, $image, $statusbar);
+    $zoom_fit->connect_simple('clicked', 'change_size_image', 'zoom_to_window', $filename, $image, $statusbar);
     $rotate_left->connect_simple('clicked', 'rotate_image', 'left', $filename, $image);
     $rotate_right->connect_simple('clicked', 'rotate_image', 'right', $filename, $image);
-    $exif_info->connect_simple('clicked', 'show_exif', $filename);
+    $exif_info->connect_simple('clicked', 'exif_window', $filename);
     ///////////////////////////////////
 
     $vbox = new GtkVBox();
@@ -260,6 +279,7 @@ function image_view($filename)
  */
 function image_view_close($window)
 {
+	global $img_file;
 
 	if (file_exists($img_file))
 	{
@@ -284,7 +304,7 @@ function image_view_close($window)
  */
 function rotate_image($action, $filename, $image)
 {
-    global $rotate_image, $pixbuf_width, $pixbuf_height, $lang, $img_file;
+    global $rotate_image, $pixbuf_width, $pixbuf_height, $lang, $img_file, $pixbuf;
 
     if (!extension_loaded('gd'))
     {
@@ -365,7 +385,7 @@ function rotate_image($action, $filename, $image)
  */
 function change_size_image($action, $filename, $image, $statusbar)
 {
-    global $rotate_image, $pixbuf_width, $pixbuf_height, $scope_image, $img_file;
+    global $rotate_image, $pixbuf_width, $pixbuf_height, $scope_image, $img_file, $pixbuf;
 
    	$pixbuf2 = GdkPixbuf::new_from_file($filename);
 	
@@ -417,10 +437,13 @@ function change_size_image($action, $filename, $image, $statusbar)
     }
     elseif ($action == 'zoom_to_window')
     {
-		$ratio  = ($image_size[0] / 600) + 0.5;
-		$width  = floor($image_size[0] / $ratio);
-		$height = floor($image_size[1] / $ratio);
-        $scope  = $scope_image / (1 + $ratio);
+//    	if ($pixbuf_width < $window_width OR $pixbuf_height < $window_height) 
+//    	{
+			$ratio  = ($image_size[0] / 600) + 0.5;
+			$width  = floor($image_size[0] / $ratio);
+			$height = floor($image_size[1] / $ratio);
+        	$scope  = $scope_image / (1 + $ratio);
+//        }
     }
 
     if ($scope <= 5 OR $scope >= 400)
@@ -452,7 +475,7 @@ function change_size_image($action, $filename, $image, $statusbar)
  * @global resource $sqlite
  * @global array    $lang
  */
-function show_exif($filename)
+function exif_window($filename)
 {
     global $lang;
 
@@ -471,18 +494,19 @@ function show_exif($filename)
     $window->set_resizable(FALSE);
     $window->set_size_request(350, 400);
     $window->set_modal(TRUE);
+    $window->set_border_width(8);
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
-    
+
     $exif = exif_read_data($filename, FILE|IFD0|THUMBNAIL|COMMENT|EXIF, TRUE, FALSE);
-    
+
     if ($exif == FALSE)
     {
     	alert_window($lang['image']['exif_no_data']);
     	return FALSE;
     }
-    
+
     $model = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING);
-    
+
 	foreach ($exif as $key => $section) 
 	{
 	   foreach ($section as $name => $val) 
@@ -492,14 +516,13 @@ function show_exif($filename)
 	}	
 	
     $view = new GtkTreeView($model);
-    $view->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_BOTH);
     $view->set_enable_search(FALSE);
     
     $render = new GtkCellRendererText;
     $render->set_property('ellipsize', Pango::ELLIPSIZE_END);
     $render->set_property('editable', true);
     
-    $view->append_column($column_name = new GtkTreeViewColumn($lang['image']['exif_tags'], $render, 'text', 0));
+    $view->append_column($column_name = new GtkTreeViewColumn($lang['image']['exif_tag'], $render, 'text', 0));
     $view->append_column($column_data = new GtkTreeViewColumn($lang['image']['exif_value'], $render, 'text', 1));
     
     $column_name->set_sizing(Gtk::TREE_VIEW_COLUMN_FIXED);
@@ -508,11 +531,21 @@ function show_exif($filename)
     $column_data->set_resizable(TRUE);
     
 	$scroll = new GtkScrolledWindow();
+	$scroll->set_shadow_type(Gtk::SHADOW_ETCHED_IN);
 	$scroll->set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
 	$scroll->add($view);
 	$scroll->show_all();
     
+    //todo: Сделать кнопку "скопировать данные в буфер".
+    
     $window->add($scroll);
     $window->show_all();
     Gtk::main();
+}
+
+function save_image($filename)
+{  
+	global $pixbuf;
+	//todo: Окно сохранить файл со возможностью выбора формата, без(с) перезаписи оригинала.
+//	$pixbuf->save($filename, 'png');
 }
