@@ -9,11 +9,12 @@
 /**
  * Отображает окно со свойствами для указанного файла.
  * @global array $lang
+ * @global array $_config
  * @param string $filename Адрес файла, для которого необходимо произвести операцию
  */
 function properties_window($filename)
 {
-    global $lang;
+    global $lang, $_config;
     
     $window = new GtkWindow();
     $window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
@@ -49,8 +50,11 @@ function properties_window($filename)
     $label_type->modify_font(new PangoFontDescription('Bold'));
     $table->attach($label_type, 0, 1, 1, 2, Gtk::FILL, Gtk::FILL);
 
-    $type = new GtkLabel((is_dir($filename)) ? $lang['properties']['dir'] :
-        ((is_link($filename)) ? $lang['properties']['simlink'] : $lang['properties']['file']));
+    $type = new GtkLabel(is_dir($filename)
+    	? $lang['properties']['dir'] 
+    	: (is_link($filename) 
+    		? $lang['properties']['simlink'] 
+    		: $lang['properties']['file']));
     $type->set_alignment(0, 0);
     $table->attach($type, 1, 2, 1, 2);
 
@@ -107,7 +111,7 @@ function properties_window($filename)
         $label_mtime->modify_font(new PangoFontDescription('Bold'));
         $table->attach($label_mtime, 0, 1, 6, 7, Gtk::FILL, Gtk::FILL);
 
-        $mtime = new GtkLabel(date('d.m.Y G:i:s', filemtime($filename)));
+        $mtime = new GtkLabel(date($_config['mtime_format'], filemtime($filename)));
         $mtime->set_alignment(0.0, 0.5);
         $table->attach($mtime, 1, 2, 6, 7);
 
@@ -117,7 +121,7 @@ function properties_window($filename)
         $label_atime->modify_font(new PangoFontDescription('Bold'));
         $table->attach($label_atime, 0, 1, 7, 8, Gtk::FILL, Gtk::FILL);
         
-        $atime = new GtkLabel(date('d.m.Y G:i:s', fileatime($filename)));
+        $atime = new GtkLabel(date($_config['mtime_format'], fileatime($filename)));
         $atime->set_alignment(0, 0.5);
         $table->attach($atime, 1, 2, 7, 8);
     } 
@@ -146,7 +150,7 @@ function properties_window($filename)
 	    $label_mtime->modify_font(new PangoFontDescription('Bold'));
 	    $table->attach($label_mtime, 0, 1, 8, 9, Gtk::FILL, Gtk::FILL);
 
-	    $mtime = new GtkLabel(date('d.m.Y G:i:s', filectime($filename)));
+	    $mtime = new GtkLabel(date($_config['mtime_format'], filectime($filename)));
 	    $mtime->set_alignment(0.0, 0.5);
 	    $table->attach($mtime, 1, 2, 8, 9);
 
@@ -156,7 +160,7 @@ function properties_window($filename)
 	    $label_atime->modify_font(new PangoFontDescription('Bold'));
 	    $table->attach($label_atime, 0, 1, 9, 10, Gtk::FILL, Gtk::FILL);
 	    
-	    $atime = new GtkLabel(date('d.m.Y G:i:s', fileatime($filename)));
+	    $atime = new GtkLabel(date($_config['mtime_format'], fileatime($filename)));
 	    $atime->set_alignment(0, 0.5);
 	    $table->attach($atime, 1, 2, 9, 10);
     }

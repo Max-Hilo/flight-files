@@ -393,8 +393,7 @@ $array_menuitem = array(
     array('edit', '', 'cut', $lang['menu']['cut'], Gtk::STOCK_CUT, 'bufer_file', 'cut', '', 'false', ''), // изменить
     array('edit', '', 'paste', $lang['menu']['paste'], Gtk::STOCK_PASTE, 'paste_file', '', '', 'false', ''), // изменить
     array('edit', 'separator'),
-    array('edit', '', 'delete', $lang['menu']['delete'], Gtk::STOCK_DELETE, 'delete_window'
-    , '', '', 'false', ''), //изменить
+    array('edit', '', 'delete', $lang['menu']['delete'], Gtk::STOCK_DELETE, 'delete_window', '', '', 'false', ''), //изменить
     array('edit', 'separator'),
     array('edit', '', 'rename', $lang['menu']['rename'], '', 'rename_window', '', '', 'false', 'F2'),
     array('edit', '', 'mass_rename', $lang['menu']['mass_rename'], '', 'bulk_rename_window', '', '', 'write', '<control>F2'),
@@ -683,7 +682,7 @@ $hbox->set_homogeneous(TRUE);
 $panel = 'left';
 
 $left = new GtkFrame;
-$left->set_shadow_type(Gtk::SHADOW_IN);
+$left->set_shadow_type(Gtk::SHADOW_ETCHED_IN);
 
 $store['left'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING,
     GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING);
@@ -737,7 +736,7 @@ $left->add($scroll_left);
 $panel = 'right';
 
 $right = new GtkFrame;
-$right->set_shadow_type(Gtk::SHADOW_IN);
+$right->set_shadow_type(Gtk::SHADOW_ETCHED_IN);
 
 $store['right'] = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING,
     GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING);

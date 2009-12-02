@@ -419,7 +419,7 @@ function on_button($view, $event, $type)
             $copy->set_image(GtkImage::new_from_stock(Gtk::STOCK_COPY, Gtk::ICON_SIZE_MENU));
             
             $cut = new GtkImageMenuItem($lang['popup']['cut_file']);
-            $cut->set_image(GtkImage::new_from_stock(Gtk::STOCK_COPY, Gtk::ICON_SIZE_MENU));
+            $cut->set_image(GtkImage::new_from_stock(Gtk::STOCK_CUT, Gtk::ICON_SIZE_MENU));
             
             $rename = new GtkImageMenuItem($lang['popup']['rename_file']);
             $rename->set_image(GtkImage::new_from_file(THEME . 'page_white_edit.png'));
@@ -445,7 +445,7 @@ function on_button($view, $event, $type)
             $sub_checksum->append($crc32);
 
             // Расчитывать контрольную сумму для пустых файлов бессмысленно
-            if ($size == '0 '.$lang['size']['b'])
+            if ($size == '0 ' . $lang['size']['b'])
             {
                 $checksum->set_sensitive(FALSE);
             }
@@ -478,7 +478,10 @@ function on_button($view, $event, $type)
                 $open->connect_simple('activate', 'open_in_system', $filename);
                 $menu->append($open);
             }
-            if ($mime == 'image/jpeg' OR $mime == 'image/x-png' OR $mime == 'image/gif' OR $mime == 'image/x-bmp')
+            if ($mime == 'image/jpeg' OR $mime == 'image/x-png' OR 
+				$mime == 'image/gif'  OR $mime == 'image/x-bmp' OR
+				$mime == 'image/tiff' OR $mime == 'image/x-ico' OR
+				$mime == 'image/png')
             {
                 $open = new GtkMenuItem($lang['popup']['open_image']);
                 $menu->append($open);
@@ -505,15 +508,15 @@ function on_button($view, $event, $type)
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($properties);
 
-            $copy->connect_simple('activate', 'bufer_file', 'copy');
-            $cut->connect_simple('activate', 'bufer_file', 'cut');
-            $rename->connect_simple('activate', 'rename_window');
-            $delete->connect_simple('activate', 'delete_window');
-            $md5->connect_simple('activate', 'checksum_window',   $start[$panel]. DS .$file, 'MD5');
-            $sha1->connect_simple('activate', 'checksum_window',  $start[$panel]. DS .$file, 'SHA1');
-            $crc32->connect_simple('activate', 'checksum_window', $start[$panel]. DS .$file, 'CRC32');
+            $copy      ->connect_simple('activate', 'bufer_file', 'copy');
+            $cut       ->connect_simple('activate', 'bufer_file', 'cut');
+            $rename    ->connect_simple('activate', 'rename_window');
+            $delete    ->connect_simple('activate', 'delete_window');
+            $md5       ->connect_simple('activate', 'checksum_window', $start[$panel]. DS .$file, 'MD5');
+            $sha1      ->connect_simple('activate', 'checksum_window', $start[$panel]. DS .$file, 'SHA1');
+            $crc32     ->connect_simple('activate', 'checksum_window', $start[$panel]. DS .$file, 'CRC32');
+            $terminal  ->connect_simple('activate', 'open_terminal');
             $properties->connect_simple('activate', 'properties_window', $start[$panel]. DS .$file);
-            $terminal->connect_simple('activate', 'open_terminal');
         }
         elseif ($dir_file == '<DIR>')
         {
@@ -567,12 +570,12 @@ function on_button($view, $event, $type)
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($properties);
 
-            $open->connect_simple('activate', 'change_dir', 'open', $file);
-            $copy->connect_simple('activate', 'bufer_file', 'copy');
-            $cut->connect_simple('activate', 'bufer_file', 'cut');
-            $rename->connect_simple('activate', 'rename_window');
-            $delete->connect_simple('activate', 'delete_window');
-            $terminal->connect_simple('activate', 'open_terminal');
+            $open      ->connect_simple('activate', 'change_dir', 'open', $file);
+            $copy      ->connect_simple('activate', 'bufer_file', 'copy');
+            $cut       ->connect_simple('activate', 'bufer_file', 'cut');
+            $rename    ->connect_simple('activate', 'rename_window');
+            $delete    ->connect_simple('activate', 'delete_window');
+            $terminal  ->connect_simple('activate', 'open_terminal');
             $properties->connect_simple('activate', 'properties_window', $start[$panel]. DS .$file);
         }
         else
@@ -663,6 +666,7 @@ function on_drop($widget, $context, $x, $y, $data, $info, $time, $panel_source)
     }
 
     $filename = $data->data;
+    
     foreach ($lang['letters'] as $key => $value)
     {
         $filename = str_replace($key, $value, $filename);
@@ -1067,8 +1071,10 @@ function current_dir($panel, $status = '')
     
 
     $opendir = opendir($start[$panel]);
-
     while (FALSE !== ($file = readdir($opendir)))
+//	$file_list = explode("\n", shell_exec('dir /A:-S "' . $start[$panel] . '" /B'));
+//	$remove_last = array_pop($file_list);
+//	foreach($file_list as $file)
     {
         // Пропускаем папки '.' и '..'
         if ($file == '.' OR $file == '..')
@@ -2152,7 +2158,7 @@ function open_in_system($filename)
     {
 	    if (OS == 'Windows')
 	    {
-	        pclose(popen('"' . $filename . '"', 'r'));
+	        pclose(popen('start /B ' . fix_spaces($filename), 'r'));
 	    }
 	    elseif (OS == 'Unix')
 	    {
@@ -2177,8 +2183,8 @@ function open_in_builtin()
 
     list($model, $rows) = $selection[$panel]->get_selected_rows();
 
-    $iter = $store[$panel]->get_iter($rows[0][0]);
-    $file = $store[$panel]->get_value($iter, 0);
+    @$iter = $store[$panel]->get_iter($rows[0][0]);
+    @$file = $store[$panel]->get_value($iter, 0);
     $filename = $start[$panel] . DS . $file;
     
     if(is_dir($filename))
@@ -2205,7 +2211,8 @@ function open_in_builtin()
         
 	    if ($mime == 'image/jpeg' OR $mime == 'image/x-png' OR 
 			$mime == 'image/gif'  OR $mime == 'image/x-bmp' OR
-			$mime == 'image/tiff' OR $mime == 'image/x-ico') // также есть поддеркжа tga, но mime_content_type() об этом не знает
+			$mime == 'image/tiff' OR $mime == 'image/x-ico' OR
+			$mime == 'image/png') // также есть поддеркжа tga, но mime_content_type() об этом не знает
 	    {
 	        image_view($filename);
 	    }
@@ -2515,6 +2522,7 @@ function partbar($side)
     {
         $array = array('B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
             'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z');
+        
         foreach ($array as $drive)
         {
             if (file_exists($drive . ':'))

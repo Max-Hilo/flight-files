@@ -31,15 +31,25 @@ function files_associations_window()
 
     $vbox = new GtkVBox();
     $model_type = new GtkListStore(GObject::TYPE_STRING, GObject::TYPE_STRING, GObject::TYPE_STRING);
+    
     $view_type = new GtkTreeView($model_type);
-    $select_type = $view_type->get_selection();
+    $view_type->set_enable_search(FALSE);
+    $select_type = $view_type->get_selection();   
     $view_type->append_column($column_id = new GtkTreeViewColumn('', new GtkCellRendererText(), 'text', 2));
+    
+    $scroll = new GtkScrolledWindow();
+	$scroll->set_shadow_type(Gtk::SHADOW_ETCHED_IN);
+	$scroll->set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
+	$scroll->add($view_type);
+    
     $column_id->set_visible(FALSE);
-    $view_type->append_column($column_type = new GtkTreeViewColumn($lang['file_ass']['types'], new GtkCellRendererText(), 'text', 1));
+    $view_type->append_column($column_type    = new GtkTreeViewColumn($lang['file_ass']['types'], new GtkCellRendererText(), 'text', 1));
     $view_type->append_column($column_command = new GtkTreeViewColumn('', new GtkCellRendererText(), 'text', 2));
     $column_command->set_visible(FALSE);
+    
     list_of_types($model_type);
-    $vbox->pack_start($view_type, TRUE, TRUE, 10);
+    
+    $vbox->pack_start($scroll, TRUE, TRUE, 10);
     $vbox->pack_start($btn_add_type = new GtkButton($lang['file_ass']['add_type']), FALSE, FALSE);
     $vbox->pack_start($btn_edit_type = new GtkButton($lang['file_ass']['edit_type']), FALSE, FALSE);
     $vbox->pack_start($btn_remove_type = new GtkButton($lang['file_ass']['remove_type']), FALSE, FALSE);
@@ -49,11 +59,20 @@ function files_associations_window()
 
     $vbox = new GtkVBox();
     $model_ext = new GtkListStore(GObject::TYPE_STRING);
+    
     $view_ext = new GtkTreeView($model_ext);
+    $view_ext->set_enable_search(FALSE);
     $select_ext = $view_ext->get_selection();
     $view_ext->append_column($column_ext = new GtkTreeViewColumn($lang['file_ass']['extensions'], new GtkCellRendererText(), 'text', 0));
+    
+    $scroll_ext = new GtkScrolledWindow();
+	$scroll_ext->set_shadow_type(Gtk::SHADOW_ETCHED_IN);
+	$scroll_ext->set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
+	$scroll_ext->add($view_ext);
+    
     list_of_extensions($model_ext);
-    $vbox->pack_start($view_ext, TRUE, TRUE, 10);
+    
+    $vbox->pack_start($scroll_ext, TRUE, TRUE, 10);
     $vbox->pack_start($btn_add_ext = new GtkButton($lang['file_ass']['add_ext']), FALSE, FALSE);
     $vbox->pack_start($btn_edit_ext = new GtkButton($lang['file_ass']['edit_ext']), FALSE, FALSE);
     $vbox->pack_start($btn_remove_ext = new GtkButton($lang['file_ass']['remove_ext']), FALSE, FALSE);
@@ -79,6 +98,7 @@ function files_associations_window()
         'entry_command' => $entry_command,
         'hbox_command' => $hbox_command
     );
+    
     $btn_remove_type->connect_simple('clicked', 'remove_type', $model_type, $array);
     $btn_edit_type->connect_simple('clicked', 'edit_window', 'type', $array, $window);
     $btn_add_type->connect_simple('clicked', 'add_window', 'type', $model_type, $array, $window);
