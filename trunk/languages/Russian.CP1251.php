@@ -414,7 +414,7 @@ $lang['image']['exif_title_hint']		= 'Отобразить EXIF тэги изображения';
 $lang['image']['exif_no_data']          = 'EXIF тэги отсутствуют';
 $lang['image']['exif_tag']				= 'EXIF тэг';
 $lang['image']['exif_value']            = 'Значение';
-$lang['image']['exif_not_found']		= 'Не найдена библиотека EXIF.';
+$lang['image']['exif_not_found']		= 'Не найдена библиотека EXIF';
 $lang['image']['about']					= 'О программе';
 
 

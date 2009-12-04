@@ -315,7 +315,7 @@ function on_button($view, $event, $type)
 
     @$iter = $store[$panel]->get_iter($path);
     @$file = $store[$panel]->get_value($iter, 0);
-    @$extension = $store[$panel]->get_value($iter, 1);
+    @$extension = strtolower($store[$panel]->get_value($iter, 1));
     @$dir_file = $store[$panel]->get_value($iter, 4);
     @$size = $store[$panel]->get_value($iter, 2);
 
@@ -362,10 +362,8 @@ function on_button($view, $event, $type)
                     alert_window($lang['alert']['chmod_read_file']);
                     return FALSE;
                 }
-                //$explode = explode('.', basename($filename));
-                //$ext = '.'.$explode[count($explode) - 1];
-                $ext = substr(strrchr($filename, '.'), 1);
-                $query = sqlite_query($sqlite, "SELECT id_type, ext FROM ext_files WHERE ext = '$ext'");
+                
+                $query = sqlite_query($sqlite, "SELECT id_type, ext FROM ext_files WHERE ext = '$extension'");
                 $snr = sqlite_num_rows($query);
 
                 // Открыть программой из файловых ассоциаций
@@ -412,28 +410,29 @@ function on_button($view, $event, $type)
     {
         // Создаём меню
         $menu = new GtkMenu();
+        $menu->set_border_width(4);
 
         if ($dir_file == '<FILE>')
         {
             $copy = new GtkImageMenuItem($lang['popup']['copy_file']);
-            $copy->set_image(GtkImage::new_from_stock(Gtk::STOCK_COPY, Gtk::ICON_SIZE_MENU));
+            //$copy->set_image(GtkImage::new_from_stock(Gtk::STOCK_COPY, Gtk::ICON_SIZE_MENU));
             
             $cut = new GtkImageMenuItem($lang['popup']['cut_file']);
-            $cut->set_image(GtkImage::new_from_stock(Gtk::STOCK_CUT, Gtk::ICON_SIZE_MENU));
+            //$cut->set_image(GtkImage::new_from_stock(Gtk::STOCK_CUT, Gtk::ICON_SIZE_MENU));
             
             $rename = new GtkImageMenuItem($lang['popup']['rename_file']);
-            $rename->set_image(GtkImage::new_from_file(THEME . 'page_white_edit.png'));
+            //$rename->set_image(GtkImage::new_from_file(THEME . 'page_white_edit.png'));
             
             $delete = new GtkImageMenuItem($lang['popup']['delete']);
-            $delete->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_MENU));
+            //$delete->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_MENU));
             
             $checksum = new GtkMenuItem($lang['popup']['checksum']);
             
             $terminal = new GtkImageMenuItem($lang['popup']['open_terminal']);
-            $terminal->set_image(GtkImage::new_from_file(THEME . 'application_xp_terminal.png'));
+            //$terminal->set_image(GtkImage::new_from_file(THEME . 'application_xp_terminal.png'));
             
             $properties = new GtkImageMenuItem($lang['properties']['properties']);
-            $properties->set_image(GtkImage::new_from_stock(Gtk::STOCK_PROPERTIES, Gtk::ICON_SIZE_MENU));
+            //$properties->set_image(GtkImage::new_from_stock(Gtk::STOCK_PROPERTIES, Gtk::ICON_SIZE_MENU));
 
             $sub_checksum = new GtkMenu();
             $checksum->set_submenu($sub_checksum);
@@ -485,16 +484,15 @@ function on_button($view, $event, $type)
             {
                 $open = new GtkMenuItem($lang['popup']['open_image']);
                 $menu->append($open);
-                $menu->append(new GtkSeparatorMenuItem());
                 $open->connect_simple('activate', 'image_view', $filename);
             }
             elseif ($mime == 'text/plain' OR $mime == 'text/html')
             {
                 $open = new GtkMenuItem($lang['popup']['open_text_file']);
                 $menu->append($open);
-                $menu->append(new GtkSeparatorMenuItem());
                 $open->connect_simple('activate', 'text_editor_window', $filename);
             }
+            $menu->append(new GtkSeparatorMenuItem());
             $menu->append($copy);
             $menu->append($cut);
             $menu->append(new GtkSeparatorMenuItem());
@@ -521,25 +519,25 @@ function on_button($view, $event, $type)
         elseif ($dir_file == '<DIR>')
         {
             $open = new GtkImageMenuItem($lang['popup']['open_dir']);
-            $open->set_image(GtkImage::new_from_stock(Gtk::STOCK_OPEN, Gtk::ICON_SIZE_MENU));
+            //$open->set_image(GtkImage::new_from_stock(Gtk::STOCK_OPEN, Gtk::ICON_SIZE_MENU));
             
             $copy = new GtkImageMenuItem($lang['popup']['copy_dir']);
-            $copy->set_image(GtkImage::new_from_stock(Gtk::STOCK_COPY, Gtk::ICON_SIZE_MENU));
+            //$copy->set_image(GtkImage::new_from_stock(Gtk::STOCK_COPY, Gtk::ICON_SIZE_MENU));
             
             $cut = new GtkImageMenuItem($lang['popup']['cut_dir']);
-            $cut->set_image(GtkImage::new_from_stock(Gtk::STOCK_CUT, Gtk::ICON_SIZE_MENU));
+            //$cut->set_image(GtkImage::new_from_stock(Gtk::STOCK_CUT, Gtk::ICON_SIZE_MENU));
             
             $rename = new GtkImageMenuItem($lang['popup']['rename_dir']);
-            $rename->set_image(GtkImage::new_from_file(THEME . 'page_white_edit.png'));
+            //$rename->set_image(GtkImage::new_from_file(THEME . 'page_white_edit.png'));
             
             $delete = new GtkImageMenuItem($lang['popup']['delete']);
-            $delete->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_MENU));
+            //$delete->set_image(GtkImage::new_from_stock(Gtk::STOCK_DELETE, Gtk::ICON_SIZE_MENU));
             
             $terminal = new GtkImageMenuItem($lang['popup']['open_terminal']);
-            $terminal->set_image(GtkImage::new_from_file(THEME . 'application_xp_terminal.png'));
+            //$terminal->set_image(GtkImage::new_from_file(THEME . 'application_xp_terminal.png'));
             
             $properties = new GtkImageMenuItem($lang['properties']['properties']);
-            $properties->set_image(GtkImage::new_from_stock(Gtk::STOCK_PROPERTIES, Gtk::ICON_SIZE_MENU));
+            //$properties->set_image(GtkImage::new_from_stock(Gtk::STOCK_PROPERTIES, Gtk::ICON_SIZE_MENU));
 
             if (!is_writable($start[$panel]))
             {
@@ -581,11 +579,11 @@ function on_button($view, $event, $type)
         else
         {
             $new_file = new GtkImageMenuItem($lang['popup']['new_file']);
-            $new_file->set_image(GtkImage::new_from_stock(Gtk::STOCK_NEW, Gtk::ICON_SIZE_MENU));
+            //$new_file->set_image(GtkImage::new_from_stock(Gtk::STOCK_NEW, Gtk::ICON_SIZE_MENU));
             $new_dir = new GtkImageMenuItem($lang['popup']['new_dir']);
-            $new_dir->set_image(GtkImage::new_from_stock(Gtk::STOCK_DIRECTORY, Gtk::ICON_SIZE_MENU));
+            //$new_dir->set_image(GtkImage::new_from_stock(Gtk::STOCK_DIRECTORY, Gtk::ICON_SIZE_MENU));
             $paste = new GtkImageMenuItem($lang['popup']['paste']);
-            $paste->set_image(GtkImage::new_from_stock(Gtk::STOCK_PASTE, Gtk::ICON_SIZE_MENU));
+            //$paste->set_image(GtkImage::new_from_stock(Gtk::STOCK_PASTE, Gtk::ICON_SIZE_MENU));
             $terminal = new GtkMenuItem($lang['popup']['open_terminal']);
 
             if (!is_writable($start[$panel]))
@@ -1101,7 +1099,7 @@ function current_dir($panel, $status = '')
                 {
                     if (!preg_match("#^\.(.+?)#", $file))
                     {
-                        $ext = '.'.$explode[count($explode) - 1];
+                        $ext = substr(strrchr($filename, '.'), 1);
                     }
                     else
                     {
