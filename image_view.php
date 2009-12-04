@@ -53,8 +53,7 @@ function image_view($filename)
 
     $window = new GtkWindow();
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
-    $title = str_replace('%s', basename($filename), $lang['image']['title']);
-    $window->set_title($title);
+    $window->set_title(basename($filename));
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $window->set_position(Gtk::WIN_POS_CENTER);
     $window->set_size_request($window_width, $window_height);
