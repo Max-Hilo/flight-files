@@ -256,9 +256,9 @@ $lang['popup']['copy_file']             = 'Копировать';
 $lang['popup']['cut_file']              = 'Вырезать';
 $lang['popup']['rename_file']           = 'Переименовать';
 $lang['popup']['checksum']              = 'Контрольная сумма';
-$lang['popup']['md5']                   = 'MD5';
-$lang['popup']['sha1']                  = 'SHA1';
-$lang['popup']['crc32']                 = 'CRC32';
+$lang['popup']['md5']                   = 'md5';
+$lang['popup']['sha1']                  = 'sha1';
+$lang['popup']['crc32']                 = 'crc32';
 $lang['popup']['open_in']               = "Открыть в '%s'";
 $lang['popup']['open_image']            = 'Открыть изображение';
 $lang['popup']['open_text_file']        = 'Открыть в текстовом редакторе';
@@ -366,7 +366,7 @@ $lang['bulk_rename']['cancel']          = '_Отменить';
 $lang['bulk_rename']['rename']          = '_Переименовать';
 
 $lang['file_ass']['title']              = 'Файловые ассоциации';
-$lang['file_ass']['add_type']           = '_Добавить';
+$lang['file_ass']['add_type']           = 'До_бавить';
 $lang['file_ass']['edit_type']          = '_Изменить';
 $lang['file_ass']['remove_type']        = '_Удалить';
 $lang['file_ass']['types']              = 'Типы файлов:';
@@ -386,11 +386,11 @@ $lang['file_ass']['edit_ext_title']     = 'Изменить расширение
 
 $lang['image']['title']                 = 'Просмотр изображения: %s';
 $lang['image']['zoom_in']               = 'Увеличить';
-$lang['image']['zoom_in_hint']          = 'Увеличить изображение на 10%';
+$lang['image']['zoom_in_hint']          = 'Увеличить на 10%';
 $lang['image']['zoom_out']              = 'Уменьшить';
-$lang['image']['zoom_out_hint']         = 'Уменьшить изображение на 10%';
+$lang['image']['zoom_out_hint']         = 'Уменьшить на 10%';
 $lang['image']['zoom_source']           = 'Исходный';
-$lang['image']['zoom_source_hint']      = 'Вернуть изображение в его исходный размер';
+$lang['image']['zoom_source_hint']      = 'Исходный размер';
 $lang['image']['zoom_fit']              = 'По размеру окна';
 $lang['image']['zoom_fit_hint']		    = 'Подогнать изображение под размер окна';
 $lang['image']['rotate_left']           = 'Повернуть влево';
@@ -414,7 +414,7 @@ $lang['image']['exif_title_hint']		= 'Отобразить EXIF тэги изо�
 $lang['image']['exif_no_data']          = 'EXIF тэги отсутствуют';
 $lang['image']['exif_tag']				= 'EXIF тэг';
 $lang['image']['exif_value']            = 'Значение';
-$lang['image']['exif_not_found']		= 'Не найдена библиотека EXIF.';
+$lang['image']['exif_not_found']		= 'Не найдена библиотека EXIF';
 $lang['image']['about']					= 'О программе';
 
 

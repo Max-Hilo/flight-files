@@ -492,6 +492,13 @@ function on_button($view, $event, $type)
                 $menu->append($open);
                 $open->connect_simple('activate', 'text_editor_window', $filename);
             }
+//            elseif ($extension == 'mp3') // because mime_content_type is crazy thing
+//            {
+//            	$open = new GtkMenuItem('Open in tag-editor');
+//                $menu->append($open);
+//                $open->connect_simple('activate', 'tag_window', $filename);
+//            }
+            
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($copy);
             $menu->append($cut);
@@ -1066,8 +1073,6 @@ function current_dir($panel, $status = '')
     $count_dir = 0;
     $count_file = 0;
 
-    
-
     $opendir = opendir($start[$panel]);
     while (FALSE !== ($file = readdir($opendir)))
 //	$file_list = explode("\n", shell_exec('dir /A:-S "' . $start[$panel] . '" /B'));
@@ -1097,7 +1102,7 @@ function current_dir($panel, $status = '')
                 $count = count($explode);
                 if ($count != 1)
                 {
-                    if (!preg_match("#^\.(.+?)#", $file))
+                    if (!preg_match("#^\.(.+?)#", $file)) // fix it
                     {
                         $ext = substr(strrchr($filename, '.'), 1);
                     }
@@ -1234,7 +1239,7 @@ function conversion_size($size_byte)
  * @global int $numbet
  * @global string $panel
  * @global array $action
- * @param string $direct Напрваление навигации (back - назад, forward - вперёд)
+ * @param string $direct Направление навигации (back - назад, forward - вперёд)
  */
 function history($direct)
 {
@@ -1753,22 +1758,23 @@ function enter_template_window()
     $dialog->set_resizable(FALSE);
     $dialog->set_has_separator(FALSE);
     $dialog->set_transient_for($main_window);
+    $dialog->set_border_width(5);
     
     $dialog->add_button($lang['tmp_window']['button_yes'], Gtk::RESPONSE_OK);
     $dialog->add_button($lang['tmp_window']['button_no'], Gtk::RESPONSE_CANCEL);
 
     $vbox = $dialog->vbox;
+    
+    $vbox->pack_start($label = new GtkLabel(), FALSE, FALSE, 10);
+    $label->set_markup('<i>' . $lang['tmp_window']['hint'] . '</i>');
+    $label->set_line_wrap(TRUE);
+    $label->set_justify(Gtk::JUSTIFY_LEFT);
 
     $vbox->pack_start($entry = new GtkEntry());
     $vbox->pack_start($check = new GtkCheckButton($lang['tmp_window']['register']));
     $entry->connect_simple('changed', 'active_online', $entry, $check);
     $entry->connect_simple('activate', 'redirect_template', $entry, $check, $dialog);
     $check->connect_simple('toggled', 'active_online', $entry, $check);
-    
-    $vbox->pack_start($label = new GtkLabel(), FALSE, FALSE, 10);
-    $label->set_markup('<i>'.$lang['tmp_window']['hint'].'</i>');
-    $label->set_line_wrap(TRUE);
-    $label->set_justify(Gtk::JUSTIFY_RIGHT);
 
     $dialog->show_all();
     $result = $dialog->run();
@@ -2068,6 +2074,9 @@ function image_column($column, $render, $model, $iter)
 		'xls'  => 'page_excel.png',
 		'ppt'  => 'page_white_powerpoint.png',
 		'pdf'  => 'page_white_acrobat.png',
+		'djvu' => 'icon_djvu.gif',
+		'djv'  => 'icon_djvu.gif',
+		'chm'  => 'icon-chm.gif',
 		'htm'  => 'page_world.png',
 		'html' => 'page_world.png',
 		'xhtml'=> 'page_world.png',
@@ -2177,7 +2186,7 @@ function open_in_system($filename)
  */
 function open_in_builtin()
 {
-	global $lang, $start, $panel, $selection, $main_window, $store;
+	global $lang, $charset, $start, $panel, $selection, $main_window, $store;
 
     list($model, $rows) = $selection[$panel]->get_selected_rows();
 
@@ -2216,7 +2225,8 @@ function open_in_builtin()
 	    }
 	    elseif ($mime == 'text/plain' OR $mime == 'text/html')
 	    {
-	        text_editor_window($filename);
+	        text_editor_window($filename, $charset);
+	        //text_editor_window($filename, $charset);
 	    } 
 	    else
 	    {
@@ -2774,7 +2784,7 @@ function addressbar($side)
         $$address->pack_start($current_dir, TRUE, TRUE);
         
         $button = new GtkButton();
-        $button->set_image(GtkImage::new_from_stock(Gtk::STOCK_REDO, Gtk::ICON_SIZE_MENU));
+        $button->set_image(GtkImage::new_from_stock(Gtk::STOCK_MEDIA_PLAY, Gtk::ICON_SIZE_MENU));
         $button->set_tooltip_text($lang['addressbar']['change_dir_hint']);
         $button->connect_simple('clicked', 'jump_to_folder', $current_dir, $side);
         $$address->pack_start($button, FALSE, FALSE);

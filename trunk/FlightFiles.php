@@ -84,12 +84,14 @@ include SHARE_DIR . DS . 'alert.php';
 include SHARE_DIR . DS . 'bookmarks.php';
 include SHARE_DIR . DS . 'checksum.php';
 include SHARE_DIR . DS . 'files_associations.php';
-include SHARE_DIR . DS . 'image_view.php';
 include SHARE_DIR . DS . 'mass_rename.php';
 include SHARE_DIR . DS . 'preference.php';
 include SHARE_DIR . DS . 'properties.php';
 include SHARE_DIR . DS . 'shortcuts.php';
+
 include SHARE_DIR . DS . 'text_editor.php';
+include SHARE_DIR . DS . 'image_view.php';
+//include SHARE_DIR . DS . 'tag_editor.php';
 
 if (!extension_loaded('php-gtk'))
 {
@@ -724,7 +726,7 @@ sqlite_query($sqlite, "INSERT INTO history_left(path) VALUES('$start[left]')");
 current_dir('left');
 
 $scroll_left = new GtkScrolledWindow();
-$scroll_left->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_ALWAYS);
+$scroll_left->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
 $scroll_left->add($tree_view['left']);
 $scroll_left->show_all();
 
@@ -777,7 +779,7 @@ if (!empty($_config['font_list']))
 columns($tree_view['right'], $cell_renderer['right']);
 
 $scroll_right = new GtkScrolledWindow();
-$scroll_right->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_ALWAYS);
+$scroll_right->set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
 $scroll_right->add($tree_view['right']);
 $scroll_right->show_all();
 

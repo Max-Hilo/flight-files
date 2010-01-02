@@ -8,6 +8,7 @@
 
 /**
  * Отбражает окно текстового редактора.
+ * @global string $charset Кодировка системы по-умолчанию
  * @global array $start
  * @global string $panel
  * @global array $lang
@@ -16,7 +17,7 @@
  */
 function text_editor_window($filename)
 {
-    global $start, $panel, $lang, $text_editor;
+    global $charset, $start, $panel, $lang, $text_editor;
 
     $clipboard = new GtkClipboard();
 
@@ -41,7 +42,7 @@ function text_editor_window($filename)
     /////////////////////////
     if (class_exists('GtkSourceBuffer') AND class_exists('GtkSourceView'))
     {
-        $explode = explode('.', basename($text_editor['filename']));
+        $explode = explode('.', basename($text_editor['filename'])); // fix it
         $ext = $explode[count($explode) - 1];
         $mime = my_mime($ext);
         if ($mime !== FALSE)
