@@ -273,6 +273,8 @@ function add_command_window($store, $array)
             Gtk::STOCK_OK, Gtk::RESPONSE_OK,
         )
     );
+    $dialog->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+    
     $filename = $array['entry_command']->get_text();
     if (file_exists($filename))
     {

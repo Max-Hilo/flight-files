@@ -34,7 +34,7 @@ function image_view($filename)
     /**
      * Ширина окна
      */
-    $window_width = 600;
+    $window_width = 700;
 
     /**
      * Высота окна
@@ -436,13 +436,25 @@ function change_size_image($action, $filename, $image, $statusbar)
     }
     elseif ($action == 'zoom_to_window')
     {
-//    	if ($pixbuf_width < $window_width OR $pixbuf_height < $window_height) 
-//    	{
+//    	echo $pixbuf_width. "\n";
+//    	echo "x"."\n";
+//    	echo $pixbuf_height . "\n";
+//    	echo "------"."\n";
+    	
+    	if ($pixbuf_width > $pixbuf_height and $pixbuf_width > $window_width) 
+    	{
 			$ratio  = ($image_size[0] / 600) + 0.5;
 			$width  = floor($image_size[0] / $ratio);
 			$height = floor($image_size[1] / $ratio);
-        	$scope  = $scope_image / (1 + $ratio);
-//        }
+        }
+        elseif ($pixbuf_height > $pixbuf_width and $pixbuf_height > $window_height)
+        {
+        	$ratio  = ($image_size[1] / 400) + 0.5;
+			$width  = floor($image_size[1] / $ratio);
+			$height = floor($image_size[0] / $ratio);
+        }
+        
+        $scope  = $scope_image / (1 + $ratio);
     }
 
     if ($scope <= 5 OR $scope >= 400)
@@ -497,6 +509,14 @@ function exif_window($filename)
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
 
     $exif = exif_read_data($filename, FILE|IFD0|THUMBNAIL|COMMENT|EXIF, TRUE, FALSE);
+//	print_r($exif);
+
+//    $emake =$exif['Make'];
+//    $emodel = $exif['Model'];
+//    $eexposuretime = $exif['ExposureTime'];
+//    $efnumber = $exif['FNumber'];
+//    $eiso = $exif['ISOSpeedRatings'];
+//    $edate = $exif['DateTime'];
 
     if ($exif == FALSE)
     {
