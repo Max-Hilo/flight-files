@@ -88,7 +88,7 @@ include SHARE_DIR . DS . 'mass_rename.php';
 include SHARE_DIR . DS . 'preference.php';
 include SHARE_DIR . DS . 'properties.php';
 include SHARE_DIR . DS . 'shortcuts.php';
-
+// Дополнительные модули программы
 include SHARE_DIR . DS . 'text_editor.php';
 include SHARE_DIR . DS . 'image_view.php';
 //include SHARE_DIR . DS . 'tag_editor.php';
@@ -831,5 +831,3 @@ $vbox->pack_start(status_bar(), FALSE, FALSE);
 $main_window->add($vbox);
 $main_window->show();
 Gtk::main();
-
-?>
