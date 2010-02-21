@@ -258,7 +258,6 @@ function image_view($filename)
     $rotate_left->connect_simple('clicked', 'rotate_image', 'left', $filename, $image);
     $rotate_right->connect_simple('clicked', 'rotate_image', 'right', $filename, $image);
     $exif_info->connect_simple('clicked', 'exif_window', $filename);
-    ///////////////////////////////////
 
     $vbox = new GtkVBox();
     $vbox->pack_start($menu, FALSE, FALSE, 0);
@@ -405,14 +404,8 @@ function change_size_image($action, $filename, $image, $statusbar)
     }
     elseif ($action == 'zoom_source')
     {
-        echo $width  = $image_size[0];
-        echo ' x ';
-        echo $height = $image_size[1];
-//        echo ' ---- ';
-//        echo $pixbuf_width;
-//        echo ' x ';
-//        echo $pixbuf_height;
-       
+    	$width  = $image_size[0];
+        $height = $image_size[1];
         $scope  = 100;
         
         if ($pixbuf_height > $pixbuf_width AND $image_size[0] > $image_size[1])
@@ -435,12 +428,7 @@ function change_size_image($action, $filename, $image, $statusbar)
         }
     }
     elseif ($action == 'zoom_to_window')
-    {
-//    	echo $pixbuf_width. "\n";
-//    	echo "x"."\n";
-//    	echo $pixbuf_height . "\n";
-//    	echo "------"."\n";
-    	
+    {	
     	if ($pixbuf_width > $pixbuf_height and $pixbuf_width > $window_width) 
     	{
 			$ratio  = ($image_size[0] / 600) + 0.5;
@@ -509,14 +497,6 @@ function exif_window($filename)
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
 
     $exif = exif_read_data($filename, FILE|IFD0|THUMBNAIL|COMMENT|EXIF, TRUE, FALSE);
-//	print_r($exif);
-
-//    $emake =$exif['Make'];
-//    $emodel = $exif['Model'];
-//    $eexposuretime = $exif['ExposureTime'];
-//    $efnumber = $exif['FNumber'];
-//    $eiso = $exif['ISOSpeedRatings'];
-//    $edate = $exif['DateTime'];
 
     if ($exif == FALSE)
     {

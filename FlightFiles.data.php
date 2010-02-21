@@ -492,12 +492,6 @@ function on_button($view, $event, $type)
                 $menu->append($open);
                 $open->connect_simple('activate', 'text_editor_window', $filename);
             }
-//            elseif ($extension == 'mp3') // because mime_content_type is crazy thing
-//            {
-//            	$open = new GtkMenuItem('Open in tag-editor');
-//                $menu->append($open);
-//                $open->connect_simple('activate', 'tag_window', $filename);
-//            }
             
             $menu->append(new GtkSeparatorMenuItem());
             $menu->append($copy);
