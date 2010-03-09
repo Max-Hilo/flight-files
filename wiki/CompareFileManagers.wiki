@@ -1,0 +1,71 @@
+#summary Сравнение популярных файл менеджеров в Linux
+#labels Featured
+
+==Сравнительная таблица файл менеджеров в Linux==
+
+<table cellpadding=3 cellspacing=2 border=1>
+<tbody>
+<tr>
+<td></td>
+<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/bscommander_ico.png" title="BeeSoft Commander" height="51" width="51" /></td>
+<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/emelFM2_ico.png" title="emelFM2" height="51" width="48" /></td>
+<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/gentoo_ico.png" title="Gentoo" height="44" width="45" /></td>
+<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/gnomecommander_ico.png" title="GNOME Commander" height="50" width="44" /></td>
+<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/konqueror_ico.png" title="Konqueror" height="53" width="50" /></td>
+<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/krusader_ico.png" title="Krusader" height="51" width="52" /></td>
+<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/terminal.png" title="Midnight Commander" height="33" width="38" /></td>
+<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/nautilus_ico.png" title="Nautilus" height="42" width="48" /></td>
+<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/terminal.png" title="Necromancer's DOS Navigator" height="33" width="38" /></td>
+<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/tuxcommander_ico.png" title="Necromancer's DOS Navigator" height="56" width="48" /></td>
+<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/terminal.png" title="Worker" height="33" width="38" /></td>
+<td><img src="http://flight-files.googlecode.com/svn/trunk/logo_program.png" title="FlightFiles" height="48" width="48" /></td>
+</tr>
+
+<tr><td align="right">GUI</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">-</td><td align="center">+</td><td align="center">-</td><td align="center">+</td><td align="center">+</td><td align="center">+</td></tr>
+<tr><td align="right">Графическая библиотека</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td></tr>
+<tr><td align="right">Вкладки</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">-</td></tr>
+<tr><td align="right">FTP клиент</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">-</td></tr>
+<tr><td align="right">Протокол FTP://</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">+</td><td align="center">-</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td></tr>
+<tr><td align="right">Протокол SMB://</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">-</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td></tr>
+<tr><td align="right">Протокол HTTP://</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td></tr>
+<tr><td align="right">Миниатюры документов</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">+</td><td align="center">-</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td></tr>
+<tr><td align="right">Текстовый редактор</td><td align="center">+</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">+</td><td align="center">-</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">+</td></tr>
+<tr><td align="right">Просмотр изображений</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">+</td></tr>
+<tr><td align="right">Просмотр видео</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td></tr>
+<tr><td align="right">Просмотр HTML</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td></tr>
+<tr><td align="right">Просмотр RTF</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td></tr>
+<tr><td align="right">Просмотр DOC</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td></tr>
+<tr><td align="right">HEX-редактор</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">-</td></tr>
+<tr><td align="right">Подсветка типов файлов</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">+</td></tr>
+<tr><td align="right">Быстрые папки (Закладки)</td><td align="center">-</td><td align="center">+</td><td align="center">-</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">-</td><td align="center">+</td><td align="center">-</td><td align="center">+</td></tr>
+<tr><td align="right">История папок</td><td align="center">-</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">+</td></tr>
+<tr><td align="right">Часто посещаемые папки</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td></tr>
+<tr><td align="right">Панель (меню) быстрого запуска</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">-</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">-</td></tr>
+<tr><td align="right">Плагины</td><td align="center">-</td><td align="center">+</td><td align="center">-</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td></tr>
+<tr><td align="right">Многозадачность</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td></tr>
+<tr>
+<td></td>
+<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/bscommander_ico.png" title="BeeSoft Commander" height="51" width="51" /></td>
+<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/emelFM2_ico.png" title="emelFM2" height="51" width="48" /></td>
+<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/gentoo_ico.png" title="Gentoo" height="44" width="45" /></td>
+<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/gnomecommander_ico.png" title="GNOME Commander" height="50" width="44" /></td>
+<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/konqueror_ico.png" title="Konqueror" height="53" width="50" /></td>
+<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/krusader_ico.png" title="Krusader" height="51" width="52" /></td>
+<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/terminal.png" title="Midnight Commander" height="33" width="38" /></td>
+<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/nautilus_ico.png" title="Nautilus" height="42" width="48" /></td>
+<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/terminal.png" title="Necromancer's DOS Navigator" height="33" width="38" /></td>
+<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/tuxcommander_ico.png" title="Necromancer's DOS Navigator" height="56" width="48" /></td>
+<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/terminal.png" title="Worker" height="33" width="38" /></td>
+<td><img src="http://flight-files.googlecode.com/svn/trunk/logo_program.png" title="FlightFiles" height="48" width="48" /></td>
+</tr>
+</tbody>
+</table>
+
+Оригинал [http://www.ixbt.com/soft/filemanagers-linux.shtml статьи].
+
+
+
+
+
+
+
