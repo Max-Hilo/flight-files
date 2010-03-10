@@ -22,7 +22,7 @@
 </tr>
 
 <tr><td align="right">GUI</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">-</td><td align="center">+</td><td align="center">-</td><td align="center">+</td><td align="center">+</td><td align="center">+</td></tr>
-<tr><td align="right">Графическая библиотека</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td></tr>
+<tr><td align="right">Графическая библиотека</td><td align="center">QT</td><td align="center">GTK2</td><td align="center">GTK1</td><td align="center">GTK2</td><td align="center">QT</td><td align="center">QT</td><td align="center">-</td><td align="center">GTK2</td><td align="center">-</td><td align="center">GTK2</td><td align="center">X11</td><td align="center">GTK2</td></tr>
 <tr><td align="right">Вкладки</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">-</td></tr>
 <tr><td align="right">FTP клиент</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">-</td></tr>
 <tr><td align="right">Протокол FTP://</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">+</td><td align="center">+</td><td align="center">-</td><td align="center">+</td><td align="center">-</td><td align="center">-</td><td align="center">-</td><td align="center">-</td></tr>
@@ -62,8 +62,6 @@
 </table>
 
 Оригинал [http://www.ixbt.com/soft/filemanagers-linux.shtml статьи].
-
-
 
 
 
