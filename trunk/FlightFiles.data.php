@@ -1960,7 +1960,7 @@ function columns($tree_view, $cell_renderer)
 
     $columns[$panel]['mtime'] = new GtkTreeViewColumn($lang['column']['mtime'], $cell_renderer, 'text', 3);
     $columns[$panel]['mtime']->set_sizing(Gtk::TREE_VIEW_COLUMN_FIXED);
-    $columns[$panel]['mtime']->set_fixed_width(100);
+    $columns[$panel]['mtime']->set_fixed_width(110);
     $columns[$panel]['mtime']->set_resizable(TRUE);
     $columns[$panel]['mtime']->set_sort_column_id(3);
     if ($_config['mtime_column'] == 'off')
@@ -2024,7 +2024,7 @@ function image_column($column, $render, $model, $iter)
 		'mkv'  => 'film.png',
 		'mov'  => 'film.png',
 		'vob'  => 'dvd.png',
-		'flv'  => 'page_white_flash.png',
+		'flv'  => 'flash.png',
 		/* Audio */
 		'mp3'  => 'music.png',
 		'ogg'  => 'music.png',
@@ -2047,6 +2047,7 @@ function image_column($column, $render, $model, $iter)
 		'bz'  => 'package.png',
 		'bz2' => 'package.png',
 		'tgz' => 'package.png',
+		'tar' => 'package.png',
 		'cab' => 'package.png',
 		/* Exe and dll*/
 		'exe' => 'cog.png',
@@ -2062,15 +2063,17 @@ function image_column($column, $render, $model, $iter)
 		/* docs, html etc. */
 		'txt'  => 'page_white_text.png',
 		'php'  => 'page_white_php.png',
+		'rb'   => 'ruby.png',
+		'py'   => 'python.png',
 		'js'   => 'script.png',
 		'xml'  => 'script_code.png',
 		'doc'  => 'page_word.png',
 		'xls'  => 'page_excel.png',
 		'ppt'  => 'page_white_powerpoint.png',
 		'pdf'  => 'page_white_acrobat.png',
-		'djvu' => 'icon_djvu.gif',
-		'djv'  => 'icon_djvu.gif',
-		'chm'  => 'icon-chm.gif',
+		'djvu' => 'djvu.png',
+		'djv'  => 'djvu.png',
+		'chm'  => 'chm.png',
 		'htm'  => 'page_world.png',
 		'html' => 'page_world.png',
 		'xhtml'=> 'page_world.png',
@@ -2210,22 +2213,22 @@ function open_in_builtin()
         
         $mime = mime_content_type($filename);
         
-	    if ($mime == 'image/jpeg' OR $mime == 'image/x-png' OR 
-			$mime == 'image/gif'  OR $mime == 'image/x-bmp' OR
-			$mime == 'image/tiff' OR $mime == 'image/x-ico' OR
-			$mime == 'image/png') // также есть поддеркжа tga, но mime_content_type() об этом не знает
-	    {
+//	    if ($mime == 'image/jpeg' OR $mime == 'image/x-png' OR 
+//			$mime == 'image/gif'  OR $mime == 'image/x-bmp' OR
+//			$mime == 'image/tiff' OR $mime == 'image/x-ico' OR
+//			$mime == 'image/png') // также есть поддеркжа tga, но mime_content_type() об этом не знает
+//	    {
 	        image_view($filename);
-	    }
-	    elseif ($mime == 'text/plain' OR $mime == 'text/html')
-	    {
-	        text_editor_window($filename, $charset);
-	        //text_editor_window($filename, $charset);
-	    } 
-	    else
-	    {
-			open_in_system($filename);
-	    }
+//	    }
+//	    elseif ($mime == 'text/plain' OR $mime == 'text/html')
+//	    {
+//	        text_editor_window($filename, $charset);
+//	        //text_editor_window($filename, $charset);
+//	    } 
+//	    else
+//	    {
+//			open_in_system($filename);
+//	    }
     }
 }
 
