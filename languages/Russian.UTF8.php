@@ -385,6 +385,8 @@ $lang['file_ass']['edit_type_title']    = 'Изменить тип файлов'
 $lang['file_ass']['edit_ext_title']     = 'Изменить расширение';
 
 $lang['image']['title']                 = 'Просмотр изображения: %s';
+$lang['image']['go_back']               = 'Назад';
+$lang['image']['go_forward']            = 'Вперёд';
 $lang['image']['zoom_in']               = 'Увеличить';
 $lang['image']['zoom_in_hint']          = 'Увеличить на 10%';
 $lang['image']['zoom_out']              = 'Уменьшить';

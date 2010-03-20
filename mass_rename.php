@@ -27,9 +27,10 @@ function bulk_rename_window()
     $wnd->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
     $wnd->set_transient_for($main_window);
     $wnd->connect_simple('destroy', array('Gtk', 'main_quit'));
+    $wnd->set_border_width(10);
 
     $vbox = new GtkVBox;
-    $vbox->set_spacing(5);
+    $vbox->set_spacing(2);
 
     $upper_radio = new GtkRadioButton(NULL, $lang['bulk_rename']['upper']);
     $upper_radio->set_tooltip_text($lang['bulk_rename']['upper_hint']);
@@ -80,22 +81,22 @@ function bulk_rename_window()
     $vbox->pack_start($check_vbox);
 
     $vbox->pack_start(new GtkHSeparator(), FALSE, FALSE);
-
-    $button_cancel = new GtkButton();
+    
     $btn_hbox = new GtkHBox();
-    $btn_hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_CANCEL, Gtk::ICON_SIZE_BUTTON));
+    $button_cancel = new GtkButton();
     $btn_hbox->pack_start($label = new GtkLabel($lang['bulk_rename']['cancel']));
     $label->set_use_underline(TRUE);
     $button_cancel->add($btn_hbox);
     $button_ok = new GtkButton();
     $btn_hbox = new GtkHBox();
-    $btn_hbox->pack_start(GtkImage::new_from_stock(Gtk::STOCK_OK, Gtk::ICON_SIZE_BUTTON));
     $btn_hbox->pack_start($label = new GtkLabel($lang['bulk_rename']['rename']));
     $label->set_use_underline(TRUE);
     $button_ok->add($btn_hbox);
     $hhbox = new GtkHButtonBox();
-    $hhbox->add($button_cancel);
+    $hhbox->set_layout(Gtk::BUTTONBOX_END);
+    $hhbox->set_spacing(4);
     $hhbox->add($button_ok);
+    $hhbox->add($button_cancel);
     $vbox->pack_start($hhbox, FALSE, FALSE);
     
     $upper_radio->connect_simple('toggled', 'active_type_rename', 'upper', $order_hbox, $replace_table, $ext_check);

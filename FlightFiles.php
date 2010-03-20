@@ -713,7 +713,6 @@ elseif ($_config['view_lines_files'] == 'on')
     $tree_view['left']->set_grid_lines(Gtk::TREE_VIEW_GRID_LINES_HORIZONTAL);
 }
 
-
 $cell_renderer['left'] = new GtkCellRendererText();
 if (!empty($_config['font_list']))
 {
@@ -790,6 +789,7 @@ $right->add($scroll_right);
 $hbox->pack_start($left);
 $hbox->pack_start($right);
 $hbox->show_all();
+
 if (in_array('--one', $argv))
 {
     $action_menu['one_panel']->set_active(TRUE);
