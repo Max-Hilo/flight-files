@@ -2213,22 +2213,22 @@ function open_in_builtin()
         
         $mime = mime_content_type($filename);
         
-//	    if ($mime == 'image/jpeg' OR $mime == 'image/x-png' OR 
-//			$mime == 'image/gif'  OR $mime == 'image/x-bmp' OR
-//			$mime == 'image/tiff' OR $mime == 'image/x-ico' OR
-//			$mime == 'image/png') // также есть поддеркжа tga, но mime_content_type() об этом не знает
-//	    {
+	    if ($mime == 'image/jpeg' OR $mime == 'image/x-png' OR 
+			$mime == 'image/gif'  OR $mime == 'image/x-bmp' OR
+			$mime == 'image/tiff' OR $mime == 'image/x-ico' OR
+			$mime == 'image/png') // также есть поддеркжа tga, но mime_content_type() об этом не знает
+	    {
 	        image_view($filename);
-//	    }
-//	    elseif ($mime == 'text/plain' OR $mime == 'text/html')
-//	    {
-//	        text_editor_window($filename, $charset);
-//	        //text_editor_window($filename, $charset);
-//	    } 
-//	    else
-//	    {
-//			open_in_system($filename);
-//	    }
+	    }
+	    elseif ($mime == 'text/plain' OR $mime == 'text/html')
+	    {
+	        text_editor_window($filename);
+	        //text_editor_window($filename, $charset);
+	    } 
+	    else
+	    {
+			open_in_system($filename);
+	    }
     }
 }
 
