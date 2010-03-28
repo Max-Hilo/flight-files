@@ -80,12 +80,12 @@ function image_view($filename)
     		if ($pixbuf_height > $pixbuf_width)
     		{
     			$pixbuf = GdkPixbuf::new_from_file_at_size($filename, 300, 520);
-   				$scope_image = ceil(100 / (1 + ($image_size[0] / 300))); // пересчитаем масштаб
+   				$scope_image = ceil((300 * 100) / $image_size[0]); // пересчитаем масштаб
     		}
     		else
 			{
 				$pixbuf = GdkPixbuf::new_from_file_at_size($filename, 520 , 400);
-				$scope_image = ceil(100 / (1 + ($image_size[0] / 520))); // пересчитаем масштаб
+				$scope_image = ceil((520 * 100) / $image_size[0]); // пересчитаем масштаб
     		}
     	}
     	else
@@ -266,11 +266,11 @@ function image_view($filename)
     $toolbar->insert($exif_info, -1);
     
     // Calculate position
-    $image_list = glob(dirname($filename) . DS . '*.{png,gif,jpg,jpeg,gif,tif,bmp,ico,tga,PNG,GIF,JPG,JPEG,GIF,TIF,BMP,ICO,TGA}', GLOB_BRACE);
+    $image_list = glob(dirname($filename) . DS . '*.{png,gif,jpg,jpeg,tif,bmp,ico,tga,PNG,GIF,JPG,JPEG,TIF,BMP,ICO,TGA}', GLOB_BRACE|GLOB_NOSORT);
     $total_images = count($image_list);
     
-    sort($image_list);
-
+  	sort($image_list);
+  	
 	$index = array_search($filename, $image_list);
 
     $index_prev = $index - 1;
