@@ -10,13 +10,13 @@
 <td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/bscommander_ico.png" title="BeeSoft Commander" height="51" width="51" /></td>
 <td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/emelFM2_ico.png" title="emelFM2" height="51" width="48" /></td>
 <td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/gentoo_ico.png" title="Gentoo" height="44" width="45" /></td>
-<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/gnomecommander_ico.png" title="GNOME Commander" height="50" width="44" /></td>
+<td><img src="http://lh6.ggpht.com/_RT_oLN-mNkM/S7OwU6eraAI/AAAAAAAAAZc/RU0Q7aWITbg/logo.png" title="GNOME Commander" height="48" width="45" /></td>
 <td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/konqueror_ico.png" title="Konqueror" height="53" width="50" /></td>
 <td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/krusader_ico.png" title="Krusader" height="51" width="52" /></td>
-<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/terminal.png" title="Midnight Commander" height="33" width="38" /></td>
+<td><img src="http://lh4.ggpht.com/_RT_oLN-mNkM/S7OwU3zRsPI/AAAAAAAAAZY/3S7R5yQRIJ4/MidnightCommander.png" title="Midnight Commander" height="48" width="48" /></td>
 <td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/nautilus_ico.png" title="Nautilus" height="42" width="48" /></td>
 <td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/terminal.png" title="Necromancer's DOS Navigator" height="33" width="38" /></td>
-<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/tuxcommander_ico.png" title="Necromancer's DOS Navigator" height="56" width="48" /></td>
+<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/tuxcommander_ico.png" title="Tux commander" height="56" width="48" /></td>
 <td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/terminal.png" title="Worker" height="33" width="38" /></td>
 <td><img src="http://flight-files.googlecode.com/svn/trunk/logo_program.png" title="FlightFiles" height="48" width="48" /></td>
 </tr>
@@ -48,13 +48,13 @@
 <td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/bscommander_ico.png" title="BeeSoft Commander" height="51" width="51" /></td>
 <td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/emelFM2_ico.png" title="emelFM2" height="51" width="48" /></td>
 <td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/gentoo_ico.png" title="Gentoo" height="44" width="45" /></td>
-<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/gnomecommander_ico.png" title="GNOME Commander" height="50" width="44" /></td>
+<td><img src="http://lh6.ggpht.com/_RT_oLN-mNkM/S7OwU6eraAI/AAAAAAAAAZc/RU0Q7aWITbg/logo.png" title="GNOME Commander" height="48" width="45" /></td>
 <td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/konqueror_ico.png" title="Konqueror" height="53" width="50" /></td>
 <td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/krusader_ico.png" title="Krusader" height="51" width="52" /></td>
-<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/terminal.png" title="Midnight Commander" height="33" width="38" /></td>
+<td><img src="http://lh4.ggpht.com/_RT_oLN-mNkM/S7OwU3zRsPI/AAAAAAAAAZY/3S7R5yQRIJ4/MidnightCommander.png" title="Midnight Commander" height="48" width="48" /></td>
 <td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/nautilus_ico.png" title="Nautilus" height="42" width="48" /></td>
 <td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/terminal.png" title="Necromancer's DOS Navigator" height="33" width="38" /></td>
-<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/tuxcommander_ico.png" title="Necromancer's DOS Navigator" height="56" width="48" /></td>
+<td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/tuxcommander_ico.png" title="Tux commander" height="56" width="48" /></td>
 <td><img src="http://www.ixbt.com/soft/images/filemanagers-linux/terminal.png" title="Worker" height="33" width="38" /></td>
 <td><img src="http://flight-files.googlecode.com/svn/trunk/logo_program.png" title="FlightFiles" height="48" width="48" /></td>
 </tr>
@@ -62,8 +62,6 @@
 </table>
 
 Оригинал [http://www.ixbt.com/soft/filemanagers-linux.shtml статьи].
-
-
 
 
 
