@@ -11,8 +11,8 @@
  * @global int       $pixbuf_height
  * @global array     $lang
  * @global int       $scope_image
- * @global int       $rotate_image
- * @global pixbuf    $pixbuf
+ * @global int       $rotation_angle
+ * @global GdkPixbuf $pixbuf
  * @global GtkWindow $window
  * @global int       $index_cur
  * @global int       $total_images
@@ -20,7 +20,7 @@
  */
 function image_view($filename)
 {
-    global $pixbuf_width, $pixbuf_height, $lang, $scope_image, $rotate_image, $pixbuf, $window, $index_cur, $total_images;
+    global $pixbuf_width, $pixbuf_height, $lang, $scope_image, $rotation_angle, $pixbuf, $window, $index_cur, $total_images;
 
     $image_size = getimagesize($filename);
 
@@ -47,7 +47,7 @@ function image_view($filename)
     /**
      * Угол поворота
      */
-    $rotate_image = 0;
+    $rotation_angle = 0;
 
     /**
      * Масштаб, в процентах
@@ -58,6 +58,8 @@ function image_view($filename)
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
     $window->set_title(basename($filename));
     $window->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
+    $window->set_modal(TRUE);
+    $window->set_transient_for($main_window);
     $window->set_position(Gtk::WIN_POS_CENTER);
     $window->set_size_request($window_width, $window_height);
     $window->connect_simple('delete-event', 'image_view_close', $window);
@@ -342,7 +344,7 @@ function image_view_close()
  * Изменение угла поворота изображения.
  * Если библиотека GD или функция imagerotate() не найдены,
  * то открывается диалог alert_window(), информирующий об этом.
- * @global int $rotate_image
+ * @global int $rotation_angle
  * @global int $pixbuf_width
  * @global int $pixbuf_height
  * @global array $lang
@@ -352,13 +354,14 @@ function image_view_close()
  */
 function rotate_image($action, $filename, $image)
 {
-    global $rotate_image, $pixbuf_width, $pixbuf_height, $lang, $img_file, $pixbuf;
+    global $rotation_angle, $pixbuf_width, $pixbuf_height, $lang, $img_file, $pixbuf;
 
     if (!extension_loaded('gd'))
     {
         alert_window($lang['image']['gd_not_found']);
         return FALSE;
     }
+    
     if (!function_exists('imagerotate'))
     {
         alert_window($lang['image']['imagerotate_not_found']);
@@ -367,11 +370,11 @@ function rotate_image($action, $filename, $image)
 
     if ($action == 'left')
     {
-        $rotate_image += 90;
+        $rotation_angle += 90;
     }
     elseif ($action == 'right')
     {
-        $rotate_image -= 90;
+        $rotation_angle -= 90;
     }
 
     $pixbuf_width  = $pixbuf_width + $pixbuf_height;
@@ -395,9 +398,7 @@ function rotate_image($action, $filename, $image)
         default:
             return FALSE;
     }
-    $img = imagerotate($img, $rotate_image, 0);
-    $color = imagecolorallocate($img, 0, 0, 0);
-    imagecolortransparent($img, $color);
+    $img = imagerotate($img, $rotation_angle, 0);
     switch ($type)
     {
         case 1:
@@ -416,29 +417,29 @@ function rotate_image($action, $filename, $image)
         default:
             return FALSE;
     }
-    $pixbuf = GdkPixbuf::new_from_file($img_file);
+  	$pixbuf = GdkPixbuf::new_from_file($img_file); // Maybe it shoud be: GdkPixbuf::new_from_gd($img)
     $pixbuf = $pixbuf->scale_simple($pixbuf_width, $pixbuf_height, Gdk::INTERP_HYPER);
     $image->set_from_pixbuf($pixbuf);
 }
 
 /**
  * Масштабирование изображения.
- * @global int    $rotate_image
- * @global int    $pixbuf_height
- * @global int    $pixbuf_width
- * @global int    $scope_image
- * @global string $img_file
- * @global pixbuf $pixbuf
- * @global int    $index_cur
- * @global int    $total_images
- * @param string  $action Направление масштабирования
- * @param string  $filename Файл, для которого необходимо произвести операцию
- * @param GtkImage     $image Виджет, отображающий изображение
- * @param GtkStatusBar $statusbar Строка состояния
+ * @global int          $rotation_angle
+ * @global int          $pixbuf_height
+ * @global int          $pixbuf_width
+ * @global int          $scope_image
+ * @global string       $img_file
+ * @global GdkPixbuf    $pixbuf
+ * @global int          $index_cur
+ * @global int          $total_images
+ * @param  string       $action    Направление масштабирования
+ * @param  string       $filename  Файл, для которого необходимо произвести операцию
+ * @param  GtkImage     $image     Виджет, отображающий изображение
+ * @param  GtkStatusBar $statusbar Строка состояния
  */
 function change_size_image($action, $filename, $image, $statusbar)
 {
-    global $rotate_image, $pixbuf_width, $pixbuf_height, $scope_image, $img_file, $pixbuf, $index_cur, $total_images;
+    global $rotation_angle, $pixbuf_width, $pixbuf_height, $scope_image, $img_file, $pixbuf, $index_cur, $total_images;
 
    	$pixbuf2 = GdkPixbuf::new_from_file($filename);
 	
@@ -519,7 +520,6 @@ function change_size_image($action, $filename, $image, $statusbar)
 			}
         }
         $scope = ($width * 100) / $image_size[0];
-        //$scope  = $scope_image / (1 + $ratio);
     }
 
     if ($scope <= 5 OR $scope >= 400)
@@ -531,7 +531,7 @@ function change_size_image($action, $filename, $image, $statusbar)
     $pixbuf_height = $height;
     $scope_image   = $scope;
     
-    if ($rotate_image != 0) // Если изображение повернуто, ресайзим специально созданный временный файл.
+    if ($rotation_angle !== 0 ) // Если изображение повернуто, ресайзим специально созданный временный файл.
     {
 		$pixbuf = GdkPixbuf::new_from_file($img_file);
     } 

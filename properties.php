@@ -25,8 +25,8 @@ function properties_window($filename)
     $window->connect_simple('destroy', array('Gtk', 'main_quit'));
 
     $alignment = new GtkAlignment();
-    $notebook = new GtkNotebook();
     $alignment->set_padding(10, 10, 10, 10);
+    $notebook = new GtkNotebook();
 
     //////////////////////////////
     ///// Вкладка "Основные" /////
@@ -70,7 +70,7 @@ function properties_window($filename)
         $label_mtime->modify_font(new PangoFontDescription('Bold'));
         $table->attach($label_mtime, 0, 1, 6, 7, Gtk::FILL, Gtk::FILL);
 
-	    $mtime = new GtkLabel(date('l, F d, Y, G:i:s', filemtime($filename)));
+		$mtime = new GtkLabel(strftime('%d %B %Y, %X', filemtime($filename)));
 	    $mtime->set_alignment(0, 0.5);
 	    $table->attach($mtime, 1, 2, 6, 7);
 
@@ -80,7 +80,7 @@ function properties_window($filename)
 	    $label_atime->modify_font(new PangoFontDescription('Bold'));
 	    $table->attach($label_atime, 0, 1, 7, 8, Gtk::FILL, Gtk::FILL);
 	    
-	    $atime = new GtkLabel(date('l, F d, Y, G:i:s', fileatime($filename)));
+		$atime = new GtkLabel(strftime('%d %B %Y, %X', filemtime($filename)));
 	    $atime->set_alignment(0, 0.5);
 	    $table->attach($atime, 1, 2, 7, 8);
 
@@ -132,7 +132,7 @@ function properties_window($filename)
 	    $label_mtime->modify_font(new PangoFontDescription('Bold'));
 	    $table->attach($label_mtime, 0, 1, 8, 9, Gtk::FILL, Gtk::FILL);
 
-	    $mtime = new GtkLabel(date('l, F d, Y, G:i:s', filectime($filename)));
+	    $mtime = new GtkLabel(strftime('%d %B %Y, %X', filemtime($filename)));
 	    $mtime->set_alignment(0.0, 0.5);
 	    $table->attach($mtime, 1, 2, 8, 9);
 
@@ -142,7 +142,7 @@ function properties_window($filename)
 	    $label_atime->modify_font(new PangoFontDescription('Bold'));
 	    $table->attach($label_atime, 0, 1, 9, 10, Gtk::FILL, Gtk::FILL);
 	    
-	    $atime = new GtkLabel(date('l, F d, Y, G:i:s', fileatime($filename)));
+	    $atime = new GtkLabel(strftime('%d %B %Y, %X', filemtime($filename)));
 	    $atime->set_alignment(0, 0.5);
 	    $table->attach($atime, 1, 2, 9, 10);
     }
@@ -476,7 +476,7 @@ function my_chmod($check, $filename, $num, $act, $label_int, $label_text)
     $label_text->set_text(permissons_text($new_perm, $filename));
 }
 
-// todo: Добавить проверку на наличие прав/
+// todo: Добавить проверку на наличие прав.
 function change_attributes($check, $filename, $attribute)
 {
 	$value = $check->get_active() ? 'on' : 'off';
