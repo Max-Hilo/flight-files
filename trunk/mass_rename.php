@@ -9,8 +9,8 @@
 /**
  * Отображает окно для массового переименования файлов.
  * @global GtkRadioButton $active_type_rename
- * @global GtkWindow $main_window
- * @global array $lang
+ * @global GtkWindow      $main_window
+ * @global array          $lang
  */
 function bulk_rename_window()
 {
@@ -22,7 +22,7 @@ function bulk_rename_window()
     $wnd->set_title($lang['bulk_rename']['title']);
     $wnd->set_icon(GdkPixbuf::new_from_file(ICON_PROGRAM));
     $wnd->set_position(Gtk::WIN_POS_CENTER);
-    $wnd->set_resizable(TRUE);
+    $wnd->set_resizable(FALSE);
     $wnd->set_modal(TRUE);
     $wnd->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
     $wnd->set_transient_for($main_window);
@@ -39,6 +39,10 @@ function bulk_rename_window()
     $lower_radio = new GtkRadioButton($upper_radio, $lang['bulk_rename']['lower']);
     $lower_radio->set_tooltip_text($lang['bulk_rename']['lower_hint']);
     $vbox->pack_start($lower_radio);
+    
+    $ucfirst_radio = new GtkRadioButton($upper_radio, $lang['bulk_rename']['ucfirst']);
+    $ucfirst_radio->set_tooltip_text($lang['bulk_rename']['ucfirst_hint']);
+    $vbox->pack_start($ucfirst_radio);
 
     $order_radio = new GtkRadioButton($upper_radio, $lang['bulk_rename']['order']);
     $order_radio->set_tooltip_text($lang['bulk_rename']['order_hint']);
@@ -71,10 +75,13 @@ function bulk_rename_window()
     $vbox->pack_start(new GtkHSeparator);
 
     $ext_check = new GtkCheckButton($lang['bulk_rename']['ext']);
+    $ext_check->set_active(TRUE);
     $ext_check->set_tooltip_text($lang['bulk_rename']['ext_hint']);
+    
     $hidden_check = new GtkCheckButton($lang['bulk_rename']['hidden']);
     $hidden_check->set_active(TRUE);
     $hidden_check->set_tooltip_text($lang['bulk_rename']['hidden_hint']);
+    
     $check_vbox = new GtkVBox;
     $check_vbox->pack_start($ext_check);
     $check_vbox->pack_start($hidden_check);
@@ -101,13 +108,15 @@ function bulk_rename_window()
     
     $upper_radio->connect_simple('toggled', 'active_type_rename', 'upper', $order_hbox, $replace_table, $ext_check);
     $lower_radio->connect_simple('toggled', 'active_type_rename', 'lower', $order_hbox, $replace_table, $ext_check);
+    $ucfirst_radio->connect_simple('toggled', 'active_type_rename', 'ucfirst', $order_hbox, $replace_table, $ext_check);
     $order_radio->connect_simple('toggled', 'active_type_rename', 'order', $order_hbox, $replace_table, $ext_check);
     $replace_radio->connect_simple('toggled', 'active_type_rename', 'replace', $order_hbox, $replace_table, $ext_check);
     $button_cancel->connect_simple('clicked', 'bulk_rename_window_close', $wnd);
     $button_ok->connect_simple(
         'clicked', 'bulk_rename_action', $wnd,
         $ext_check, $hidden_check, $order_name_entry,
-        $replace_oldname_entry, $replace_newname_entry);
+        $replace_oldname_entry, $replace_newname_entry
+    );
 
     $wnd->add($vbox);
     $wnd->show_all();
@@ -117,10 +126,10 @@ function bulk_rename_window()
 /**
  * Функция заносит в глобальную переменную тип переименования файлов
  * и делает неактивными некоторые элементы интерфейса.
- * @global string $active_type_rename
- * @param string $type Тип переименования
- * @param GtkBox $order Контейнер с элементами интерфейса
- * @param GtkTable $replace Контейнер с элементами интерфейса
+ * @global string        $active_type_rename
+ * @param string         $type      Тип переименования
+ * @param GtkBox         $order     Контейнер с элементами интерфейса
+ * @param GtkTable       $replace   Контейнер с элементами интерфейса
  * @param GtkCheckButton $extension Флажок "Оставить прежние расширения"
  */
 function active_type_rename($type, $order, $replace, $extension)
@@ -147,18 +156,18 @@ function active_type_rename($type, $order, $replace, $extension)
     }
     $active_type_rename = $type;
 }
-
+//todo: Заменять запрещенные символы в Виндовс.
  /**
   * Массовое переименование всех файлов в текущей директории.
   * @global string $active_type_rename
-  * @global array $start
+  * @global array  $start
   * @global string $panel
-  * @param GtkWindow $window Окно, которое будет закрыто после завершения операции
+  * @param GtkWindow      $window    Окно, которое будет закрыто после завершения операции
   * @param GtkCheckButton $extension Переключатель, отвечающий за переименование расширения
-  * @param GtkCheckButton $hidden Переключатель, отвечающий за пропуск скрытых файлов
-  * @param GtkEntry $order Поле ввода, используется, если тип переименования 'order'
-  * @param GtkEntry $match Поле ввода строки поиска, используется, если тип переименования 'replace'
-  * @param GtkEntry $replace Поле ввода строки замены, используется, если тип переименования 'replace'
+  * @param GtkCheckButton $hidden    Переключатель, отвечающий за пропуск скрытых файлов
+  * @param GtkEntry       $order     Поле ввода, используется, если тип переименования 'order'
+  * @param GtkEntry       $match     Поле ввода строки поиска, используется, если тип переименования 'replace'
+  * @param GtkEntry       $replace   Поле ввода строки замены, используется, если тип переименования 'replace'
   */
 function bulk_rename_action($window, $extension, $hidden, $order, $match, $replace)
 {
@@ -171,7 +180,7 @@ function bulk_rename_action($window, $extension, $hidden, $order, $match, $repla
 
     while (FALSE !== ($file = readdir($opendir)))
     {
-        $filename = $start[$panel].'/'.$file;
+        $filename = $start[$panel] . DS . $file;
 
         // Пропускаем директории '.' и '..'
         if ($file == '.' OR $file == '..' OR !is_file($filename))
@@ -192,28 +201,27 @@ function bulk_rename_action($window, $extension, $hidden, $order, $match, $repla
             // Оставляем прежние расширения
             if ($extension->get_active() === TRUE)
             {
-                $explode = explode ('.', $file);
+                $explode = explode('.', $file);
                 $count = count($explode);
                 // Если у файла нет расширения
                 if ($count == 1)
                 {
-                    rename($filename, $start[$panel].'/'.my_strto('upper', $file));
+					rename($filename, $start[$panel] . DS . mb_strtoupper($file));
                     continue;
                 }
                 $new_file = '';
                 for ($i = 0; $i < $count; $i++)
                 {
-                    if ($i < $count - 1)
-                        $new_file .= my_strto('upper', $explode[$i]).'.';
-                    else
-                        $new_file .= $explode[$i];
+					$new_file .= ($i < $count - 1)
+						? mb_strtoupper($explode[$i]) . '.'
+						: $explode[$i];
                 }
-                rename($filename, $start[$panel].'/'.$new_file);
+                rename($filename, $start[$panel] . DS . $new_file);
             }
             // Переименовываем вместе с расширениями
             else
             {
-                rename($filename, $start[$panel].'/'.my_strto('upper', $file));
+				rename($filename, $start[$panel] . DS . mb_strtoupper($file));
             }
         }
         // Нижний регистр
@@ -227,58 +235,54 @@ function bulk_rename_action($window, $extension, $hidden, $order, $match, $repla
                 // Если у файла нет расширения
                 if ($count == 1)
                 {
-                    rename($filename, $start[$panel].'/'.my_strto('lower', $file));
+					rename($filename, $start[$panel] . DS . mb_strtolower($file));
                     continue;
                 }
                 $new_file = '';
                 for ($i = 0; $i < $count; $i++)
                 {
-                    if ($i < $count - 1)
-                        $new_file .= my_strto('lower', $explode[$i]).'.';
-                    else
-                        $new_file .= $explode[$i];
+					$new_file .= ($i < $count - 1)
+						? mb_strtolower($explode[$i]) . '.'
+						: $explode[$i];
                 }
-                rename($filename, $start[$panel].'/'.$new_file);
+                rename($filename, $start[$panel] . DS . $new_file);
             }
             // Переименовываем вместе с расширениями
             else
             {
-                rename($filename, $start[$panel].'/'.my_strto('lower', $file));
+				rename($filename, $start[$panel] . DS . mb_strtolower($file));
             }
         }
         elseif ($active_type_rename == 'ucfirst')
         {
-            rename($filename, $start[$panel].'/'.my_strto('ucfirst', my_strto('lower', $file)));
+			rename($filename, $start[$panel] . DS . mb_ucfirst(mb_strtolower($file)));
         }
         // По порядку
         elseif ($active_type_rename == 'order')
         {
             $name = $order->get_text();
+            
             if (empty($name))
             {
-                $name = 'Файл ';
+                $name = $lang['bulk_rename']['order_default_name'];
             }
 
             // Оставляем прежние расширения
             if ($extension->get_active() === TRUE)
             {
-                $explode = explode ('.', $file);
+                $explode = explode('.', $file);
                 $count = count($explode);
                 // Если у файла нет расширения
-                if ($count == 1)
-                {
-                    $out = $name.$i;
-                }
-                else
-                {
-                    $out = $name.$i.'.'.$explode[$count - 1];
-                }
-                rename($filename, $start[$panel].'/'.$out);
+				$out = ($count == 1) 
+					? $name . $i 
+					: $name . $i . '.' . $explode[$count - 1];
+				
+                rename($filename, $start[$panel] . DS . $out);
             }
             // Переименовываем вместе с расширениями
             else
             {
-                rename($filename, $start[$panel].'/'.$name.$i);
+                rename($filename, $start[$panel] . DS . $name . $i);
             }
             $i++;
         }
@@ -287,7 +291,7 @@ function bulk_rename_action($window, $extension, $hidden, $order, $match, $repla
         {
             $mtc = $match->get_text();
             $rpl = $replace->get_text();
-            rename($filename, $start[$panel].'/'.str_replace($mtc, $rpl, $file));
+            rename($filename, $start[$panel] . DS . str_replace($mtc, $rpl, $file));
         }
     }
     closedir($opendir);
@@ -296,33 +300,17 @@ function bulk_rename_action($window, $extension, $hidden, $order, $match, $repla
 }
 
 /**
- * Правильное изменение регистра файлов с нелатинскими символами в имени.
- * На данный момент поддерживается только русский алфавит.
- * @param string $type Направление изменения регистра
- * @param string $str Старое имя файла
- * @return string Новое имя файла
+ * Реализация ф-ции mb_ucfirst - переводит первую букву строки в заглавную.
+ * @param  string $string Старое имя файла
+ * @return string $string Новое имя файла
  */
-function my_strto($type, $str)
+if (!function_exists('mb_ucfirst'))
 {
-    $lower = array(
-        'ё','й','ц','у','к','е','н','г', 'ш','щ',
-        'з','х','ъ','ф','ы','в', 'а','п','р','о',
-        'л','д','ж','э', 'я','ч','с','м','и','т',
-        'ь','б','ю');
-    $upper = array(
-        'Ё','Й','Ц','У','К','Е','Н','Г', 'Ш','Щ',
-        'З','Х','Ъ','Ф','Ы','В', 'А','П','Р','О',
-        'Л','Д','Ж','Э', 'Я','Ч','С','М','И','Т',
-        'Ь','Б','Ю');
-    if ($type == 'lower')
+    function mb_ucfirst($string) 
     {
-        $str = str_replace($upper, $lower, strtolower($str));
+        $string = mb_strtoupper(mb_substr($string, 0, 1)) . mb_substr($string, 1);
+        return $string;
     }
-    elseif ($type == 'upper')
-    {
-        $str = str_replace($lower, $upper, strtoupper($str));
-    }
-    return $str;
 }
 
 /**

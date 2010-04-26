@@ -75,7 +75,7 @@ define('ICON_PROGRAM', SHARE_DIR . DS . 'logo_program.png');
 /**
  * Папка с темой иконок.
  */
-define('THEME',  SHARE_DIR . DS . 'themes/silk/');
+define('THEME',  SHARE_DIR . DS . 'themes' . DS . 'silk' . DS);
 
 // Файлы с функциями программы
 include SHARE_DIR . DS . 'FlightFiles.data.php';
@@ -203,16 +203,17 @@ else
 }
 
 config_parser();
+setlocale(LC_ALL, '');
 
 $explode = explode('.', $_config['language']);
-include LANG_DIR . DS .$_config['language'] . '.php';
+include LANG_DIR . DS . $_config['language'] . '.php';
 $charset = $explode[1];
 ini_set('php-gtk.codepage', $charset);
 
 // Выводим версию программы
 if (in_array('--version', $argv) OR in_array('-v', $argv))
 {
-    echo VERSION_PROGRAM."\r\n";
+    echo VERSION_PROGRAM . "\r\n";
     exit();
 }
 
@@ -375,7 +376,7 @@ foreach ($array_menubar as $value)
  * [9] => "Горячие клавиши"
  */
 $array_menuitem = array(
-	array('file', '', 'builtin', $lang['menu']['quick_view'], '', 'open_in_builtin', '', '', '', 'F3'), //изменить
+	array('file', '', 'builtin', $lang['menu']['quick_view'], '', 'open_in_builtin', '', '', '', 'F3'), //TODO: активировать только если выбран файл или папка
 	array('file', 'separator'),
     array('file', '', 'new_file', $lang['menu']['new_file'], Gtk::STOCK_NEW, 'new_element', 'file', '', 'write', '<control>N'),
     array('file', '', 'new_dir', $lang['menu']['new_dir'], Gtk::STOCK_DIRECTORY, 'new_element', 'dir', '', 'write', '<shift><control>N'),
@@ -385,7 +386,7 @@ $array_menuitem = array(
     array('file', '', 'comparison_file', $lang['menu']['comparison_file'], '', 'open_comparison', 'file', '', '', ''),
     array('file', '', 'comparison_dir', $lang['menu']['comparison_dir'], '', 'open_comparison', 'dir', '', '', ''),
     array('file', 'separator'),
-    array('file', '', 'active_all', $lang['menu']['active_all'], '', 'active_all', 'all', '', '', '<control>*'),//изменить
+    array('file', '', 'active_all', $lang['menu']['active_all'], '', 'active_all', 'all', '', '', ''), //изменить, нельзя ставить *
     array('file', '', 'active_template', $lang['menu']['active_template'], '', 'enter_template_window', '', '', '', '<control><alt>A'),
     array('file', '', 'active_all_none', $lang['menu']['active_all_none'], '', 'active_all', 'none', '', '', '<control><shift>A'),
     array('file', 'separator'),

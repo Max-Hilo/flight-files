@@ -192,19 +192,19 @@ function on_key($view, $event, $type)
             open_in_system($filename);
         }
     } 
-    elseif ($state & Gdk::CONTROL_MASK AND $keyval == 120 OR $keyval == 88 OR $keyval == 1758 OR $keyval == 790) // cut CTRL+X
+    elseif ($state & Gdk::CONTROL_MASK AND ($keyval == 120 OR $keyval == 88 OR $keyval == 1758 OR $keyval == 790)) // cut CTRL+X
     {
     	bufer_file('cut');
     }
-    elseif ($state & Gdk::CONTROL_MASK AND $keyval == 99 OR $keyval == 67 OR $keyval == 1747 OR $keyval == 1779) // copy CTRL+C
+    elseif ($state & Gdk::CONTROL_MASK AND ($keyval == 99 OR $keyval == 67 OR $keyval == 1747 OR $keyval == 1779)) // copy CTRL+C
     {
     	bufer_file('copy');
     }
-    elseif ($state & Gdk::CONTROL_MASK AND $keyval == 118 OR $keyval == 86 OR $keyval == 1741 OR $keyval == 1773) // paste CTRL+V
+    elseif ($state & Gdk::CONTROL_MASK AND ($keyval == 118 OR $keyval == 86 OR $keyval == 1741 OR $keyval == 1773)) // paste CTRL+V
     {
 		paste_file();
     }
-    elseif($state & Gdk::CONTROL_MASK AND $keyval == 97 OR $keyval == 65 OR $keyval == 1732 OR $keyval == 1766) // select all CTRL+A
+    elseif($state & Gdk::CONTROL_MASK AND ($keyval == 97 OR $keyval == 65 OR $keyval == 1732 OR $keyval == 1766)) // select all CTRL+A
     {
     	active_all('all');
     }
@@ -220,6 +220,7 @@ function on_key($view, $event, $type)
     {
 		open_in_builtin();
     }
+
     return FALSE;
 }
 
@@ -1087,7 +1088,7 @@ function current_dir($panel, $status = '')
         }
 
         $filename = $start[$panel] . DS . $file;
-        // Заполняем колонки для файлов...
+        // Заполняем колонки для файлов
         if (is_file($filename))
         {
             if (empty($status))
@@ -1109,20 +1110,12 @@ function current_dir($panel, $status = '')
                 {
                     $ext = '';
                 }
-//                $store[$panel]->append(array(
-//                        $file,
-//                        $ext,
-//                        convert_size($filename),
-//                        date($_config['mtime_format'],filemtime($filename)),
-//                        '<FILE>',
-//                        ''));
              $store[$panel]->insert(0, array(
                         $file,
                         $ext,
                         convert_size($filename),
                         date($_config['mtime_format'], filemtime($filename)),
-                        '<FILE>',
-                        ''));
+                        '<FILE>', ''));
             }
             $count_file++;
         }
@@ -1131,7 +1124,6 @@ function current_dir($panel, $status = '')
         {
             if (empty($status))
             {
-                //$store[$panel]->append(array($file, '', '', '', '<DIR>', ''));
                 $store[$panel]->insert(0, array($file, '', '', '', '<DIR>', ''));
             }
             $count_dir++;
@@ -2005,10 +1997,10 @@ function columns_view($widget, $key)
 
 /**
  * Добавляет изображения файла/папки для строки в списке файлов.
- * @param GtkTreeViewColumn $column
+ * @param GtkTreeViewColumn     $column
  * @param GtkCellRendererPixbuf $render
- * @param GtkListStore $model
- * @param GtkTreeIter $iter
+ * @param GtkListStore          $model
+ * @param GtkTreeIter           $iter
  */
 function image_column($column, $render, $model, $iter)
 {
@@ -2016,75 +2008,7 @@ function image_column($column, $render, $model, $iter)
     $type = $model->get_value($iter, 4);
     $file = $model->get_value($iter, 0);
     
-    $ext_icons = array(
-		/* Video */
-		'avi'  => 'film.png',
-		'mpeg' => 'film.png',
-		'wmv'  => 'film.png',
-		'mkv'  => 'film.png',
-		'mov'  => 'film.png',
-		'vob'  => 'dvd.png',
-		'flv'  => 'flash.png',
-		/* Audio */
-		'mp3'  => 'music.png',
-		'ogg'  => 'music.png',
-		'wav'  => 'music.png',
-		'flac' => 'music.png',
-		/* Image */
-		'jpg' => 'picture.png',
-		'png' => 'picture.png',
-		'bmp' => 'picture.png',
-		'gif' => 'picture.png',
-		'psd' => 'picture.png',
-		'ico' => 'picture.png',
-		'tif' => 'picture.png',
-		'tga' => 'picture.png',
-		'raw' => 'camera.png',
-		/* Archive */
-		'rar' => 'package.png',
-		'zip' => 'package.png',
-		'7z'  => 'package.png',
-		'bz'  => 'package.png',
-		'bz2' => 'package.png',
-		'tgz' => 'package.png',
-		'tar' => 'package.png',
-		'cab' => 'package.png',
-		/* Exe and dll*/
-		'exe' => 'cog.png',
-		'msi' => 'cog.png',
-		'sh'  => 'cog.png',
-		'dll' => 'brick.png',
-		'so'  => 'brick.png',
-		/* dvd and cd images */
-		'iso'  => 'cd.png',
-		'mdf'  => 'cd.png',
-		'mds'  => 'cd.png',
-		'nrg'  => 'cd.png',
-		/* docs, html etc. */
-		'txt'  => 'page_white_text.png',
-		'php'  => 'page_white_php.png',
-		'rb'   => 'ruby.png',
-		'py'   => 'python.png',
-		'js'   => 'script.png',
-		'xml'  => 'script_code.png',
-		'doc'  => 'page_word.png',
-		'xls'  => 'page_excel.png',
-		'ppt'  => 'page_white_powerpoint.png',
-		'pdf'  => 'page_white_acrobat.png',
-		'djvu' => 'djvu.png',
-		'djv'  => 'djvu.png',
-		'chm'  => 'chm.png',
-		'htm'  => 'page_world.png',
-		'html' => 'page_world.png',
-		'xhtml'=> 'page_world.png',
-		/* ini, cfg, log etc. */
-		'ini'  => 'page_gear.png',
-		'cfg'  => 'page_gear.png',
-		'bat'  => 'page_gear.png',
-		/* todo: 
-		plugin, scripts
-		*/
-	);
+    include THEME . 'theme.php'; // Load icons-theme file
     
     if ($type == '<DIR>')
     {
@@ -2190,7 +2114,7 @@ function open_in_builtin()
     @$iter = $store[$panel]->get_iter($rows[0][0]);
     @$file = $store[$panel]->get_value($iter, 0);
     $filename = $start[$panel] . DS . $file;
-    
+     
     if(is_dir($filename))
     {
         if (!is_readable($filename))
@@ -2389,8 +2313,6 @@ function active_all($action, $template = '', $register = FALSE)
         $action_menu['cut']->set_sensitive(FALSE);
         $action_menu['delete']->set_sensitive(FALSE);
         $action_menu['rename']->set_sensitive(FALSE);
-//        $action_menu['comparison_file']->set_sensitive(FALSE);
-//        $action_menu['comparison_dir']->set_sensitive(FALSE);
         return TRUE;
     }
 
@@ -2403,8 +2325,6 @@ function active_all($action, $template = '', $register = FALSE)
         $action_menu['cut']->set_sensitive(FALSE);
         $action_menu['delete']->set_sensitive(FALSE);
         $action_menu['rename']->set_sensitive(FALSE);
-//        $action_menu['comparison_file']->set_sensitive(FALSE);
-//        $action_menu['comparison_dir']->set_sensitive(FALSE);
         return FALSE;
     }
 
@@ -2427,22 +2347,6 @@ function active_all($action, $template = '', $register = FALSE)
         }
     }
 
-//    if ($files == 2 OR $files == 3)
-//    {
-//        $action_menu['comparison_file']->set_sensitive(TRUE);
-//    }
-//    else
-//    {
-//        $action_menu['comparison_file']->set_sensitive(FALSE);
-//    }
-//    if ($dirs == 2 OR $dirs == 3)
-//    {
-//        $action_menu['comparison_dir']->set_sensitive(TRUE);
-//    }
-//    else
-//    {
-//        $action_menu['comparison_dir']->set_sensitive(FALSE);
-//    }
     $action_menu['copy']->set_sensitive(TRUE);
     $action_menu['cut']->set_sensitive(TRUE);
     $action_menu['delete']->set_sensitive(TRUE);
