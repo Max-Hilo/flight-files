@@ -8,9 +8,9 @@
  
 /**
  * Отображает окно с настройками.
- * @global array $_config
- * @global array $lang
- * @global resource $sqlite
+ * @global array     $_config
+ * @global array     $lang
+ * @global resource  $sqlite
  * @global GtkWindow $main_window
  */
 function preference()
@@ -79,14 +79,14 @@ function preference()
     $vbox->pack_start($maximize, FALSE, FALSE);
 
     // Автообновление списка разделов
-    $partbar_refresh = new GtkCheckButton($lang['preference']['partbar_refresh']);
-    $partbar_refresh->set_tooltip_text($lang['preference']['partbar_refresh_hint']);
-    $partbar_refresh->connect('toggled', 'check_button_write', 'partbar_refresh');
-    if ($_config['partbar_refresh'] == 'on')
-    {
-        $partbar_refresh->set_active(TRUE);
-    }
-    $vbox->pack_start($partbar_refresh, FALSE, FALSE);
+//    $partbar_refresh = new GtkCheckButton($lang['preference']['partbar_refresh']);
+//    $partbar_refresh->set_tooltip_text($lang['preference']['partbar_refresh_hint']);
+//    $partbar_refresh->connect('toggled', 'check_button_write', 'partbar_refresh');
+//    if ($_config['partbar_refresh'] == 'on')
+//    {
+//        $partbar_refresh->set_active(TRUE);
+//    }
+//    $vbox->pack_start($partbar_refresh, FALSE, FALSE);
 
     // Показывать иконку в трее
     $status_icon = new GtkCheckButton($lang['preference']['status_icon']);
@@ -164,6 +164,7 @@ function preference()
         }
     }
     closedir($opendir);
+    
     $combo->connect('changed', 'combo_write', 'language');
     $vbox->pack_start(new GtkHSeparator, FALSE, FALSE);
     $vbox->pack_start($hbox = new GtkHBox, FALSE, FALSE);
@@ -200,7 +201,22 @@ function preference()
      * Вкладка "Интерфейс".
      */
     $vbox = new GtkVBox;
-    $notebook->append_page($vbox, new GtkLabel($lang['preference']['interface']));
+    $notebook->append_page($vbox, new GtkLabel($lang['preference']['interface'])); 
+    
+   	// Icons theme
+   	$label_theme = new GtkLabel($lang['preference']['change_icons_theme']);
+    $label_theme->set_alignment(0, 0.5);
+
+    $combo_theme = GtkComboBox::new_text();
+    $combo_theme->append_text('Silk');
+    $combo_theme->set_active(0);
+    $combo_theme->set_sensitive(FALSE);
+	
+	$vbox->pack_start($hbox = new GtkHBox, FALSE, FALSE);
+    $hbox->pack_start($label_theme, TRUE, TRUE);
+    $hbox->pack_start($combo_theme, TRUE, TRUE);
+    
+    $vbox->pack_start(new GtkHSeparator, FALSE, FALSE);
 
 	// Показывать линии между файлами
     $view_lines_files = new GtkCheckButton($lang['preference']['view_lines_files']);
@@ -293,7 +309,7 @@ function preference()
     // Сравнение файлов
     $label_comparison = new GtkLabel();
     $label_comparison->set_alignment(0, 0);
-    $label_comparison->set_markup('<b>'.$lang['preference']['comparison'].'</b>');
+    $label_comparison->set_markup('<b>' . $lang['preference']['comparison'] . '</b>');
     $vbox->pack_start($label_comparison, FALSE, FALSE);
 
     $entry_comparison = new GtkEntry($_config['comparison']);
@@ -308,7 +324,7 @@ function preference()
     // Терминал
     $label_terminal = new GtkLabel();
     $label_terminal->set_alignment(0, 0);
-    $label_terminal->set_markup('<b>'.$lang['preference']['terminal'].'</b>');
+    $label_terminal->set_markup('<b>' . $lang['preference']['terminal'] . '</b>');
     $vbox->pack_start($label_terminal, FALSE, FALSE);
 
     $entry_terminal = new GtkEntry($_config['terminal']);

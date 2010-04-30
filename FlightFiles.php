@@ -91,7 +91,6 @@ include SHARE_DIR . DS . 'shortcuts.php';
 // Дополнительные модули программы
 include SHARE_DIR . DS . 'text_editor.php';
 include SHARE_DIR . DS . 'image_view.php';
-//include SHARE_DIR . DS . 'tag_editor.php';
 
 if (!extension_loaded('php-gtk'))
 {
@@ -220,7 +219,7 @@ if (in_array('--version', $argv) OR in_array('-v', $argv))
 // Выводим справочную информацию
 if (in_array('-h', $argv) OR in_array('--help', $argv))
 {
-    echo $lang['help']['using']."\r\n";
+    echo $lang['help']['usage']."\r\n";
     echo "  FlightFiles [".$lang['help']['key']."] [".$lang['help']['dir_left']."] [".$lang['help']['dir_right']."]\r\n\r\n";
     echo "  -h, --help\t\t".$lang['help']['help']."\r\n";
     echo "  -v, --version\t\t".$lang['help']['version']."\r\n";

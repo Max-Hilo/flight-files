@@ -34,7 +34,7 @@ function shortcuts_window()
     $array = array(
         array($shr['new_file'], 'Ctrl+N'),
         array($shr['new_dir'], 'Shift+Ctrl+N'),
-        array($shr['select_all'], 'Ctrl+*'),
+        array($shr['select_all'], 'Ctrl+A'),
         array($shr['select_template'], 'Ctrl+Alt+A'),
         array($shr['unselect_all'], 'Shift+Ctrl+A'),
         array($shr['quit'], 'Ctrl+Q'),
