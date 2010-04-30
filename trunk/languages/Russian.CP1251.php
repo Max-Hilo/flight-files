@@ -184,6 +184,7 @@ $lang['preference']['button_ok']        = 'Ok';
 $lang['preference']['button_cancel']    = 'Отменить';
 $lang['preference']['change_program_hint'] = 'Изменить программу';
 $lang['preference']['change_font_hint'] = 'Изменить шрифт';
+$lang['preference']['change_icons_theme']    = 'Тема иконок:';
 $lang['preference']['toolbar_style']    = 'Тип панели инструментов:';
 $lang['preference']['toolbar_style_hint'] = 'Выберите наиболее удобный для Вас тип отображения панели инструментов';
 $lang['preference']['toolbar_icons']    = 'Только иконки';

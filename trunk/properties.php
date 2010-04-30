@@ -80,7 +80,7 @@ function properties_window($filename)
 	    $label_atime->modify_font(new PangoFontDescription('Bold'));
 	    $table->attach($label_atime, 0, 1, 7, 8, Gtk::FILL, Gtk::FILL);
 	    
-		$atime = new GtkLabel(strftime('%d %B %Y, %X', filemtime($filename)));
+		$atime = new GtkLabel(strftime('%d %B %Y, %X', fileatime($filename)));
 	    $atime->set_alignment(0, 0.5);
 	    $table->attach($atime, 1, 2, 7, 8);
 
@@ -142,7 +142,7 @@ function properties_window($filename)
 	    $label_atime->modify_font(new PangoFontDescription('Bold'));
 	    $table->attach($label_atime, 0, 1, 9, 10, Gtk::FILL, Gtk::FILL);
 	    
-	    $atime = new GtkLabel(strftime('%d %B %Y, %X', filemtime($filename)));
+	    $atime = new GtkLabel(strftime('%d %B %Y, %X', fileatime($filename)));
 	    $atime->set_alignment(0, 0.5);
 	    $table->attach($atime, 1, 2, 9, 10);
     }
