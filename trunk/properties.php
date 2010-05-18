@@ -136,21 +136,24 @@ function properties_window($filename)
 	    $mtime->set_alignment(0.0, 0.5);
 	    $table->attach($mtime, 1, 2, 8, 9);
 
-	    // Дата доступа к папке
-	    $label_atime = new GtkLabel($lang['properties']['atime_dir']);
-	    $label_atime->set_alignment(0, 0.5);
-	    $label_atime->modify_font(new PangoFontDescription('Bold'));
-	    $table->attach($label_atime, 0, 1, 9, 10, Gtk::FILL, Gtk::FILL);
-	    
-	    $atime = new GtkLabel(strftime('%d %B %Y, %X', fileatime($filename)));
-	    $atime->set_alignment(0, 0.5);
-	    $table->attach($atime, 1, 2, 9, 10);
+		if (OS == 'Unix') // В Windows нет такого понятия
+    	{
+		    // Дата доступа к папке
+		    $label_atime = new GtkLabel($lang['properties']['atime_dir']);
+		    $label_atime->set_alignment(0, 0.5);
+		    $label_atime->modify_font(new PangoFontDescription('Bold'));
+		    $table->attach($label_atime, 0, 1, 9, 10, Gtk::FILL, Gtk::FILL);
+		    
+		    $atime = new GtkLabel(strftime('%d %B %Y, %X', fileatime($filename)));
+		    $atime->set_alignment(0, 0.5);
+		    $table->attach($atime, 1, 2, 9, 10);
+		}
     }
     
     // Атрибуты файла/папки
     if (OS == 'Windows')
     {
-	    $table->attach(new GtkHSeparator, 0, 2, 10, 11);
+	    $table->attach(new GtkHSeparator, 0, 2, 9, 10);
 	    
 	    $hbox = new GtkHBox();
 		
@@ -181,12 +184,12 @@ function properties_window($filename)
 		    }
 		}
 
-		$label_attr = new GtkLabel($lang['properties']['attributes']);
+		$label_attr = new GtkLabel($lang['properties']['attributes'] . "  ");
 	    $label_attr->set_alignment(0, 0.5);
 	    $label_attr->modify_font(new PangoFontDescription('Bold'));
 	    
 	   	$is_read = new GtkCheckButton($lang['properties']['read_only']);
-	    $is_read->set_alignment(0, 0);
+	    $is_read->set_alignment(0, 0.5);
 	    $is_read->connect('toggled', 'change_attributes', $filename, 'R');
 	    if ($is_readonly == true)
 	    {
@@ -194,7 +197,7 @@ function properties_window($filename)
 	    }
 	    
 	    $is_hid = new GtkCheckButton($lang['properties']['hidden']);
-	    $is_hid->set_alignment(0, 0);
+	    $is_hid->set_alignment(0, 0.5);
 	    $is_hid->connect('toggled', 'change_attributes', $filename, 'H');
 	   	if ($is_hidden == true)
 	    {
@@ -202,7 +205,7 @@ function properties_window($filename)
 	    }
 	    
 	    $is_arch = new GtkCheckButton($lang['properties']['archive']);
-	    $is_arch->set_alignment(0, 0);
+	    $is_arch->set_alignment(0, 0.5);
 	    $is_arch->connect('toggled', 'change_attributes', $filename, 'A');
 	    if ($is_archive == true)
 	    {
@@ -210,7 +213,7 @@ function properties_window($filename)
 	    }
 	    
 	    $is_sys = new GtkCheckButton($lang['properties']['system']);
-	    $is_sys->set_alignment(0, 0);
+	    $is_sys->set_alignment(0, 0.5);
 	    $is_sys->connect('toggled', 'change_attributes', $filename, 'S');
 	    if ($is_system == true)
 	    {
@@ -228,7 +231,7 @@ function properties_window($filename)
 	    $table->attach($hbox, 1, 2, 11, 12);
     }
     
-//    $table->set_col_spacing(0, 5);
+    $table->set_col_spacing(0, 5);
     
     $notebook->append_page($table, new GtkLabel($lang['properties']['general']));
     

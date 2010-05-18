@@ -20,7 +20,7 @@ $lang['menu']['new_file']               = 'Создать файл';
 $lang['menu']['new_dir']                = 'Создать папку';
 $lang['menu']['open']                   = 'Открыть';
 $lang['menu']['quick_view']             = 'Быстрый просмотр';
-$lang['menu']['clear_bufer']            = 'Очистить буфер обмена';
+$lang['menu']['clear_buffer']            = 'Очистить буфер обмена';
 $lang['menu']['comparison_file']        = 'Сравнить файлы';
 $lang['menu']['comparison_dir']         = 'Сравнить папки';
 $lang['menu']['active_all']             = 'Выделить все';
@@ -208,7 +208,7 @@ $lang['properties']['dir']              = 'Папка';
 $lang['properties']['file']             = 'Файл';
 $lang['properties']['simlink']          = 'Символическая ссылка';
 $lang['properties']['size']             = 'Размер:';
-$lang['properties']['path']             = 'Местоположение:';
+$lang['properties']['path']             = 'Размещение:';
 $lang['properties']['mtime_file']       = 'Дата изменения:';
 $lang['properties']['atime_file']       = 'Дата доступа:';
 $lang['properties']['mtime_dir']        = 'Дата создания:';
@@ -233,7 +233,7 @@ $lang['properties']['perms_run']        = 'Выполнение';
 
 $lang['alert']['title']                 = 'Внимание';
 $lang['alert']['button_ok']             = 'Ok';
-$lang['alert']['bufer_clear']           = 'Буфер обмена очищен';
+$lang['alert']['buffer_cleared']           = 'Буфер обмена очищен';
 $lang['alert']['chmod_read_dir']        = 'У вас недостаточно прав для просмотра указанной директории!';
 $lang['alert']['chmod_read_file']       = 'У вас недостаточно прав для просмотра указанного файла!';
 $lang['alert']['access_denied']         = 'Отказано в доступе';
@@ -251,7 +251,6 @@ $lang['alert']['copy_file_not_found']   = 'Копируемого файла не существует';
 $lang['alert']['rename_dir_not_found']  = 'Перемещаемой папки не существует';
 $lang['alert']['rename_file_not_found'] = 'Перемещаемого файла не существует';
 $lang['alert']['not_folder']            = 'Указанный адрес не является папкой';
-$lang['alert']['unsupported']           = 'Выбранный файл не поддерживается встроенными редакторами';
 
 $lang['popup']['copy_file']             = 'Копировать';
 $lang['popup']['cut_file']              = 'Вырезать';
@@ -419,7 +418,6 @@ $lang['image']['exif_tag']				= 'EXIF тэг';
 $lang['image']['exif_value']            = 'Значение';
 $lang['image']['exif_not_found']		= 'Не найдена библиотека EXIF';
 $lang['image']['about']					= 'О программе';
-
 
 $lang['help']['using']                  = 'Использование:';
 $lang['help']['key']                    = 'КЛЮЧ';

@@ -1,9 +1,9 @@
 <?php
 /**
-* Most icons are taken from Famfamfam icon package: http://code.google.com/p/famfamfam/.
-* Please read readme.txt for further information.
+* Most icons are taken from Fugue Icons package: http://code.google.com/p/fugue-icons-src/.
+* Please read readme.txt for further information. Copyright © 2010 Yusuke Kamiyamane. All rights reserved.
 *
-* @name    Silk
+* @name    Fugue
 * @version 1.0
 * @author  Max Hilo HiloMax@gmail.com
 */
@@ -17,7 +17,7 @@ $ext_icons = array(
 	'wmv'  => 'film.png',
 	'mkv'  => 'film.png',
 	'mov'  => 'film.png',
-	'vob'  => 'dvd.png',
+	'vob'  => 'film.png',
 	'flv'  => 'flash.png',
 	/* Audio */
 	'mp3'  => 'music.png',
@@ -29,11 +29,13 @@ $ext_icons = array(
 	'png' => 'picture.png',
 	'bmp' => 'picture.png',
 	'gif' => 'picture.png',
-	'psd' => 'picture.png',
+	'psd' => 'photoshop.png',
+	'ai'  => 'illustrator.png',
 	'ico' => 'picture.png',
 	'tif' => 'picture.png',
 	'tga' => 'picture.png',
 	'raw' => 'camera.png',
+	// todo: svg, vector etc.
 	/* Archive */
 	'rar' => 'package.png',
 	'zip' => 'package.png',
@@ -44,12 +46,12 @@ $ext_icons = array(
 	'tar' => 'package.png',
 	'gz'  => 'package.png',
 	'cab' => 'package.png',
-	/* exe and dll*/
+	/* Exe and dll*/
 	'exe' => 'application.png',
 	'msi' => 'application.png',
-	'sh'  => 'application.png',
-	'dll' => 'brick.png',
-	'so'  => 'brick.png',
+	'sh'  => 'terminal.png',
+	'dll' => 'block.png',
+	'so'  => 'block.png',
 	/* dvd and cd images */
 	'iso'  => 'cd.png',
 	'mdf'  => 'cd.png',
@@ -59,7 +61,7 @@ $ext_icons = array(
 	'txt'  => 'text.png',
 	'php'  => 'php.png',
 	'rb'   => 'ruby.png',
-	'py'   => 'python.png',
+	'py'   => 'python.png', /* todo: add perl icon */
 	'js'   => 'script.png',
 	'xml'  => 'script_code.png',
 	'doc'  => 'word.png',
@@ -67,14 +69,15 @@ $ext_icons = array(
 	'docx' => 'word.png',
 	'xlsx' => 'excel.png',
 	'ppt'  => 'powerpoint.png',
-	'eml'  => 'email.png',
+	'eml'  => 'outlook.png',
+	'mbd'  => 'access.png',
 	'pdf'  => 'acrobat.png',
 	'djvu' => 'djvu.png',
 	'djv'  => 'djvu.png',
 	'chm'  => 'chm.png',
 	'htm'  => 'world.png',
 	'html' => 'world.png',
-	'xhtml'=> 'world.png',
+	'xhtml'=> 'world.png', 
 	/* ini, cfg, log etc. */
 	'ini'  => 'gear.png',
 	'cfg'  => 'gear.png',

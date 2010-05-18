@@ -158,6 +158,16 @@ if (!file_exists(LANG_DIR))
     mkdir(LANG_DIR);
 }
 
+// Сбрасыванием настройки программы (удаляется файл базы данных)
+if (in_array('--reset', $argv) OR in_array('-r', $argv))
+{
+	if (file_exists(DATABASE))
+	{
+		unlink(DATABASE);
+    	echo "  Config file was successfully deleted." . "\r\n";
+    }
+}
+
 // Подключаемся к базе данных
 if (!file_exists(DATABASE))
 {
@@ -209,13 +219,6 @@ include LANG_DIR . DS . $_config['language'] . '.php';
 $charset = $explode[1];
 ini_set('php-gtk.codepage', $charset);
 
-// Выводим версию программы
-if (in_array('--version', $argv) OR in_array('-v', $argv))
-{
-    echo VERSION_PROGRAM . "\r\n";
-    exit();
-}
-
 // Выводим справочную информацию
 if (in_array('-h', $argv) OR in_array('--help', $argv))
 {
@@ -223,7 +226,16 @@ if (in_array('-h', $argv) OR in_array('--help', $argv))
     echo "  FlightFiles [".$lang['help']['key']."] [".$lang['help']['dir_left']."] [".$lang['help']['dir_right']."]\r\n\r\n";
     echo "  -h, --help\t\t".$lang['help']['help']."\r\n";
     echo "  -v, --version\t\t".$lang['help']['version']."\r\n";
+    echo "  -r, --reset\t\t"."Reset current config"."\r\n";
     echo "  --one\t\t\t".$lang['help']['one']."\r\n";
+    exit();
+    // todo: reset config option
+}
+
+// Выводим версию программы
+if (in_array('--version', $argv) OR in_array('-v', $argv))
+{
+    echo VERSION_PROGRAM . "\r\n";
     exit();
 }
 
@@ -380,7 +392,7 @@ $array_menuitem = array(
     array('file', '', 'new_file', $lang['menu']['new_file'], Gtk::STOCK_NEW, 'new_element', 'file', '', 'write', '<control>N'),
     array('file', '', 'new_dir', $lang['menu']['new_dir'], Gtk::STOCK_DIRECTORY, 'new_element', 'dir', '', 'write', '<shift><control>N'),
     array('file', 'separator'),
-    array('file', '', 'clear_bufer', $lang['menu']['clear_bufer'], Gtk::STOCK_CLEAR, 'clear_bufer', '', '', 'false', ''),
+    array('file', '', 'clear_bufer', $lang['menu']['clear_buffer'], Gtk::STOCK_CLEAR, 'clear_bufer', '', '', 'false', ''),
     array('file', 'separator'),
     array('file', '', 'comparison_file', $lang['menu']['comparison_file'], '', 'open_comparison', 'file', '', '', ''),
     array('file', '', 'comparison_dir', $lang['menu']['comparison_dir'], '', 'open_comparison', 'dir', '', '', ''),
@@ -830,4 +842,5 @@ $vbox->pack_start(status_bar(), FALSE, FALSE);
 
 $main_window->add($vbox);
 $main_window->show();
+
 Gtk::main();

@@ -1855,7 +1855,7 @@ function clear_bufer()
     $action['paste']->set_sensitive(FALSE);
     $action_menu['clear_bufer']->set_sensitive(FALSE);
     $action_menu['paste']->set_sensitive(FALSE);
-    alert_window($lang['alert']['bufer_clear']);
+    alert_window($lang['alert']['buffer_cleared']);
 }
 
 /**
@@ -2012,14 +2012,14 @@ function image_column($column, $render, $model, $iter)
     
     if ($type == '<DIR>')
     {
-        $render->set_property('pixbuf', GdkPixbuf::new_from_file(THEME . 'folder.png'));
+        $render->set_property('pixbuf', GdkPixbuf::new_from_file(THEME . $ext_icons['folder']));
     }
     else
     {
         $ext = substr(strrchr(strtolower($file), '.'), 1);
         if ($ext == '') // Если файл без расширения
         {
-        	$render->set_property('pixbuf', GdkPixbuf::new_from_file(THEME . 'page_white.png'));
+        	$render->set_property('pixbuf', GdkPixbuf::new_from_file(THEME . $ext_icons['file']));
         }
         elseif (array_key_exists($ext, $ext_icons)) 
         {
@@ -2027,7 +2027,7 @@ function image_column($column, $render, $model, $iter)
 		}
 		else 
 		{
-			$render->set_property('pixbuf', GdkPixbuf::new_from_file(THEME . 'page_white.png'));
+			$render->set_property('pixbuf', GdkPixbuf::new_from_file(THEME . $ext_icons['file']));
 		}
 
     }

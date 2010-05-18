@@ -20,7 +20,7 @@ $lang['menu']['new_file']               = 'Создать файл';
 $lang['menu']['new_dir']                = 'Создать папку';
 $lang['menu']['open']                   = 'Открыть';
 $lang['menu']['quick_view']             = 'Быстрый просмотр';
-$lang['menu']['clear_bufer']            = 'Очистить буфер обмена';
+$lang['menu']['clear_buffer']            = 'Очистить буфер обмена';
 $lang['menu']['comparison_file']        = 'Сравнить файлы';
 $lang['menu']['comparison_dir']         = 'Сравнить папки';
 $lang['menu']['active_all']             = 'Выделить все';
@@ -233,7 +233,7 @@ $lang['properties']['perms_run']        = 'Выполнение';
 
 $lang['alert']['title']                 = 'Внимание';
 $lang['alert']['button_ok']             = 'Ok';
-$lang['alert']['bufer_clear']           = 'Буфер обмена очищен';
+$lang['alert']['buffer_cleared']           = 'Буфер обмена очищен';
 $lang['alert']['chmod_read_dir']        = 'У вас недостаточно прав для просмотра указанной директории!';
 $lang['alert']['chmod_read_file']       = 'У вас недостаточно прав для просмотра указанного файла!';
 $lang['alert']['access_denied']         = 'Отказано в доступе';
