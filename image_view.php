@@ -339,11 +339,29 @@ function image_view_close()
     $window->destroy();
     Gtk::main_quit();
 }
+/**
+* Преобразует значение угла в диапазон от 0 до 360 градусов.
+*
+* @param int $angle Значение угла
+*/
+function normalize_angle($angle) 
+{
+    if($angle >= 360) 
+    {
+		$angle -= 360 * floor($angle/360);
+    } 
+    elseif ($n < 0) 
+    {
+		$angle += 360 * abs(floor($angle/360)); 
+	}
+    return $angle;
+ }
 
 /**
  * Изменение угла поворота изображения.
  * Если библиотека GD или функция imagerotate() не найдены,
  * то открывается диалог alert_window(), информирующий об этом.
+ *
  * @global int $rotation_angle
  * @global int $pixbuf_width
  * @global int $pixbuf_height
@@ -401,15 +419,15 @@ function rotate_image($action, $filename, $image)
     $img = imagerotate($img, $rotation_angle, 0);
     switch ($type)
     {
-        case 1:
+        case IMAGETYPE_GIF:
             $img_file = CONFIG_DIR . DS . 'tmp_image.gif';
             imagegif($img, $img_file);
             break;
-        case 2:
+        case IMAGETYPE_JPEG:
             $img_file = CONFIG_DIR . DS . 'tmp_image.jpeg';
             imagejpeg($img, $img_file);
             break;
-        case 3:
+        case IMAGETYPE_PNG:
             $img_file = CONFIG_DIR . DS . 'tmp_image.png';
         	imagesavealpha($img, true);
             imagepng($img, $img_file);
@@ -623,7 +641,7 @@ function exif_window($filename)
 function save_image($filename)
 {  
 	global $pixbuf;
-	//todo: Окно сохранить файл с возможностью выбора формата, c перезаписью оригинала по выбору.
+	//todo: Окно "Cохранить файл" с возможностью выбора формата, c перезаписью оригинала по выбору.
 //	$pixbuf->save($filename, 'png');
 }
 
