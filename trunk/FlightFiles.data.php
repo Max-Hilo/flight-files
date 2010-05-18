@@ -1837,6 +1837,9 @@ function close_window($action = '')
     sqlite_query($sqlite, "UPDATE config SET value = '$right' WHERE key = 'LAST_DIR_RIGHT'");
     
     Gtk::main_quit();
+    // @change - 2010-05-18 - scorninpc()gmail°com - Added exit()
+    exit(0);
+    return FALSE;
 }
 
 /**

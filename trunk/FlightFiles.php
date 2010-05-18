@@ -1,4 +1,3 @@
-#!/usr/bin/php
 <?php
 	
 /**
@@ -18,7 +17,8 @@ if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN')
 else
 {
     $os = 'Unix';
-    $home_dir = $_ENV['HOME'];
+    // @change - 2010-05-18 - scorninpc()gmail°com - replaced $_ENV by getenv()
+    $home_dir = getenv('HOME');
     $root_dir = '/';
 }
 
