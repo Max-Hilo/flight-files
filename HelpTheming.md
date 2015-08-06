@@ -1,0 +1,43 @@
+FlightFiles начиная с версии `x` поддерживает сменные темы оформления иконок расширений файлов.
+
+Для начала необходимо создать папку по адресу `FlightFiles\themes\` с желаемым именем. Например: `FlightFiles\themes\Silk`. Далее в каталоге темы создаем файл `theme.php`. В начале файла размещается заголовок содержащий информацию об авторе или официальном источнике иконок, информацию о лицензии, ссылки на любую другую правовую информацию.
+
+Например:
+```
+<?php
+/**
+* Most icons are taken from Famfamfam icon package: http://code.google.com/p/famfamfam/.
+* Please read readme.txt for further information.
+*
+```
+
+Следующим блоком идет информация о названии темы (тег `@name`), её версии (тег `@version`), а также её авторе (тег `@author`) по желанию указывается контактная информация.
+
+Например:
+```
+* @name    Silk
+* @version 1.0
+* @author  Max Hilo HiloMax@gmail.com
+*/
+```
+
+Последний блок содержит непосредственно список всех привязок графических файлов к конкретном расширению. Список представляет собой ассоциативный массив, где ключ – расширение файла, а его значение – адрес соответствующего изображения. Обязательными являются первые два ключа: `folder` и `file`, которые отвечают за отображения значка папки и файла по-умолчанию. Далее следует перечень расширений и соответствующих им иконок. Иконки файлов могут находится в подпапках текущей темы. Для расширений не перечисленных в массиве `$ext_icons` будет назначена иконка из ключа `file`. Лучше всего использовать изображения размером 16х16 px в формате PNG (<img src='http://flight-files.googlecode.com/svn/trunk/themes/silk/camera.png' height='16' width='16' />,
+<img src='http://flight-files.googlecode.com/svn/trunk/themes/silk/dvd.png' height='16' width='16' />,
+<img src='http://flight-files.googlecode.com/svn/trunk/themes/silk/php.png' height='16' width='16' />), также поддерживаются GIF, JPG.
+
+Например:
+```
+$ext_icons = array(
+	/* Base icons */
+	'folder' => 'folder.png',
+	'file'   => 'document.png',
+	/* Video */
+	'avi'  => 'avi.png',
+	'mpeg' => 'video/film.png',
+	'wmv'  => 'video/film.png');
+?>
+```
+
+<font color='red'><b>Внимание!</b> Если указанное в массиве $ext_icons изображение не существует – программа завершиться с аварийным сообщением.</font>
+
+Пример готового [файла темы](http://code.google.com/p/flight-files/source/browse/trunk/themes/silk/theme.php). Удобный поисковик иконок - http://www.iconfinder.com.
